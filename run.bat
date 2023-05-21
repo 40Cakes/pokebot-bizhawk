@@ -1,3 +1,3 @@
 @echo off
-"python.exe" "./bot.py"
+"python.exe" ".\bot.py"
 pause

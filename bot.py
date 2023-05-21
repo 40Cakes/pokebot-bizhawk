@@ -28,7 +28,7 @@ import webview                                   # https://pypi.org/project/pywe
 from ruamel.yaml import YAML                     # https://pypi.org/project/ruamel.yaml/
 import fastjsonschema                            # https://pypi.org/project/fastjsonschema/
 
-def read_file(file: str): # Function to read data from a file
+def read_file(file: str): # Simple function to read data from a file, return False if file doesn't exist
     try:
         debug_log.debug(f"Reading file: {file}...")
         if os.path.isfile(file):
@@ -36,13 +36,13 @@ def read_file(file: str): # Function to read data from a file
                 file_data = open_file.read()
                 return file_data
         else:
-            debug_log.exception('')
+            debug_log.error(f"File: {file} does not exist!")
             return False
     except:
         debug_log.exception('')
         return False
 
-def write_file(file: str, value: str): # Function to write data to a file
+def write_file(file: str, value: str): # Simple function to write data to a file, will create the file if doesn't exist
     try:
         debug_log.debug(f"Writing file: {file}...")
         with open(file, mode="w", encoding="utf-8") as save_file:
@@ -52,74 +52,69 @@ def write_file(file: str, value: str): # Function to write data to a file
         debug_log.exception('')
         return False
 
-def load_json_mmap(size, file): # Function to load a JSON object from a memory mapped file (Bizhawk maps the files)
+def load_json_mmap(size, file): # Function to load a JSON object from a memory mapped file
+    # BizHawk writes game information to memory mapped files every few frames (see bizhawk.lua)
+    # See https://tasvideos.org/Bizhawk/LuaFunctions (comm.mmfWrite)
     try:
-        shm = mmap.mmap(0, size, file)
-        if shm:
-            try:
-                if args.dm: debug_log.debug(f"Attempting to read {file} ({size} bytes) from memory...")
-                bytes_io = io.BytesIO(shm)
-                byte_str = bytes_io.read()
-                if args.dm: debug_log.debug(f"Byte string: {byte_str}")
-                json_obj = json.loads(byte_str.decode("utf-8").split("\x00")[0])
-                if args.dm: debug_log.debug(f"JSON result: {json_obj}")
-                return json_obj
-            except: return False
+        shmem = mmap.mmap(0, size, file)
+        if shmem:
+            if args.dm: debug_log.debug(f"Attempting to read {file} ({size} bytes) from memory...")
+            bytes_io = io.BytesIO(shmem)
+            byte_str = bytes_io.read()
+            if args.dm: debug_log.debug(f"Byte string: {byte_str}")
+            json_obj = json.loads(byte_str.decode("utf-8").split("\x00")[0]) # Only grab the data before \x00 null chars
+            if args.dm: debug_log.debug(f"JSON result: {json_obj}")
+            return json_obj
         else: return False
     except:
         debug_log.exception('')
         return False
 
-def emu_combo(sequence: list): # Function to run a sequence of inputs and delays
+def emu_combo(sequence: list): # Function to send a sequence of inputs and delays to the emulator
+    # Example: emu_combo(["B", "Up", "500ms", "Left"])
     try:
-        sleep_pattern = "^\d*\.?\d*sec$"
+        sleep_pattern = "^\d*\.?\d*ms$"
 
         for k in sequence:
             if re.match(sleep_pattern, k):
-                delay = float(re.sub(r"sec$", "", k))
+                delay = float(re.sub(r"ms$", "", k))
                 time.sleep(delay/emu_speed)
             else: press_button(k)
     except: debug_log.exception('')
 
-def press_button(button: str):
+def press_button(button: str): # Function to update the press_input object
     global press_input
     debug_log.debug(f"Pressing: {button}...")
     press_input[button] = True
-    time.sleep(0.01/emu_speed)
+    time.sleep(0.01/emu_speed) # Wait ~1 frame
     press_input[button] = False
-    time.sleep(0.01/emu_speed)
+    time.sleep(0.01/emu_speed) # Wait ~1 frame
 
-def hold_button(button: str):
+def hold_button(button: str): # Function to update the hold_input object
     global hold_input
     debug_log.debug(f"Holding: {button}...")
     hold_input[button] = True
 
-def release_button(button: str):
+def release_button(button: str): # Function to update the hold_input object
     global hold_input
     debug_log.debug(f"Releasing: {button}...")
     hold_input[button] = False
 
-def release_all_inputs():
+def release_all_inputs(): # Function to release all keys in all input objects
     global press_input, hold_input
     debug_log.debug(f"Releasing all inputs...")
     for button in ["A", "B", "L", "R", "Up", "Down", "Left", "Right", "Select", "Start", "Power"]:
         press_input[button] = False
         hold_input[button] = False
 
-def opponent_changed(): # This function detects if there is a new opponent, indicating the game state is now in a battle
+def opponent_changed(): # This function checks if there is a different opponent since last check, indicating the game state is probably now in a battle
     try:
-        global last_trainer_state, last_opponent_personality
+        global last_opponent_personality
 
         if opponent_info:
             if last_opponent_personality != opponent_info["personality"]:
                 last_opponent_personality = opponent_info["personality"]
                 debug_log.info("Opponent has changed!")
-                return True
-            else: return False
-        elif trainer_info:
-            if trainer_info["state"] != 80 and trainer_info["state"] == 255 and last_trainer_state != trainer_info["state"]:
-                last_trainer_state = trainer_info["state"]
-                debug_log.info("Trainer state has changed!")
                 return True
             else: return False
         else: return False
@@ -130,12 +125,12 @@ def opponent_changed(): # This function detects if there is a new opponent, indi
 def find_image(file: str): # Function to find an image in a BizHawk screenshot
     try:
         profile_start = time.time() # Performance profiling
-        hold_button("Screenshot")
         threshold = 0.999
+        hold_button("Screenshot")
         if args.di: debug_log.debug(f"Searching for image {file} (threshold: {threshold})")
 
-        shm = mmap.mmap(0, mmap_screenshot_size, mmap_screenshot_file)
-        screenshot = Image.open(io.BytesIO(shm))
+        shmem = mmap.mmap(0, mmap_screenshot_size, mmap_screenshot_file)
+        screenshot = Image.open(io.BytesIO(shmem))
 
         screenshot = cv2.cvtColor(numpy.array(screenshot), cv2.COLOR_BGR2RGB) # Convert screenshot to numpy array COLOR_BGR2RGB
         template = cv2.imread(file, cv2.IMREAD_UNCHANGED)
@@ -188,7 +183,7 @@ def catch_pokemon(): # Function to catch pokemon
                         i += 1
     
                     if spore_pp != 0:
-                        emu_combo(["A", "0.1sec"])
+                        emu_combo(["A", "100ms"])
                         if spore_move_num == 0: seq = ["Up", "Left"]
                         elif spore_move_num == 1: seq = ["Up", "Right"]
                         elif spore_move_num == 2: seq = ["Left", "Down"]
@@ -197,7 +192,7 @@ def catch_pokemon(): # Function to catch pokemon
                         while not find_image("data/templates/spore.png"):
                             emu_combo(seq)
     
-                        emu_combo(["A", "4sec"]) # Select move and wait for animations
+                        emu_combo(["A", "4000ms"]) # Select move and wait for animations
     
                 while not find_image("data/templates/battle/bag.png"): emu_combo(["button_release:all", "B", "Up", "Right"]) # Press B + up + right until BAG menu is visible
 
@@ -280,7 +275,7 @@ def battle(): # Function to battle wild pokemon
                                     immune = True
 
                             if party_info[0]["pp"][i] != 0 and not immune:
-                                emu_combo(["A", "0.05sec"])
+                                emu_combo(["A", "50ms"])
                                 if i == 0:
                                     emu_combo(["Up", "Left"])
                                     break
@@ -294,7 +289,7 @@ def battle(): # Function to battle wild pokemon
                                     emu_combo(["Right", "Down"])
                                     break
                     i += 1
-                if i <= 3: emu_combo(["A", "4sec"]) # Select move and wait for animations
+                if i <= 3: emu_combo(["A", "4000ms"]) # Select move and wait for animations
 
         if party_info[0]["hp"] == 0:
             debug_log.info("Lead Pokemon out of HP!")
@@ -445,13 +440,13 @@ def start_menu(entry: str): # Function to open any start menu item - presses STA
             filename = f"data/templates/start_menu/{entry.lower()}.png"
             
             release_all_inputs()
-            emu_combo(["Start", "0.2sec"]) # Open start menu
+            emu_combo(["Start", "200ms"]) # Open start menu
 
             while not find_image(filename): # Find menu entry
-                emu_combo(["Down", "0.2sec"])
+                emu_combo(["Down", "200ms"])
 
             while find_image(filename): # Press menu entry
-                emu_combo(["A", "0.2sec"])
+                emu_combo(["A", "200ms"])
         else:
             return False
     except:
@@ -464,19 +459,19 @@ def bag_menu(category: str, item: str): # Function to find an item in the bag an
             debug_log.info(f"Scrolling to bag category: {category}...")
 
             while not find_image(f"data/templates/start_menu/bag/{category.lower()}.png"):
-                emu_combo(["Right", "0.3sec"]) # Press right until the correct category is selected
+                emu_combo(["Right", "300ms"]) # Press right until the correct category is selected
             time.sleep(2/emu_speed) # Wait for animations
 
             debug_log.info(f"Scanning for item: {item}...")
             i = 0
             while not find_image(f"data/templates/start_menu/bag/items/{item}.png") and i < 50:
-                if i < 25: emu_combo(["Down", "0.05sec"])
-                else: emu_combo(["Up", "0.05sec"])
+                if i < 25: emu_combo(["Down", "50ms"])
+                else: emu_combo(["Up", "50ms"])
                 i += 1
 
             if find_image(f"data/templates/start_menu/bag/items/{item}.png"):
                 debug_log.info(f"Using item: {item}...")
-                while trainer_info["state"] == 0: emu_combo(["A", "0.5sec"]) # Press A to use the item
+                while trainer_info["state"] == 0: emu_combo(["A", "500ms"]) # Press A to use the item
                 return True
             else:
                 return False
@@ -496,8 +491,7 @@ def pickup_items(): # If using a team of Pokemon with the ability "pickup", this
                 if pokemon["speciesName"] in pickup_pokemon:
                     debug_log.info(f"Pokemon {i}: {pokemon['speciesName']} has item: {item_list[pokemon['heldItem']]}")
                     if pokemon["heldItem"] != 0: item_count += 1
-            except:
-                debug_log.exception('')
+            except: debug_log.exception('')
 
         if item_count >= 3: # Only run if 3 or more Pokemon have an item
             time.sleep(0.3/emu_speed) # Wait for animations
@@ -509,13 +503,11 @@ def pickup_items(): # If using a team of Pokemon with the ability "pickup", this
                 if item_count > 0:
                     if pokemon["speciesName"] in pickup_pokemon:
                         if pokemon["heldItem"] != 0:
-                            emu_combo(["Down", "0.05sec", "A", "0.05sec", "Down", "0.05sec", "Down", "0.05sec", "A", "0.05sec", "Down", "0.05sec", "A", "1sec", "B", "0.05sec"]) # Take the item from the pokemon
+                            emu_combo(["Down", "50ms", "A", "50ms", "Down", "50ms", "Down", "50ms", "A", "50ms", "Down", "50ms", "A", "1000ms", "B", "50ms"]) # Take the item from the pokemon
                             item_count -= 1
-                        else:
-                            emu_combo(["0.05sec", "Down"])
-            emu_combo(["B", "1.5sec", "B"]) # Close out of menus
-    except:
-        debug_log.exception('')
+                        else: emu_combo(["50ms", "Down"])
+            emu_combo(["B", "1500ms", "B"]) # Close out of menus
+    except: debug_log.exception('')
 
 def save_game(): # Function to save the game via the save option in the start menu
     try:
@@ -527,7 +519,7 @@ def save_game(): # Function to save the game via the save option in the start me
             while not find_image("data/templates/start_menu/save/yes.png"):
                 time.sleep(0.1/emu_speed)
             while find_image("data/templates/start_menu/save/yes.png"):
-                emu_combo(["A", "0.5sec"])
+                emu_combo(["A", "500ms"])
                 i += 1
         time.sleep(8/emu_speed) # Wait for game to save
     except:
@@ -686,9 +678,9 @@ def identify_pokemon(starter: bool = False): # Identify opponent pokemon and inc
             return False
     except: debug_log.exception('')
 
-def memGrabber(): # Loop repeatedly to read and write game information and inputs in memory
+def memHandler(): # Loop repeatedly to read and write game information and inputs in memory
     try:
-        global trainer_info, party_info, opponent_info, last_trainer_state, last_opponent_personality, emu_info, emu_speed
+        global trainer_info, party_info, opponent_info, last_opponent_personality, emu_info, emu_speed
 
         pokemon_schema = json.loads(read_file("data/schemas/pokemon.json"))
         validate_pokemon = fastjsonschema.compile(pokemon_schema)
@@ -759,7 +751,7 @@ def memGrabber(): # Loop repeatedly to read and write game information and input
                         enriched_opponent_obj = enrich_mon_data(opponent_info_mmap["opponent"])
                         if enriched_opponent_obj:
                             opponent_info = enriched_opponent_obj
-                elif not opponent_info: opponent_info = json.loads(read_file("data/placeholder_pokemon.json")) # TODO fix
+                elif not opponent_info: opponent_info = json.loads(read_file("data/placeholder_pokemon.json"))
 
                 emu_info_mmap = load_json_mmap(4096, "bizhawk_emu_info")
                 if emu_info_mmap:
@@ -834,7 +826,7 @@ def httpServer(): # Run HTTP server to make data available via HTTP GET
 
 def mainLoop(): # 🔁 Main loop
     try:
-        global last_opponent_personality, last_trainer_state
+        global last_opponent_personality
         if "save_game_on_start" in config["game_save"]: save_game()
         release_all_inputs()
 
@@ -851,7 +843,7 @@ def mainLoop(): # 🔁 Main loop
                     start_menu("pokemon")
                     press_button("A") # Select first pokemon in party
                     while not find_image("data/templates/sweet_scent.png"): press_button("Down") # Search for sweet scent in menu
-                    emu_combo(["A", "5sec"]) # Select sweet scent and wait for animation
+                    emu_combo(["A", "5000ms"]) # Select sweet scent and wait for animation
                     identify_pokemon()
 
                 # 🚲 Bunny hop method
@@ -884,12 +876,12 @@ def mainLoop(): # 🔁 Main loop
                 # 🐠 Fishing method
                 if config["bot_mode"] == "Fishing":
                     debug_log.info(f"Fishing...")
-                    emu_combo(["Select", "0.8sec"]) # Cast rod and wait for fishing animation
+                    emu_combo(["Select", "800ms"]) # Cast rod and wait for fishing animation
                     started_fishing = time.time()
                     while not opponent_changed(): # State 80 = overworld
-                        if find_image("data/templates/oh_a_bite.png") or find_image("data/templates/on_the_hook.png"): emu_combo(["0.1sec", "A", "0.1sec"])
-                        if find_image("data/templates/not_even_a_nibble.png") or find_image("data/templates/it_got_away.png"): emu_combo(["B", "0.1sec", "Select"])
-                        if not find_image("data/templates/text_period.png"): emu_combo(["Select", "0.8sec"]) # Re-cast rod if the fishing text prompt is not visible
+                        if find_image("data/templates/oh_a_bite.png") or find_image("data/templates/on_the_hook.png"): emu_combo(["100ms", "A", "100ms"])
+                        if find_image("data/templates/not_even_a_nibble.png") or find_image("data/templates/it_got_away.png"): emu_combo(["B", "100ms", "Select"])
+                        if not find_image("data/templates/text_period.png"): emu_combo(["Select", "800ms"]) # Re-cast rod if the fishing text prompt is not visible
                     identify_pokemon()
 
                 # ➕ Starters soft reset method
@@ -964,7 +956,7 @@ def mainLoop(): # 🔁 Main loop
                             while not opponent_changed():
                                 if i < 500:
                                     follow_path([(13, 12)])
-                                    emu_combo(["A", "1sec"])
+                                    emu_combo(["A", "1000ms"])
                                     if find_image("data/templates/dreams.png"):
                                         press_button("B")
                                         break
@@ -973,14 +965,8 @@ def mainLoop(): # 🔁 Main loop
                             else: identify_pokemon()
 
                 # TODO fix Buy 10x pokeballs method
-                #if config["bot_mode"] == "Buy Premier Balls": while True: emu_combo(["A", "1sec", "Right", "Down", "A", "1sec", "A", "0.8sec", "A", "0.8sec", "A"])
+                #if config["bot_mode"] == "Buy Premier Balls": while True: emu_combo(["A", "1000ms", "Right", "Down", "A", "1000ms", "A", "800ms", "A", "800ms", "A"])
             else:
-                debug_log.info("Waiting for initial information from Bizhawk script...")
-                debug_log.debug(f"Trainer info: {trainer_info}")
-                debug_log.debug(f"Party info: {trainer_info}")
-                debug_log.debug(f"Opponent info: {opponent_info}")
-                debug_log.debug(f"Emu info: {emu_info}")
-                if trainer_info: last_trainer_state = trainer_info["state"]
                 if opponent_info: last_opponent_personality = opponent_info["personality"]
                 release_all_inputs()
                 time.sleep(0.2)
@@ -1071,14 +1057,14 @@ try:
 
     # Set up and launch threads if screenshot is detected in memory (Lua script is running in Bizhawk)
     if mmap.mmap(0, mmap_screenshot_size, mmap_screenshot_file):
-        mem_grabber = Thread(target=memGrabber)
-        mem_grabber.start()
+        mem_handler = Thread(target=memHandler)
+        mem_handler.start()
 
         http_server = Thread(target=httpServer)
         http_server.start()
 
-        main_thread = Thread(target=mainLoop)
-        main_thread.start()
+        main_loop = Thread(target=mainLoop)
+        main_loop.start()
 
         webview.start()
 except Exception as e:
