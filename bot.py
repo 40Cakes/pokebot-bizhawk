@@ -634,7 +634,7 @@ def identify_pokemon(starter: bool = False): # Identify opponent pokemon and inc
             if not starter and config["bot_mode"] not in ["Manual Mode", "Rayquaza", "Kyogre", "Groudon"] and "shinies" in config["catch"]: catch_pokemon()
 
             if not args.n: write_file("stats/totals.json", json.dumps(stats, indent=4, sort_keys=True)) # Save stats file
-            if config["manual_catch"]: os._exit(0)
+            if config["manual_catch"]: input("Pausing bot for manual catch. Press Enter to continue...")
             else: return True
 
         else:
@@ -661,7 +661,7 @@ def identify_pokemon(starter: bool = False): # Identify opponent pokemon and inc
 
                 ### Custom Filters ###
                 # Add custom filters here (make sure to uncomment the line), examples:
-                # If you want to STOP the bot instead of automatically catching, replace `catch_pokemon()` with `os._exit(0)`
+                # If you want to pause the bot instead of automatically catching, replace `catch_pokemon()` with `input("Pausing bot for manual catch. Press Enter to continue...")`
 
                 # --- Catch any species that the trainer has not already caught ---
                 #elif pokemon["hasSpecies"] == 0: catch_pokemon()
@@ -911,7 +911,7 @@ def mainLoop(): # 🔁 Main loop
                         while True:
                             try:
                                 if party_info[0]:
-                                    if identify_pokemon(starter=True): os._exit(0) # Kill bot and wait for manual intervention to manually catch the shiny starter
+                                    if identify_pokemon(starter=True): input("Pausing bot for manual catch. Press Enter to continue...") # Kill bot and wait for manual intervention to manually catch the shiny starter
                                     else:
                                         hold_button("Power")
                                         time.sleep(0.5/emu_speed)
@@ -927,7 +927,7 @@ def mainLoop(): # 🔁 Main loop
                                 break
                             if trainer_info["state"] != 80:
                                 if opponent_changed():
-                                    if identify_pokemon(): os._exit(0) # Kill bot and wait for manual intervention to manually catch Rayquaza
+                                    if identify_pokemon(): input("Pausing bot for manual catch. Press Enter to continue...") # Kill bot and wait for manual intervention to manually catch Rayquaza
                                 break
 
                         time.sleep(1/emu_speed)
