@@ -17,7 +17,7 @@ For a guide on how to download and run this bot, check out [Wiki: Getting starte
 - [Bizhawk 2.9](https://github.com/TASEmulators/BizHawk/releases/tag/2.9) (and Bizhawk [prereqs](https://github.com/TASEmulators/BizHawk-Prereqs/releases))
 
 # Video examples
-These are also available in the Discord channel #running-examples.
+These are also available in the Discord channel `#running-examples`.
 - [Starters soft resetting](https://cdn.discordapp.com/attachments/1109296060003778580/1109296440020312094/NVIDIA_Share_GXbkQ9G7T3.mp4)
 - [Acro bike bunny hopping](https://cdn.discordapp.com/attachments/1109296060003778580/1109302055048314930/NVIDIA_Share_YkYog0pJMB.mp4)
 - [Fishing](https://cdn.discordapp.com/attachments/1109296060003778580/1109300987367276614/NVIDIA_Share_hrk4r4dS6U.mp4)
@@ -31,8 +31,8 @@ There are 2 components of this bot:
 
 1.  `bizhawk.lua` is a Lua script that runs in Bizhawk's Lua console ([Bizhawk Scripting API](https://tasvideos.org/Bizhawk/LuaFunctions)).
 This Lua script reads a bunch of different locations GBA memory to extract information such as:
--- Trainer info (Map IDs, X and Y coordinates, state, roamer map)
--- Party info (
+
+TODO
 
 # Notes
 
