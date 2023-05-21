@@ -1,0 +1,5 @@
+*Thumbs.db*
+__pycache__
+logs/
+stats/
+roms/

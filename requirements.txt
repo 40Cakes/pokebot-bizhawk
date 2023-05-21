@@ -1,0 +1,8 @@
+opencv-python==4.7.0.72
+numpy==1.24.2
+Flask==2.2.3
+Flask-Cors==3.0.10
+Pillow==9.4.0
+ruamel.yaml==0.17.21
+pywebview==4.0.2
+fastjsonschema==2.16.3

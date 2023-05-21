@@ -1,0 +1,76 @@
+bot_mode: Run/Surf between coords
+run_surf:
+  coord1:
+    - 10
+    - 5
+  coord2:
+    - 3
+    - 5
+obstructed_dir:
+  - Left
+  - Right
+manual_catch: true
+catch:
+- shinies
+- spore
+battle: []
+starter_pokemon: Mudkip
+game_save:
+- save_game_after_catch
+encounter_log_limit: 100
+log:
+- all_encounters
+- shiny_encounters
+control_map:
+  a: x
+  b: z
+  l: w
+  r: e
+  up: up
+  down: down
+  right: right
+  left: left
+  select: space
+  start: enter
+  emu_screenshot: f12
+  emu_reset_combo:
+  - ctrl
+  - r
+banned_moves:
+- None
+- Bide
+- Bind
+- Counter
+- Destiny Bond
+- Dig
+- Dive
+- Doom Desire
+- Explosion
+- Fake Out
+- False Swipe
+- Fly
+- Future Sight
+- Mirror Coat
+- Nature Power
+- Perish Song
+- Present
+- Razor Wind
+- Revenge
+- Selfdestruct
+- Sky Attack
+- Snore
+- Spit Up
+- Whirlwind
+- Wrap
+no_sleep_pokemon:
+- Hoothoot
+- Noctowl
+- Spinarak
+- Ariados
+- Murkrow
+- Delibird
+- Shuppet
+- Banette
+- Honchkrow
+- Pumpkaboo
+- Ghourgeist

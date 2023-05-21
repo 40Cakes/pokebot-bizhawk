@@ -1,0 +1,36 @@
+img.sprite64 {
+    transform: scale(1.3);
+    height: 64px;
+    width: 64px;
+}
+
+img.sprite32 {
+    transform: scale(1.3);
+    height: 32px;
+    width: 32px;
+}
+
+img.sprite16 {
+    transform: scale(1.5);
+    height: 16px;
+    width: 16px;
+}
+
+img.icon {
+    transform: scale(1.5);
+}
+
+.health-bar {
+    background-color: #e40000;
+    padding: 0px;
+    border-radius: 3px;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, .2);
+}
+
+.health-bar-fill {
+    display: block;
+    width: 0%;
+    height: 10px;
+    background-color: #25b900;
+    border-radius: 2px;
+}

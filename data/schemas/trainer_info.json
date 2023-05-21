@@ -1,0 +1,13 @@
+{
+    "type": "object",
+    "properties": {
+        "tid": { "type": "number" },
+        "sid": { "type": "number" },
+        "state": { "type": "number" },
+        "mapId": { "type": "number" },
+        "mapBank": { "type": "number" },
+        "posX": { "type": "number" },
+        "posY": { "type": "number" },
+        "roamerMapId": { "type": "number" }
+    }
+}
