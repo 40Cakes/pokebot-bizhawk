@@ -78,7 +78,7 @@ def emu_combo(sequence: list): # Function to send a sequence of inputs and delay
         for k in sequence:
             if re.match(sleep_pattern, k):
                 delay = float(re.sub(r"ms$", "", k))
-                time.sleep(delay/emu_speed)
+                time.sleep((delay/1000)/emu_speed)
             else: press_button(k)
     except: debug_log.exception('')
 
