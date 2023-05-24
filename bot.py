@@ -761,6 +761,7 @@ def memHandler(): # Loop repeatedly to read and write game information and input
             except:
                 if args.d: debug_log.exception('')
                 continue
+            time.sleep(max((1/max(emu_speed,1))*0.016,0.002))
     except:
         debug_log.exception('')
         pass
@@ -970,6 +971,7 @@ def mainLoop(): # 🔁 Main loop
                 if opponent_info: last_opponent_personality = opponent_info["personality"]
                 release_all_inputs()
                 time.sleep(0.2)
+            time.sleep(max((1/max(emu_speed,1))*0.016,0.002))
     except:
         debug_log.exception('')
 
