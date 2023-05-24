@@ -7,6 +7,9 @@
 -- https://github.com/besteon/Ironmon-Tracker/
 -- https://github.com/Gikkman/bizhawk-communication
 
+enable_input = true -- Toggle inputs to the emulator, useful for testing
+write_files = false   -- Toggle output of data to files, also useful for testing
+
 dofile ("data\\lua\\Memory.lua")
 dofile ("data\\lua\\GameSettings.lua")
 
@@ -205,19 +208,37 @@ end
 -- Main function to write data to memory mapped files
 function mainLoop()
 	trainer = getTrainer()
-	comm.mmfWrite("bizhawk_trainer_info", json.encode({["trainer"] = trainer}) .. "\x00")
-
 	party = getParty()
-	comm.mmfWrite("bizhawk_party_info", json.encode({["party"] = party}) .. "\x00")
-
 	opponent = readMonData(GameSettings.estats)
+
+	comm.mmfWrite("bizhawk_trainer_info", json.encode({["trainer"] = trainer}) .. "\x00")
+	comm.mmfWrite("bizhawk_party_info", json.encode({["party"] = party}) .. "\x00")
 	comm.mmfWrite("bizhawk_opponent_info", json.encode({["opponent"] = opponent}) .. "\x00")
+
+	if write_files then
+		check_input = joypad.get()
+		if check_input["L"] and check_input["R"] then
+			trainer_info_file = io.open("testing\\trainer_info.json", "w")
+			trainer_info_file:write(json.encode({["trainer"] = trainer}))
+			trainer_info_file:close()
+			
+			party_info_file = io.open("testing\\party_info.json", "w")
+			party_info_file:write(json.encode({["party"] = party}))
+			party_info_file:close()
+
+			opponent_info_file = io.open("testing\\opponent_info.json", "w")
+			opponent_info_file:write(json.encode({["opponent"] = opponent}))
+			opponent_info_file:close()
+		end
+	end
 end
 
 -- Release all keys after starting script
-input = joypad.get()
-input["A"], input["B"], input["L"], input["R"], input["Up"], input["Down"], input["Left"], input["Right"], input["Select"], input["Start"], input["Screenshot"] = false, false, false, false, false, false, false, false, false, false, false
-joypad.set(input)
+if enable_input then
+	input = joypad.get()
+	input["A"], input["B"], input["L"], input["R"], input["Up"], input["Down"], input["Left"], input["Right"], input["Select"], input["Start"], input["Screenshot"] = false, false, false, false, false, false, false, false, false, false, false
+	joypad.set(input)
+end
 
 -- Allocate memory mapped file sizes
 comm.mmfSetFilename("bizhawk_screenshot")
@@ -241,32 +262,34 @@ last_state = 0
 last_mapBank = 0
 last_mapId = 0
 while true do
-	for button, _ in pairs (input) do
-		input[button] = false
-	end
+	if enable_input then
+		for button, _ in pairs (input) do
+			input[button] = false
+		end
 
-	local press_success, press_result = pcall(json.decode, comm.mmfRead("bizhawk_press_input", 256))
-	if press_success then
-		input_press = press_result
-	end
-	local hold_success, hold_result = pcall(json.decode, comm.mmfRead("bizhawk_hold_input", 256))
-	if hold_success then
-		input_hold = hold_result
-	end
-	
-	if input_press then
-		for button, press in pairs (input_press) do
-			if press and (press ~= 0) then
-				input[button] = true
-			elseif input_hold[button] then
-				input[button] = true
-			else
-				input[button] = false
+		local press_success, press_result = pcall(json.decode, comm.mmfRead("bizhawk_press_input", 256))
+		if press_success then
+			input_press = press_result
+		end
+		local hold_success, hold_result = pcall(json.decode, comm.mmfRead("bizhawk_hold_input", 256))
+		if hold_success then
+			input_hold = hold_result
+		end
+
+		if input_press then
+			for button, press in pairs (input_press) do
+				if press and (press ~= 0) then
+					input[button] = true
+				elseif input_hold[button] then
+					input[button] = true
+				else
+					input[button] = false
+				end
 			end
 		end
-	end
 
-	joypad.set(input)
+		joypad.set(input)
+	end
 
 	if input["Screenshot"] then
 		comm.mmfScreenshot()
