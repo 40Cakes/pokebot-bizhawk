@@ -3,4 +3,5 @@ __pycache__
 logs/
 stats/
 roms/
+testing/
 .venv
