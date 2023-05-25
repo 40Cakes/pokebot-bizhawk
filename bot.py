@@ -328,21 +328,15 @@ def battle(): # Function to battle wild pokemon
 
 def flee_battle(): # Function to run from wild pokemon
     try:
-        imageMatch = False
         debug_log.info("Running from battle...")
         while trainer_info["state"] != 80: # State 80 = overworld
-            time.sleep(max((1/max(emu_speed,1))*0.016,0.002))
-            while (imageMatch == False) and trainer_info["state"] != 80:
-                result = find_image("data/templates/battle/run.png")
-                if result is not None:
-                    imageMatch = result
+
+            while find_image("data/templates/battle/run.png") and trainer_info["state"] != 80:
                 emu_combo(["Right","Down", "B"]) # Press right + down until RUN is selected
-            imageMatch = True
-            while (imageMatch == True) and trainer_info["state"] != 80:
-                result = find_image("data/templates/battle/run.png")
-                if result is not None:
-                    imageMatch = result
+
+            while find_image("data/templates/battle/run.png") and trainer_info["state"] != 80:
                 press_button("A")
+
             press_button("B")
         time.sleep(0.8/emu_speed) # Wait for battle fade animation
     except:
@@ -829,7 +823,7 @@ def mem_sendInputs():
         except:
             if args.d: debug_log.exception('')
             continue
-        if config["eco_mode"]: time.sleep(0.001)
+        if config["eco_mode"]: time.sleep(0.001) #The less sleep the better but without sleep it will hit CPU hard
 
 def httpServer(): # Run HTTP server to make data available via HTTP GET
     try:
