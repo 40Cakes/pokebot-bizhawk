@@ -678,44 +678,53 @@ def identify_pokemon(starter: bool = False): # Identify opponent pokemon and inc
             return False
     except: debug_log.exception('')
 
-def memHandler(): # Loop repeatedly to read and write game information and inputs in memory
+def enrich_mon_data(pokemon: dict): # Function to add information to the pokemon data extracted from Bizhawk
     try:
-        global trainer_info, party_info, opponent_info, last_opponent_personality, emu_info, emu_speed
+        pokemon["name"] = pokemon["speciesName"].capitalize() # Capitalise name
+        pokemon["metLocationName"] = location_list[pokemon["metLocation"]] # Add a human readable location
+        pokemon["type"] = pokemon_list[pokemon["name"]]["type"] # Get pokemon types
+        pokemon["nature"] = nature_list[pokemon["personality"] % 25] # Get pokemon nature
+        pokemon["zeroPadNumber"] = f"{pokemon_list[pokemon['name']]['number']:03}" # Get zero pad number - e.g.: #5 becomes #005
+        pokemon["itemName"] = item_list[pokemon['heldItem']] # Get held item's name
+        pokemon["personalityBin"] = format(pokemon["personality"], "032b") # Convert personality ID to binary
+        pokemon["personalityF"] = int(pokemon["personalityBin"][:16], 2) # Get first 16 bits of binary PID
+        pokemon["personalityL"] = int(pokemon["personalityBin"][16:], 2) # Get last 16 bits of binary PID
+        pokemon["shinyValue"] = int(bin(pokemon["personalityF"] ^ pokemon["personalityL"] ^ trainer_info["tid"] ^ trainer_info["sid"])[2:], 2) # https://bulbapedia.bulbagarden.net/wiki/Personality_value#Shininess
 
-        pokemon_schema = json.loads(read_file("data/schemas/pokemon.json"))
-        validate_pokemon = fastjsonschema.compile(pokemon_schema)
-        trainer_info_schema = json.loads(read_file("data/schemas/trainer_info.json"))
-        validate_trainer_info = fastjsonschema.compile(trainer_info_schema)
-        emu_info_schema = json.loads(read_file("data/schemas/emu_info.json"))
-        validate_emu_info = fastjsonschema.compile(emu_info_schema)
+        if pokemon["shinyValue"] < 8: pokemon["shiny"] = True
+        else: pokemon["shiny"] = False
 
-        def enrich_mon_data(pokemon: dict): # Function to add information to the pokemon data extracted from mGBA
+        pokemon["enrichedMoves"] = []
+        for move in pokemon["moves"]: pokemon["enrichedMoves"].append(move_list[move])
+
+        if pokemon["pokerus"] != 0: # TODO get number of days infectious, see - https://bulbapedia.bulbagarden.net/wiki/Pok%C3%A9rus#Technical_information
+            if pokemon["pokerus"] % 10: pokemon["pokerusStatus"] = "infected"
+            else: pokemon["pokerusStatus"] = "cured"
+        else: pokemon["pokerusStatus"] = "none"
+        return pokemon
+    except: pass
+
+def mem_getEmuInfo(): # Loop repeatedly to read emulator info from memory
+    try:
+        global emu_info, emu_speed
+
+        while True:
             try:
-                pokemon["name"] = pokemon["speciesName"].capitalize() # Capitalise name
-                pokemon["metLocationName"] = location_list[pokemon["metLocation"]] # Add a human readable location
-                pokemon["type"] = pokemon_list[pokemon["name"]]["type"] # Get pokemon types
-                pokemon["nature"] = nature_list[pokemon["personality"] % 25] # Get pokemon nature
-                pokemon["zeroPadNumber"] = f"{pokemon_list[pokemon['name']]['number']:03}" # Get zero pad number - e.g.: #5 becomes #005
-                pokemon["itemName"] = item_list[pokemon['heldItem']] # Get held item's name
-                pokemon["personalityBin"] = format(pokemon["personality"], "032b") # Convert personality ID to binary
-                pokemon["personalityF"] = int(pokemon["personalityBin"][:16], 2) # Get first 16 bits of binary PID
-                pokemon["personalityL"] = int(pokemon["personalityBin"][16:], 2) # Get last 16 bits of binary PID
-                pokemon["shinyValue"] = int(bin(pokemon["personalityF"] ^ pokemon["personalityL"] ^ trainer_info["tid"] ^ trainer_info["sid"])[2:], 2) # https://bulbapedia.bulbagarden.net/wiki/Personality_value#Shininess
+                emu_info_mmap = load_json_mmap(4096, "bizhawk_emu_info")
+                if emu_info_mmap:
+                    if validate_emu_info(emu_info_mmap["emu"]):
+                        emu_info = emu_info_mmap["emu"]
+                        if emu_info_mmap["emu"]["emuFPS"]: emu_speed = emu_info_mmap["emu"]["emuFPS"]/60
+            except:
+                if args.d: debug_log.exception('')
+                continue
+    except:
+        debug_log.exception('')
+        pass
 
-                if pokemon["shinyValue"] < 8: pokemon["shiny"] = True
-                else: pokemon["shiny"] = False
-
-                pokemon["enrichedMoves"] = []
-                for move in pokemon["moves"]:
-                    pokemon["enrichedMoves"].append(move_list[move])
-
-                if pokemon["pokerus"] != 0: # TODO get number of days infectious, see - https://bulbapedia.bulbagarden.net/wiki/Pok%C3%A9rus#Technical_information
-                    if pokemon["pokerus"] % 10: pokemon["pokerusStatus"] = "infected"
-                    else: pokemon["pokerusStatus"] = "cured"
-                else:
-                    pokemon["pokerusStatus"] = "none"
-                return pokemon
-            except: pass
+def mem_getTrainerInfo(): # Loop repeatedly to read trainer info from memory
+    try:
+        global trainer_info
 
         while True:
             try:
@@ -725,7 +734,20 @@ def memHandler(): # Loop repeatedly to read and write game information and input
                         if trainer_info_mmap["trainer"]["posX"] < 0: trainer_info_mmap["trainer"]["posX"] = 0
                         if trainer_info_mmap["trainer"]["posY"] < 0: trainer_info_mmap["trainer"]["posY"] = 0
                         trainer_info = trainer_info_mmap["trainer"]
+            except:
+                if args.d: debug_log.exception('')
+                continue
+            if config["eco_mode"]: time.sleep(max((1/max(emu_speed,1))*0.016,0.002))
+    except:
+        debug_log.exception('')
+        pass
 
+def mem_getPartyInfo(): # Loop repeatedly to read party info from memory
+    try:
+        global party_info
+
+        while True:
+            try:
                 party_info_mmap = load_json_mmap(8192, "bizhawk_party_info")
                 if party_info_mmap:
                     enriched_party_obj = []
@@ -737,7 +759,20 @@ def memHandler(): # Loop repeatedly to read and write game information and input
                             print(validate(pokemon, pokemon_schema))
                             continue
                     party_info = enriched_party_obj
-                
+            except:
+                if args.d: debug_log.exception('')
+                continue
+            if config["eco_mode"]: time.sleep(max((1/max(emu_speed,1))*0.016,0.002))
+    except:
+        debug_log.exception('')
+        pass
+
+def mem_getOpponentInfo(): # Loop repeatedly to read opponent info from memory
+    try:
+        global opponent_info, last_opponent_personality
+
+        while True:
+            try:
                 opponent_info_mmap = load_json_mmap(4096, "bizhawk_opponent_info")
                 if config["bot_mode"] == "Starters": 
                     if party_info: opponent_info = party_info[0]
@@ -748,21 +783,15 @@ def memHandler(): # Loop repeatedly to read and write game information and input
                             opponent_info = enriched_opponent_obj
                 elif not opponent_info: opponent_info = json.loads(read_file("data/placeholder_pokemon.json"))
 
-                emu_info_mmap = load_json_mmap(4096, "bizhawk_emu_info")
-                if emu_info_mmap:
-                    if validate_emu_info(emu_info_mmap["emu"]):
-                        emu_info = emu_info_mmap["emu"]
-                        if emu_info_mmap["emu"]["emuFPS"]: emu_speed = emu_info_mmap["emu"]["emuFPS"]/60
             except:
                 if args.d: debug_log.exception('')
                 continue
             if config["eco_mode"]: time.sleep(max((1/max(emu_speed,1))*0.016,0.002))
-
-
     except:
         debug_log.exception('')
         pass
-def sendInputs():
+
+def mem_sendInputs():
     while True:
         try:
             press_input_mmap.seek(0)
@@ -1042,6 +1071,13 @@ try:
     type_list = json.loads(read_file("data/types.json"))
     nature_list = json.loads(read_file("data/natures.json"))
 
+    pokemon_schema = json.loads(read_file("data/schemas/pokemon.json"))
+    validate_pokemon = fastjsonschema.compile(pokemon_schema)
+    trainer_info_schema = json.loads(read_file("data/schemas/trainer_info.json"))
+    validate_trainer_info = fastjsonschema.compile(trainer_info_schema)
+    emu_info_schema = json.loads(read_file("data/schemas/emu_info.json"))
+    validate_emu_info = fastjsonschema.compile(emu_info_schema)
+
     os.makedirs("stats", exist_ok=True) # Sets up stats files if they don't exist
     if read_file("stats/totals.json"): stats = json.loads(read_file("stats/totals.json")) # Open totals stats file
     else: stats = {"pokemon": {}, "totals": {"longest_phase_encounters": 0, "shortest_phase_encounters": "-", "phase_lowest_sv": 99999, "phase_lowest_sv_pokemon": "", "encounters": 0, "phase_encounters": 0, "shiny_average": "-", "shiny_encounters": 0}}
@@ -1069,11 +1105,20 @@ try:
     # Set up and launch threads if screenshot is detected in memory (Lua script is running in Bizhawk)
     if mmap.mmap(0, mmap_screenshot_size, mmap_screenshot_file):
 
-        send_inputs = Thread(target=sendInputs)
-        send_inputs.start()
+        get_emu_info = Thread(target=mem_getEmuInfo)
+        get_emu_info.start()
 
-        mem_handler = Thread(target=memHandler)
-        mem_handler.start()
+        get_trainer_info = Thread(target=mem_getTrainerInfo)
+        get_trainer_info.start()
+
+        get_party_info = Thread(target=mem_getPartyInfo)
+        get_party_info.start()
+
+        get_opponent_info = Thread(target=mem_getOpponentInfo)
+        get_opponent_info.start()
+        
+        send_inputs = Thread(target=mem_sendInputs)
+        send_inputs.start()
 
         http_server = Thread(target=httpServer)
         http_server.start()
