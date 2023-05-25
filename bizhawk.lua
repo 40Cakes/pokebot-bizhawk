@@ -244,7 +244,6 @@ end
 comm.mmfSetFilename("bizhawk_screenshot")
 comm.mmfScreenshot()
 
-comm.mmfWrite("bizhawk_screenshot", string.rep("\x00", 12288))
 comm.mmfWrite("bizhawk_press_input", string.rep("\x00", 256))
 comm.mmfWrite("bizhawk_hold_input", string.rep("\x00", 256))
 comm.mmfWrite("bizhawk_trainer_info", string.rep("\x00", 4096))

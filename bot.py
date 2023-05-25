@@ -67,7 +67,8 @@ def load_json_mmap(size, file): # Function to load a JSON object from a memory m
             return json_obj
         else: return False
     except:
-        debug_log.exception('')
+        if args.dm:
+            debug_log.exception('')
         return False
 
 def emu_combo(sequence: list): # Function to send a sequence of inputs and delays to the emulator
@@ -119,37 +120,50 @@ def opponent_changed(): # This function checks if there is a different opponent 
             else: return False
         else: return False
     except:
-        debug_log.exception('')
+        if args.di:
+            debug_log.exception('')
         return False
+def mem_pollScreenshot():
+    global g_bizhawk_screenshot
+    while True:
+        hold_button("Screenshot")
+        time.sleep(max((1/max(emu_speed,1))*0.016,0.002)) # Give emulator time to produce a screenshot
+        try:
+            shmem = mmap.mmap(0, mmap_screenshot_size, mmap_screenshot_file)
+            screenshot = Image.open(io.BytesIO(shmem))
+            g_bizhawk_screenshot = cv2.cvtColor(numpy.array(screenshot), cv2.COLOR_BGR2RGB) # Convert screenshot to numpy array COLOR_BGR2RGB
+            screenshot.close()
+        except:
+            if screenshot is not None:
+                screenshot.close()
+            if args.dm:
+                debug_log.exception('')
+            continue
+        release_button("Screenshot")
+        if args.di:
+            cv2.imshow("pollScreenShotData",g_bizhawk_screenshot)
+            cv2.waitKey(1)
+        
 
 def find_image(file: str): # Function to find an image in a BizHawk screenshot
     try:
         profile_start = time.time() # Performance profiling
         threshold = 0.999
-        hold_button("Screenshot")
         if args.di: debug_log.debug(f"Searching for image {file} (threshold: {threshold})")
-
-        shmem = mmap.mmap(0, mmap_screenshot_size, mmap_screenshot_file)
-        screenshot = Image.open(io.BytesIO(shmem))
-
-        screenshot = cv2.cvtColor(numpy.array(screenshot), cv2.COLOR_BGR2RGB) # Convert screenshot to numpy array COLOR_BGR2RGB
         template = cv2.imread(file, cv2.IMREAD_UNCHANGED)
         hh, ww = template.shape[:2]
     
-        correlation = cv2.matchTemplate(screenshot, template[:,:,0:3], cv2.TM_CCORR_NORMED) # Do masked template matching and save correlation image
+        correlation = cv2.matchTemplate(g_bizhawk_screenshot, template[:,:,0:3], cv2.TM_CCORR_NORMED) # Do masked template matching and save correlation image
         min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(correlation)
         max_val_corr = float('{:.6f}'.format(max_val))
-
-        release_button("Screenshot")
-
         if args.di:
             debug_log.debug(f"Image detection took: {(time.time() - profile_start)*1000} ms")
-            cv2.imshow("screenshot", screenshot)
+            cv2.imshow("screenshot", g_bizhawk_screenshot)
             cv2.waitKey(1)
         if max_val_corr > threshold: 
             if args.di:
                 loc = numpy.where(correlation >= threshold)
-                result = screenshot.copy()
+                result = g_bizhawk_screenshot.copy()
                 for point in zip(*loc[::-1]):
                     cv2.rectangle(result, point, (point[0]+ww, point[1]+hh), (0,0,255), 1)
                     cv2.imshow(f"match", result)
@@ -159,9 +173,11 @@ def find_image(file: str): # Function to find an image in a BizHawk screenshot
         else:
             if args.di: debug_log.debug(f"Maximum correlation value ({max_val_corr}) is below threshold ({threshold}), file {file} was not detected on-screen.")
             return False
+        
     except:
-        debug_log.exception('')
-        return None
+        if args.di:
+            debug_log.exception('')
+        return False
 
 def catch_pokemon(): # Function to catch pokemon
     try:
@@ -228,7 +244,8 @@ def catch_pokemon(): # Function to catch pokemon
                 if trainer_info["state"] == 80: # State 80 = overworld
                     return False
     except:
-        debug_log.exception('')
+        if args.di:
+            debug_log.exception('')
         return False
 
 def battle(): # Function to battle wild pokemon
@@ -305,19 +322,26 @@ def battle(): # Function to battle wild pokemon
             debug_log.info("Battle won!")
             return True
     except:
-        debug_log.exception('')
+        if args.di:
+            debug_log.exception('')
         return False
 
 def flee_battle(): # Function to run from wild pokemon
     try:
         debug_log.info("Running from battle...")
         while trainer_info["state"] != 80: # State 80 = overworld
-            while not find_image("data/templates/battle/run.png") and trainer_info["state"] != 80: emu_combo(["Right", "Down", "B"]) # Press right + down until RUN is selected
-            while find_image("data/templates/battle/run.png") and trainer_info["state"] != 80: press_button("A")
+
+            while (find_image("data/templates/battle/run.png")==False) and trainer_info["state"] != 80:
+                emu_combo(["Right","Down", "B"]) # Press right + down until RUN is selected
+
+            while (find_image("data/templates/battle/run.png")==True) and trainer_info["state"] != 80:
+                press_button("A")
+
             press_button("B")
         time.sleep(0.8/emu_speed) # Wait for battle fade animation
     except:
-        debug_log.exception('')
+        if args.d:
+            debug_log.exception('')
 
 def run_until_obstructed(direction: str, run: bool = True): # Function to run until trainer position stops changing
     try:
@@ -390,7 +414,8 @@ def follow_path(coords: list):
 
                         if not opponent_changed():
                             try: target_pos()
-                            except: debug_log.exception('')
+                            except:
+                                if args.dm: debug_log.exception('')
                         else:
                             identify_pokemon()
                             return False
@@ -411,7 +436,7 @@ def follow_path(coords: list):
                         if not opponent_changed():
                             try: target_pos()
                             except:
-                                debug_log.exception('')
+                                if args.dm: debug_log.exception('')
                                 return False
                         else:
                             identify_pokemon()
@@ -420,7 +445,7 @@ def follow_path(coords: list):
                         release_all_inputs()
                         return True
         except:
-            debug_log.exception('')
+            if args.dm: debug_log.exception('')
             return False
 
     try:
@@ -430,7 +455,7 @@ def follow_path(coords: list):
             while not run_to_pos(x, y, map_data): continue
             else: release_all_inputs()
     except:
-        debug_log.exception('')
+        if args.dm: debug_log.exception('')
         return False
 
 def start_menu(entry: str): # Function to open any start menu item - presses START, finds the menu entry and opens it
@@ -450,7 +475,7 @@ def start_menu(entry: str): # Function to open any start menu item - presses STA
         else:
             return False
     except:
-        debug_log.exception('')
+        if args.di: debug_log.exception('')
         return False
 
 def bag_menu(category: str, item: str): # Function to find an item in the bag and use item in battle such as a pokeball
@@ -476,7 +501,7 @@ def bag_menu(category: str, item: str): # Function to find an item in the bag an
             else:
                 return False
     except:
-        debug_log.exception('')
+        if args.di: debug_log.exception('')
         return False
 
 def pickup_items(): # If using a team of Pokemon with the ability "pickup", this function will take the items from the pokemon in your party if 3 or more Pokemon have an item
@@ -491,7 +516,8 @@ def pickup_items(): # If using a team of Pokemon with the ability "pickup", this
                 if pokemon["speciesName"] in pickup_pokemon:
                     debug_log.info(f"Pokemon {i}: {pokemon['speciesName']} has item: {item_list[pokemon['heldItem']]}")
                     if pokemon["heldItem"] != 0: item_count += 1
-            except: debug_log.exception('')
+            except: 
+                if args.dm: debug_log.exception('')
 
         if item_count >= 3: # Only run if 3 or more Pokemon have an item
             time.sleep(0.3/emu_speed) # Wait for animations
@@ -507,7 +533,8 @@ def pickup_items(): # If using a team of Pokemon with the ability "pickup", this
                             item_count -= 1
                         else: emu_combo(["50ms", "Down"])
             emu_combo(["B", "1500ms", "B"]) # Close out of menus
-    except: debug_log.exception('')
+    except:
+        if args.dm: debug_log.exception('')
 
 def save_game(): # Function to save the game via the save option in the start menu
     try:
@@ -523,7 +550,8 @@ def save_game(): # Function to save the game via the save option in the start me
                 i += 1
         time.sleep(8/emu_speed) # Wait for game to save
     except:
-        debug_log.exception('')
+        if args.dm:
+            debug_log.exception('')
 
 def identify_pokemon(starter: bool = False): # Identify opponent pokemon and incremement statistics, returns True if shiny, else False
     try:
@@ -676,7 +704,8 @@ def identify_pokemon(starter: bool = False): # Identify opponent pokemon and inc
                 else: flee_battle()
     
             return False
-    except: debug_log.exception('')
+    except:
+        if args.dm: debug_log.exception('')
 
 def enrich_mon_data(pokemon: dict): # Function to add information to the pokemon data extracted from Bizhawk
     try:
@@ -695,14 +724,19 @@ def enrich_mon_data(pokemon: dict): # Function to add information to the pokemon
         else: pokemon["shiny"] = False
 
         pokemon["enrichedMoves"] = []
-        for move in pokemon["moves"]: pokemon["enrichedMoves"].append(move_list[move])
+        for move in pokemon["moves"]:
+            pokemon["enrichedMoves"].append(move_list[move])
 
         if pokemon["pokerus"] != 0: # TODO get number of days infectious, see - https://bulbapedia.bulbagarden.net/wiki/Pok%C3%A9rus#Technical_information
             if pokemon["pokerus"] % 10: pokemon["pokerusStatus"] = "infected"
             else: pokemon["pokerusStatus"] = "cured"
         else: pokemon["pokerusStatus"] = "none"
         return pokemon
-    except: pass
+    except:
+        if args.dm:
+            debug_log.exception('')
+            moves = pokemon["moves"]
+            debug_log.info(f"Moves: {moves}") 
 
 def mem_getEmuInfo(): # Loop repeatedly to read emulator info from memory
     try:
@@ -716,11 +750,12 @@ def mem_getEmuInfo(): # Loop repeatedly to read emulator info from memory
                         emu_info = emu_info_mmap["emu"]
                         if emu_info_mmap["emu"]["emuFPS"]: emu_speed = emu_info_mmap["emu"]["emuFPS"]/60
             except:
-                if args.d: debug_log.exception('')
+                if args.dm: debug_log.exception('')
                 continue
+            if config["eco_mode"]: time.sleep(max((1/max(emu_speed,1))*0.016,0.002))
+
     except:
-        debug_log.exception('')
-        pass
+        if args.d: debug_log.exception('')
 
 def mem_getTrainerInfo(): # Loop repeatedly to read trainer info from memory
     global trainer_info
@@ -735,7 +770,7 @@ def mem_getTrainerInfo(): # Loop repeatedly to read trainer info from memory
                     trainer_info = trainer_info_mmap["trainer"]
             if config["eco_mode"]: time.sleep(max((1/max(emu_speed,1))*0.016,0.002))
         except:
-            if args.d: debug_log.exception('')
+            if args.dm: debug_log.exception('')
             continue
 
 def mem_getPartyInfo(): # Loop repeatedly to read party info from memory
@@ -756,7 +791,7 @@ def mem_getPartyInfo(): # Loop repeatedly to read party info from memory
                 party_info = enriched_party_obj
             if config["eco_mode"]: time.sleep(max((1/max(emu_speed,1))*0.016,0.002))
         except:
-            if args.d: debug_log.exception('')
+            if args.dm: debug_log.exception('')
             continue
 
 def mem_getOpponentInfo(): # Loop repeatedly to read opponent info from memory
@@ -788,7 +823,7 @@ def mem_sendInputs():
         except:
             if args.d: debug_log.exception('')
             continue
-        if config["eco_mode"]: time.sleep(max((1/max(emu_speed,1))*0.016,0.002))
+        if config["eco_mode"]: time.sleep(0.001) #The less sleep the better but without sleep it will hit CPU hard
 
 def httpServer(): # Run HTTP server to make data available via HTTP GET
     try:
@@ -1082,7 +1117,7 @@ try:
     hold_input = default_input
 
     last_trainer_state, last_opponent_personality, trainer_info, opponent_info, emu_info, party_info, emu_speed = None, None, None, None, None, None, 1
-    mmap_screenshot_size, mmap_screenshot_file = 12288, "bizhawk_screenshot"
+    mmap_screenshot_size, mmap_screenshot_file = 16384, "bizhawk_screenshot"
     ImageFile.LOAD_TRUNCATED_IMAGES = True
 
     def on_window_close(): os._exit(1)
@@ -1091,6 +1126,9 @@ try:
 
     # Set up and launch threads if screenshot is detected in memory (Lua script is running in Bizhawk)
     if mmap.mmap(0, mmap_screenshot_size, mmap_screenshot_file):
+
+        poll_screenshot = Thread(target=mem_pollScreenshot)
+        poll_screenshot.start()
 
         get_emu_info = Thread(target=mem_getEmuInfo)
         get_emu_info.start()
