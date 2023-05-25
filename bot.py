@@ -330,13 +330,8 @@ def flee_battle(): # Function to run from wild pokemon
     try:
         debug_log.info("Running from battle...")
         while trainer_info["state"] != 80: # State 80 = overworld
-
-            while (find_image("data/templates/battle/run.png")==False) and trainer_info["state"] != 80:
-                emu_combo(["Right","Down", "B"]) # Press right + down until RUN is selected
-
-            while (find_image("data/templates/battle/run.png")==True) and trainer_info["state"] != 80:
-                press_button("A")
-
+            while not find_image("data/templates/battle/run.png") and trainer_info["state"] != 80: emu_combo(["Right","Down", "B"]) # Press right + down until RUN is selected
+            while find_image("data/templates/battle/run.png") and trainer_info["state"] != 80: press_button("A")
             press_button("B")
         time.sleep(0.8/emu_speed) # Wait for battle fade animation
     except:
@@ -752,7 +747,7 @@ def mem_getEmuInfo(): # Loop repeatedly to read emulator info from memory
             except:
                 if args.dm: debug_log.exception('')
                 continue
-            if config["eco_mode"]: time.sleep(max((1/max(emu_speed,1))*0.016,0.002))
+            time.sleep(max((1/max(emu_speed,1))*0.016,0.002))
 
     except:
         if args.d: debug_log.exception('')
@@ -768,7 +763,7 @@ def mem_getTrainerInfo(): # Loop repeatedly to read trainer info from memory
                     if trainer_info_mmap["trainer"]["posX"] < 0: trainer_info_mmap["trainer"]["posX"] = 0
                     if trainer_info_mmap["trainer"]["posY"] < 0: trainer_info_mmap["trainer"]["posY"] = 0
                     trainer_info = trainer_info_mmap["trainer"]
-            if config["eco_mode"]: time.sleep(max((1/max(emu_speed,1))*0.016,0.002))
+            time.sleep(max((1/max(emu_speed,1))*0.016,0.002))
         except:
             if args.dm: debug_log.exception('')
             continue
@@ -785,11 +780,9 @@ def mem_getPartyInfo(): # Loop repeatedly to read party info from memory
                     if validate_pokemon(pokemon):
                         pokemon = enrich_mon_data(pokemon)
                         enriched_party_obj.append(pokemon)
-                    else:
-                        print(validate(pokemon, pokemon_schema))
-                        continue
+                    else: continue
                 party_info = enriched_party_obj
-            if config["eco_mode"]: time.sleep(max((1/max(emu_speed,1))*0.016,0.002))
+            time.sleep(max((1/max(emu_speed,1))*0.016,0.002))
         except:
             if args.dm: debug_log.exception('')
             continue
@@ -808,7 +801,7 @@ def mem_getOpponentInfo(): # Loop repeatedly to read opponent info from memory
                     if enriched_opponent_obj:
                         opponent_info = enriched_opponent_obj
             elif not opponent_info: opponent_info = json.loads(read_file("data/placeholder_pokemon.json"))
-            if config["eco_mode"]: time.sleep(max((1/max(emu_speed,1))*0.016,0.002))
+            time.sleep(max((1/max(emu_speed,1))*0.016,0.002))
         except:
             if args.d: debug_log.exception('')
             continue
@@ -823,7 +816,7 @@ def mem_sendInputs():
         except:
             if args.d: debug_log.exception('')
             continue
-        if config["eco_mode"]: time.sleep(0.001) #The less sleep the better but without sleep it will hit CPU hard
+        time.sleep(0.001) #The less sleep the better but without sleep it will hit CPU hard
 
 def httpServer(): # Run HTTP server to make data available via HTTP GET
     try:
@@ -1030,7 +1023,7 @@ def mainLoop(): # 🔁 Main loop
                 if opponent_info: last_opponent_personality = opponent_info["personality"]
                 release_all_inputs()
                 time.sleep(0.2)
-            if config["eco_mode"]: time.sleep(max((1/max(emu_speed,1))*0.016,0.002))
+            time.sleep(max((1/max(emu_speed,1))*0.016,0.002))
 
     except:
         debug_log.exception('')
@@ -1117,7 +1110,7 @@ try:
     hold_input = default_input
 
     last_trainer_state, last_opponent_personality, trainer_info, opponent_info, emu_info, party_info, emu_speed = None, None, None, None, None, None, 1
-    mmap_screenshot_size, mmap_screenshot_file = 16384, "bizhawk_screenshot"
+    mmap_screenshot_size, mmap_screenshot_file = 24576, "bizhawk_screenshot"
     ImageFile.LOAD_TRUNCATED_IMAGES = True
 
     def on_window_close(): os._exit(1)

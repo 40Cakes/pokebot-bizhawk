@@ -241,6 +241,7 @@ if enable_input then
 end
 
 -- Allocate memory mapped file sizes
+comm.mmfWrite("bizhawk_screenshot", string.rep("\x00", 24576))
 comm.mmfSetFilename("bizhawk_screenshot")
 comm.mmfScreenshot()
 
