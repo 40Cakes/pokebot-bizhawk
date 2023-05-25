@@ -231,7 +231,6 @@ function mainLoop()
 			opponent_info_file:close()
 		end
 	end
-	comm.mmfScreenshot()
 end
 
 -- Release all keys after starting script
@@ -292,10 +291,11 @@ while true do
 
 		joypad.set(input)
 	end
-
+	if input["Screenshot"] then
+		comm.mmfScreenshot()
+	end
 	emu_info = getEmu()
 	comm.mmfWrite("bizhawk_emu_info", json.encode({["emu"] = emu_info}) .. "\x00")
-
 	-- Save screenshot and other data to memory mapped files, as FPS is higher, reduce the number of reads and writes to memory
 	fps = emu_info.emuFPS
 	if fps > 70 and fps <= 120  then -- Copy screenshot to memory every nth frame if running at higher than 1x to reduce memory writes

@@ -719,11 +719,6 @@ def memHandler(): # Loop repeatedly to read and write game information and input
 
         while True:
             try:
-                press_input_mmap.seek(0)
-                press_input_mmap.write(bytes(json.dumps(press_input), encoding="utf-8"))
-                hold_input_mmap.seek(0)
-                hold_input_mmap.write(bytes(json.dumps(hold_input), encoding="utf-8"))
-
                 trainer_info_mmap = load_json_mmap(4096, "bizhawk_trainer_info")
                 if trainer_info_mmap:
                     if validate_trainer_info(trainer_info_mmap["trainer"]):
@@ -763,9 +758,21 @@ def memHandler(): # Loop repeatedly to read and write game information and input
                 continue
             if config["eco_mode"]: time.sleep(max((1/max(emu_speed,1))*0.016,0.002))
 
+
     except:
         debug_log.exception('')
         pass
+def sendInputs():
+    while True:
+        try:
+            press_input_mmap.seek(0)
+            press_input_mmap.write(bytes(json.dumps(press_input), encoding="utf-8"))
+            hold_input_mmap.seek(0)
+            hold_input_mmap.write(bytes(json.dumps(hold_input), encoding="utf-8"))
+        except:
+            if args.d: debug_log.exception('')
+            continue
+        if config["eco_mode"]: time.sleep(max((1/max(emu_speed,1))*0.016,0.002))
 
 def httpServer(): # Run HTTP server to make data available via HTTP GET
     try:
@@ -973,6 +980,7 @@ def mainLoop(): # 🔁 Main loop
                 release_all_inputs()
                 time.sleep(0.2)
             if config["eco_mode"]: time.sleep(max((1/max(emu_speed,1))*0.016,0.002))
+
     except:
         debug_log.exception('')
 
@@ -1060,6 +1068,10 @@ try:
 
     # Set up and launch threads if screenshot is detected in memory (Lua script is running in Bizhawk)
     if mmap.mmap(0, mmap_screenshot_size, mmap_screenshot_file):
+
+        send_inputs = Thread(target=sendInputs)
+        send_inputs.start()
+
         mem_handler = Thread(target=memHandler)
         mem_handler.start()
 
