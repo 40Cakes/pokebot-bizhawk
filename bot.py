@@ -67,7 +67,7 @@ def load_json_mmap(size, file): # Function to load a JSON object from a memory m
             return json_obj
         else: return False
     except:
-        debug_log.exception('')
+        #debug_log.exception('')
         return False
 
 def emu_combo(sequence: list): # Function to send a sequence of inputs and delays to the emulator
@@ -121,47 +121,59 @@ def opponent_changed(): # This function checks if there is a different opponent 
     except:
         debug_log.exception('')
         return False
+def mem_pollScreenshot():
+    global g_bizhawk_screenshot
+    while True:
+        hold_button("Screenshot")
+        time.sleep(max((1/max(emu_speed,1))*0.016,0.002))
+        try:
+            shmem = mmap.mmap(0, mmap_screenshot_size, mmap_screenshot_file)
+            screenshot = Image.open(io.BytesIO(shmem))
+            g_bizhawk_screenshot = cv2.cvtColor(numpy.array(screenshot), cv2.COLOR_BGR2RGB) # Convert screenshot to numpy array COLOR_BGR2RGB
+            
+        except:
+            debug_log.exception('')
+            continue
+        release_button("Screenshot")
+        #cv2.imshow("pollScreenShotData",g_bizhawk_screenshot)
+        #cv2.waitKey(1)
+        
 
 def find_image(file: str): # Function to find an image in a BizHawk screenshot
     try:
         profile_start = time.time() # Performance profiling
         threshold = 0.999
-        hold_button("Screenshot")
+        #args.di = True
         if args.di: debug_log.debug(f"Searching for image {file} (threshold: {threshold})")
-
-        shmem = mmap.mmap(0, mmap_screenshot_size, mmap_screenshot_file)
-        screenshot = Image.open(io.BytesIO(shmem))
-
-        screenshot = cv2.cvtColor(numpy.array(screenshot), cv2.COLOR_BGR2RGB) # Convert screenshot to numpy array COLOR_BGR2RGB
         template = cv2.imread(file, cv2.IMREAD_UNCHANGED)
         hh, ww = template.shape[:2]
     
-        correlation = cv2.matchTemplate(screenshot, template[:,:,0:3], cv2.TM_CCORR_NORMED) # Do masked template matching and save correlation image
+        correlation = cv2.matchTemplate(g_bizhawk_screenshot, template[:,:,0:3], cv2.TM_CCORR_NORMED) # Do masked template matching and save correlation image
         min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(correlation)
         max_val_corr = float('{:.6f}'.format(max_val))
-
-        release_button("Screenshot")
-
         if args.di:
             debug_log.debug(f"Image detection took: {(time.time() - profile_start)*1000} ms")
-            cv2.imshow("screenshot", screenshot)
+            cv2.imshow("screenshot", g_bizhawk_screenshot)
             cv2.waitKey(1)
         if max_val_corr > threshold: 
             if args.di:
                 loc = numpy.where(correlation >= threshold)
-                result = screenshot.copy()
+                result = g_bizhawk_screenshot.copy()
                 for point in zip(*loc[::-1]):
                     cv2.rectangle(result, point, (point[0]+ww, point[1]+hh), (0,0,255), 1)
                     cv2.imshow(f"match", result)
                     cv2.waitKey(1)
             if args.di: debug_log.debug(f"Maximum correlation value ({max_val_corr}) is above threshold ({threshold}), file {file} was on-screen!")
+            #args.di = False
             return True
         else:
+            #args.di = False
             if args.di: debug_log.debug(f"Maximum correlation value ({max_val_corr}) is below threshold ({threshold}), file {file} was not detected on-screen.")
             return False
+        
     except:
         debug_log.exception('')
-        return None
+        return False
 
 def catch_pokemon(): # Function to catch pokemon
     try:
@@ -310,10 +322,21 @@ def battle(): # Function to battle wild pokemon
 
 def flee_battle(): # Function to run from wild pokemon
     try:
+        imageMatch = False
         debug_log.info("Running from battle...")
         while trainer_info["state"] != 80: # State 80 = overworld
-            while not find_image("data/templates/battle/run.png") and trainer_info["state"] != 80: emu_combo(["Right", "Down", "B"]) # Press right + down until RUN is selected
-            while find_image("data/templates/battle/run.png") and trainer_info["state"] != 80: press_button("A")
+            time.sleep(max((1/max(emu_speed,1))*0.016,0.002))
+            while (imageMatch == False) and trainer_info["state"] != 80:
+                result = find_image("data/templates/battle/run.png")
+                if result is not None:
+                    imageMatch = result
+                emu_combo(["Right", "Down", "B"]) # Press right + down until RUN is selected
+            imageMatch = True
+            while (imageMatch == True) and trainer_info["state"] != 80:
+                result = find_image("data/templates/battle/run.png")
+                if result is not None:
+                    imageMatch = result
+                press_button("A")
             press_button("B")
         time.sleep(0.8/emu_speed) # Wait for battle fade animation
     except:
@@ -718,6 +741,8 @@ def mem_getEmuInfo(): # Loop repeatedly to read emulator info from memory
             except:
                 if args.d: debug_log.exception('')
                 continue
+            if config["eco_mode"]: time.sleep(max((1/max(emu_speed,1))*0.016,0.002))
+
     except:
         debug_log.exception('')
         pass
@@ -1082,7 +1107,7 @@ try:
     hold_input = default_input
 
     last_trainer_state, last_opponent_personality, trainer_info, opponent_info, emu_info, party_info, emu_speed = None, None, None, None, None, None, 1
-    mmap_screenshot_size, mmap_screenshot_file = 12288, "bizhawk_screenshot"
+    mmap_screenshot_size, mmap_screenshot_file = 16384, "bizhawk_screenshot"
     ImageFile.LOAD_TRUNCATED_IMAGES = True
 
     def on_window_close(): os._exit(1)
@@ -1091,6 +1116,9 @@ try:
 
     # Set up and launch threads if screenshot is detected in memory (Lua script is running in Bizhawk)
     if mmap.mmap(0, mmap_screenshot_size, mmap_screenshot_file):
+
+        poll_screenshot = Thread(target=mem_pollScreenshot)
+        poll_screenshot.start()
 
         get_emu_info = Thread(target=mem_getEmuInfo)
         get_emu_info.start()
