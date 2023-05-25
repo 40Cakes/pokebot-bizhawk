@@ -30,9 +30,9 @@ These are also available in the Discord channel `#running-examples`.
 There are 2 components of this bot:
 
 1.  `bizhawk.lua` is a Lua script that runs in Bizhawk's Lua console ([Bizhawk Scripting API](https://tasvideos.org/Bizhawk/LuaFunctions)).
-This Lua script reads a bunch of different locations GBA memory to extract information such as:
+This Lua script reads a bunch of different locations GBA memory and writes them to memory mapped files for quick access.
 
-TODO
+2. `bot.py` is a Python Script that reads and writes to the memory mapped files created by `bizhawk.lua`. The script uses a combination of image processing and game state to work.
 
 # Notes
 
