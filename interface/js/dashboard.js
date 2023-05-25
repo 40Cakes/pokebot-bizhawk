@@ -52,7 +52,10 @@ function trainer_info() {
             $("#trainer_state").text(trainer_info["state"]);
         })
 }
-
+function get_type_image(type_str){
+    return `<img src=\"sprites/types/${type_str}.png\">`
+        
+}
 function opponent_info() {
     $.ajax({
             method: "GET",
@@ -80,6 +83,7 @@ function opponent_info() {
                 $("#opponent_name").css("color", "");
             }
             $("#opponent_shiny_value").text(opponent_info["shinyValue"].toLocaleString());
+            $("#opponent_hidden_power_type").html(get_type_image(opponent_info["hiddenPowerType"]));
             $("#opponent_personality").text(opponent_info["personality"]);
             $("#opponent_hp").text(opponent_info["hp"].toLocaleString());
             $("#opponent_hp_iv").text(opponent_info["hpIV"]);
@@ -147,13 +151,10 @@ function opponent_info() {
             var types = ""
             var arrayLength = opponent_info["type"].length;
             for (var o = 0; o < arrayLength; o++) {
-                types += "<img src=\"sprites/types/" + opponent_info["type"][o] + ".png\">"
-                if (opponent_info["type"][o] != 0 && arrayLength != 1) {
-                    types += " "
-                }
+                types += get_type_image(opponent_info["type"][o]) + String((opponent_info["type"][o] != 0 && arrayLength != 1)? '':' ');
             }
             $("#opponent_type").html(types);
-
+            
             if (opponent_info["stats"]) {
                 $("#opponent_phase_encounters").text(opponent_info["stats"]["phase_encounters"].toLocaleString());
                 $("#opponent_encounters").text(opponent_info["stats"]["encounters"].toLocaleString());
