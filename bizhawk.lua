@@ -241,10 +241,10 @@ if enable_input then
 end
 
 -- Allocate memory mapped file sizes
+comm.mmfWrite("bizhawk_screenshot", string.rep("\x00", 24576))
 comm.mmfSetFilename("bizhawk_screenshot")
 comm.mmfScreenshot()
 
-comm.mmfWrite("bizhawk_screenshot", string.rep("\x00", 12288))
 comm.mmfWrite("bizhawk_press_input", string.rep("\x00", 256))
 comm.mmfWrite("bizhawk_hold_input", string.rep("\x00", 256))
 comm.mmfWrite("bizhawk_trainer_info", string.rep("\x00", 4096))
@@ -261,6 +261,7 @@ last_posX = 0
 last_state = 0
 last_mapBank = 0
 last_mapId = 0
+
 while true do
 	if enable_input then
 		for button, _ in pairs (input) do
@@ -290,30 +291,27 @@ while true do
 
 		joypad.set(input)
 	end
-
 	if input["Screenshot"] then
 		comm.mmfScreenshot()
 	end
-
 	emu_info = getEmu()
 	comm.mmfWrite("bizhawk_emu_info", json.encode({["emu"] = emu_info}) .. "\x00")
-
 	-- Save screenshot and other data to memory mapped files, as FPS is higher, reduce the number of reads and writes to memory
-	fps = client.get_approx_framerate()
-	if fps > 60 and fps <= 120  then -- Copy screenshot to memory every nth frame if running at higher than 1x to reduce memory writes
-		if (emu.framecount() % 2 == 0) then
+	fps = emu_info.emuFPS
+	if fps > 70 and fps <= 120  then -- Copy screenshot to memory every nth frame if running at higher than 1x to reduce memory writes
+		if (emu_info.frameCount % 2 == 0) then
 			mainLoop()
 		end
 	elseif fps > 120 and fps <= 240 then 
-		if (emu.framecount() % 3 == 0) then
+		if (emu_info.frameCount % 3 == 0) then
 			mainLoop()
 		end	
 	elseif fps > 240 and fps <= 480 then 
-		if (emu.framecount() % 4 == 0) then
+		if (emu_info.frameCount % 4 == 0) then
 			mainLoop()
 		end	
 	elseif fps > 480 then 
-		if (emu.framecount() % 5 == 0) then
+		if (emu_info.frameCount % 5 == 0) then
 			mainLoop()
 		end
 	else

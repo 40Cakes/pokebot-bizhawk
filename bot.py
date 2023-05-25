@@ -67,7 +67,8 @@ def load_json_mmap(size, file): # Function to load a JSON object from a memory m
             return json_obj
         else: return False
     except:
-        debug_log.exception('')
+        if args.dm:
+            debug_log.exception('')
         return False
 
 def emu_combo(sequence: list): # Function to send a sequence of inputs and delays to the emulator
@@ -119,37 +120,50 @@ def opponent_changed(): # This function checks if there is a different opponent 
             else: return False
         else: return False
     except:
-        debug_log.exception('')
+        if args.di:
+            debug_log.exception('')
         return False
+def mem_pollScreenshot():
+    global g_bizhawk_screenshot
+    while True:
+        hold_button("Screenshot")
+        time.sleep(max((1/max(emu_speed,1))*0.016,0.002)) # Give emulator time to produce a screenshot
+        try:
+            shmem = mmap.mmap(0, mmap_screenshot_size, mmap_screenshot_file)
+            screenshot = Image.open(io.BytesIO(shmem))
+            g_bizhawk_screenshot = cv2.cvtColor(numpy.array(screenshot), cv2.COLOR_BGR2RGB) # Convert screenshot to numpy array COLOR_BGR2RGB
+            screenshot.close()
+        except:
+            if screenshot is not None:
+                screenshot.close()
+            if args.dm:
+                debug_log.exception('')
+            continue
+        release_button("Screenshot")
+        if args.di:
+            cv2.imshow("pollScreenShotData",g_bizhawk_screenshot)
+            cv2.waitKey(1)
+        
 
 def find_image(file: str): # Function to find an image in a BizHawk screenshot
     try:
         profile_start = time.time() # Performance profiling
         threshold = 0.999
-        hold_button("Screenshot")
         if args.di: debug_log.debug(f"Searching for image {file} (threshold: {threshold})")
-
-        shmem = mmap.mmap(0, mmap_screenshot_size, mmap_screenshot_file)
-        screenshot = Image.open(io.BytesIO(shmem))
-
-        screenshot = cv2.cvtColor(numpy.array(screenshot), cv2.COLOR_BGR2RGB) # Convert screenshot to numpy array COLOR_BGR2RGB
         template = cv2.imread(file, cv2.IMREAD_UNCHANGED)
         hh, ww = template.shape[:2]
     
-        correlation = cv2.matchTemplate(screenshot, template[:,:,0:3], cv2.TM_CCORR_NORMED) # Do masked template matching and save correlation image
+        correlation = cv2.matchTemplate(g_bizhawk_screenshot, template[:,:,0:3], cv2.TM_CCORR_NORMED) # Do masked template matching and save correlation image
         min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(correlation)
         max_val_corr = float('{:.6f}'.format(max_val))
-
-        release_button("Screenshot")
-
         if args.di:
             debug_log.debug(f"Image detection took: {(time.time() - profile_start)*1000} ms")
-            cv2.imshow("screenshot", screenshot)
+            cv2.imshow("screenshot", g_bizhawk_screenshot)
             cv2.waitKey(1)
         if max_val_corr > threshold: 
             if args.di:
                 loc = numpy.where(correlation >= threshold)
-                result = screenshot.copy()
+                result = g_bizhawk_screenshot.copy()
                 for point in zip(*loc[::-1]):
                     cv2.rectangle(result, point, (point[0]+ww, point[1]+hh), (0,0,255), 1)
                     cv2.imshow(f"match", result)
@@ -159,9 +173,11 @@ def find_image(file: str): # Function to find an image in a BizHawk screenshot
         else:
             if args.di: debug_log.debug(f"Maximum correlation value ({max_val_corr}) is below threshold ({threshold}), file {file} was not detected on-screen.")
             return False
+        
     except:
-        debug_log.exception('')
-        return None
+        if args.di:
+            debug_log.exception('')
+        return False
 
 def catch_pokemon(): # Function to catch pokemon
     try:
@@ -228,7 +244,8 @@ def catch_pokemon(): # Function to catch pokemon
                 if trainer_info["state"] == 80: # State 80 = overworld
                     return False
     except:
-        debug_log.exception('')
+        if args.di:
+            debug_log.exception('')
         return False
 
 def battle(): # Function to battle wild pokemon
@@ -305,19 +322,21 @@ def battle(): # Function to battle wild pokemon
             debug_log.info("Battle won!")
             return True
     except:
-        debug_log.exception('')
+        if args.di:
+            debug_log.exception('')
         return False
 
 def flee_battle(): # Function to run from wild pokemon
     try:
         debug_log.info("Running from battle...")
         while trainer_info["state"] != 80: # State 80 = overworld
-            while not find_image("data/templates/battle/run.png") and trainer_info["state"] != 80: emu_combo(["Right", "Down", "B"]) # Press right + down until RUN is selected
+            while not find_image("data/templates/battle/run.png") and trainer_info["state"] != 80: emu_combo(["Right","Down", "B"]) # Press right + down until RUN is selected
             while find_image("data/templates/battle/run.png") and trainer_info["state"] != 80: press_button("A")
             press_button("B")
         time.sleep(0.8/emu_speed) # Wait for battle fade animation
     except:
-        debug_log.exception('')
+        if args.d:
+            debug_log.exception('')
 
 def run_until_obstructed(direction: str, run: bool = True): # Function to run until trainer position stops changing
     try:
@@ -390,7 +409,8 @@ def follow_path(coords: list):
 
                         if not opponent_changed():
                             try: target_pos()
-                            except: debug_log.exception('')
+                            except:
+                                if args.dm: debug_log.exception('')
                         else:
                             identify_pokemon()
                             return False
@@ -411,7 +431,7 @@ def follow_path(coords: list):
                         if not opponent_changed():
                             try: target_pos()
                             except:
-                                debug_log.exception('')
+                                if args.dm: debug_log.exception('')
                                 return False
                         else:
                             identify_pokemon()
@@ -420,7 +440,7 @@ def follow_path(coords: list):
                         release_all_inputs()
                         return True
         except:
-            debug_log.exception('')
+            if args.dm: debug_log.exception('')
             return False
 
     try:
@@ -430,7 +450,7 @@ def follow_path(coords: list):
             while not run_to_pos(x, y, map_data): continue
             else: release_all_inputs()
     except:
-        debug_log.exception('')
+        if args.dm: debug_log.exception('')
         return False
 
 def start_menu(entry: str): # Function to open any start menu item - presses START, finds the menu entry and opens it
@@ -450,7 +470,7 @@ def start_menu(entry: str): # Function to open any start menu item - presses STA
         else:
             return False
     except:
-        debug_log.exception('')
+        if args.di: debug_log.exception('')
         return False
 
 def bag_menu(category: str, item: str): # Function to find an item in the bag and use item in battle such as a pokeball
@@ -476,7 +496,7 @@ def bag_menu(category: str, item: str): # Function to find an item in the bag an
             else:
                 return False
     except:
-        debug_log.exception('')
+        if args.di: debug_log.exception('')
         return False
 
 def pickup_items(): # If using a team of Pokemon with the ability "pickup", this function will take the items from the pokemon in your party if 3 or more Pokemon have an item
@@ -491,7 +511,8 @@ def pickup_items(): # If using a team of Pokemon with the ability "pickup", this
                 if pokemon["speciesName"] in pickup_pokemon:
                     debug_log.info(f"Pokemon {i}: {pokemon['speciesName']} has item: {item_list[pokemon['heldItem']]}")
                     if pokemon["heldItem"] != 0: item_count += 1
-            except: debug_log.exception('')
+            except: 
+                if args.dm: debug_log.exception('')
 
         if item_count >= 3: # Only run if 3 or more Pokemon have an item
             time.sleep(0.3/emu_speed) # Wait for animations
@@ -507,7 +528,8 @@ def pickup_items(): # If using a team of Pokemon with the ability "pickup", this
                             item_count -= 1
                         else: emu_combo(["50ms", "Down"])
             emu_combo(["B", "1500ms", "B"]) # Close out of menus
-    except: debug_log.exception('')
+    except:
+        if args.dm: debug_log.exception('')
 
 def save_game(): # Function to save the game via the save option in the start menu
     try:
@@ -523,7 +545,8 @@ def save_game(): # Function to save the game via the save option in the start me
                 i += 1
         time.sleep(8/emu_speed) # Wait for game to save
     except:
-        debug_log.exception('')
+        if args.dm:
+            debug_log.exception('')
 
 def identify_pokemon(starter: bool = False): # Identify opponent pokemon and incremement statistics, returns True if shiny, else False
     try:
@@ -676,94 +699,124 @@ def identify_pokemon(starter: bool = False): # Identify opponent pokemon and inc
                 else: flee_battle()
     
             return False
-    except: debug_log.exception('')
+    except:
+        if args.dm: debug_log.exception('')
 
-def memHandler(): # Loop repeatedly to read and write game information and inputs in memory
+def enrich_mon_data(pokemon: dict): # Function to add information to the pokemon data extracted from Bizhawk
     try:
-        global trainer_info, party_info, opponent_info, last_opponent_personality, emu_info, emu_speed
+        pokemon["name"] = pokemon["speciesName"].capitalize() # Capitalise name
+        pokemon["metLocationName"] = location_list[pokemon["metLocation"]] # Add a human readable location
+        pokemon["type"] = pokemon_list[pokemon["name"]]["type"] # Get pokemon types
+        pokemon["nature"] = nature_list[pokemon["personality"] % 25] # Get pokemon nature
+        pokemon["zeroPadNumber"] = f"{pokemon_list[pokemon['name']]['number']:03}" # Get zero pad number - e.g.: #5 becomes #005
+        pokemon["itemName"] = item_list[pokemon['heldItem']] # Get held item's name
+        pokemon["personalityBin"] = format(pokemon["personality"], "032b") # Convert personality ID to binary
+        pokemon["personalityF"] = int(pokemon["personalityBin"][:16], 2) # Get first 16 bits of binary PID
+        pokemon["personalityL"] = int(pokemon["personalityBin"][16:], 2) # Get last 16 bits of binary PID
+        pokemon["shinyValue"] = int(bin(pokemon["personalityF"] ^ pokemon["personalityL"] ^ trainer_info["tid"] ^ trainer_info["sid"])[2:], 2) # https://bulbapedia.bulbagarden.net/wiki/Personality_value#Shininess
 
-        pokemon_schema = json.loads(read_file("data/schemas/pokemon.json"))
-        validate_pokemon = fastjsonschema.compile(pokemon_schema)
-        trainer_info_schema = json.loads(read_file("data/schemas/trainer_info.json"))
-        validate_trainer_info = fastjsonschema.compile(trainer_info_schema)
-        emu_info_schema = json.loads(read_file("data/schemas/emu_info.json"))
-        validate_emu_info = fastjsonschema.compile(emu_info_schema)
+        if pokemon["shinyValue"] < 8: pokemon["shiny"] = True
+        else: pokemon["shiny"] = False
 
-        def enrich_mon_data(pokemon: dict): # Function to add information to the pokemon data extracted from mGBA
-            try:
-                pokemon["name"] = pokemon["speciesName"].capitalize() # Capitalise name
-                pokemon["metLocationName"] = location_list[pokemon["metLocation"]] # Add a human readable location
-                pokemon["type"] = pokemon_list[pokemon["name"]]["type"] # Get pokemon types
-                pokemon["nature"] = nature_list[pokemon["personality"] % 25] # Get pokemon nature
-                pokemon["zeroPadNumber"] = f"{pokemon_list[pokemon['name']]['number']:03}" # Get zero pad number - e.g.: #5 becomes #005
-                pokemon["itemName"] = item_list[pokemon['heldItem']] # Get held item's name
-                pokemon["personalityBin"] = format(pokemon["personality"], "032b") # Convert personality ID to binary
-                pokemon["personalityF"] = int(pokemon["personalityBin"][:16], 2) # Get first 16 bits of binary PID
-                pokemon["personalityL"] = int(pokemon["personalityBin"][16:], 2) # Get last 16 bits of binary PID
-                pokemon["shinyValue"] = int(bin(pokemon["personalityF"] ^ pokemon["personalityL"] ^ trainer_info["tid"] ^ trainer_info["sid"])[2:], 2) # https://bulbapedia.bulbagarden.net/wiki/Personality_value#Shininess
+        pokemon["enrichedMoves"] = []
+        for move in pokemon["moves"]:
+            pokemon["enrichedMoves"].append(move_list[move])
 
-                if pokemon["shinyValue"] < 8: pokemon["shiny"] = True
-                else: pokemon["shiny"] = False
+        if pokemon["pokerus"] != 0: # TODO get number of days infectious, see - https://bulbapedia.bulbagarden.net/wiki/Pok%C3%A9rus#Technical_information
+            if pokemon["pokerus"] % 10: pokemon["pokerusStatus"] = "infected"
+            else: pokemon["pokerusStatus"] = "cured"
+        else: pokemon["pokerusStatus"] = "none"
+        return pokemon
+    except:
+        if args.dm:
+            debug_log.exception('')
+            moves = pokemon["moves"]
+            debug_log.info(f"Moves: {moves}") 
 
-                pokemon["enrichedMoves"] = []
-                for move in pokemon["moves"]:
-                    pokemon["enrichedMoves"].append(move_list[move])
-
-                if pokemon["pokerus"] != 0: # TODO get number of days infectious, see - https://bulbapedia.bulbagarden.net/wiki/Pok%C3%A9rus#Technical_information
-                    if pokemon["pokerus"] % 10: pokemon["pokerusStatus"] = "infected"
-                    else: pokemon["pokerusStatus"] = "cured"
-                else:
-                    pokemon["pokerusStatus"] = "none"
-                return pokemon
-            except: pass
+def mem_getEmuInfo(): # Loop repeatedly to read emulator info from memory
+    try:
+        global emu_info, emu_speed
 
         while True:
             try:
-                press_input_mmap.seek(0)
-                press_input_mmap.write(bytes(json.dumps(press_input), encoding="utf-8"))
-                hold_input_mmap.seek(0)
-                hold_input_mmap.write(bytes(json.dumps(hold_input), encoding="utf-8"))
-
-                trainer_info_mmap = load_json_mmap(4096, "bizhawk_trainer_info")
-                if trainer_info_mmap:
-                    if validate_trainer_info(trainer_info_mmap["trainer"]):
-                        if trainer_info_mmap["trainer"]["posX"] < 0: trainer_info_mmap["trainer"]["posX"] = 0
-                        if trainer_info_mmap["trainer"]["posY"] < 0: trainer_info_mmap["trainer"]["posY"] = 0
-                        trainer_info = trainer_info_mmap["trainer"]
-
-                party_info_mmap = load_json_mmap(8192, "bizhawk_party_info")
-                if party_info_mmap:
-                    enriched_party_obj = []
-                    for pokemon in party_info_mmap["party"]:
-                        if validate_pokemon(pokemon):
-                            pokemon = enrich_mon_data(pokemon)
-                            enriched_party_obj.append(pokemon)
-                        else:
-                            print(validate(pokemon, pokemon_schema))
-                            continue
-                    party_info = enriched_party_obj
-                
-                opponent_info_mmap = load_json_mmap(4096, "bizhawk_opponent_info")
-                if config["bot_mode"] == "Starters": 
-                    if party_info: opponent_info = party_info[0]
-                elif opponent_info_mmap:
-                    if validate_pokemon(opponent_info_mmap):
-                        enriched_opponent_obj = enrich_mon_data(opponent_info_mmap["opponent"])
-                        if enriched_opponent_obj:
-                            opponent_info = enriched_opponent_obj
-                elif not opponent_info: opponent_info = json.loads(read_file("data/placeholder_pokemon.json"))
-
                 emu_info_mmap = load_json_mmap(4096, "bizhawk_emu_info")
                 if emu_info_mmap:
                     if validate_emu_info(emu_info_mmap["emu"]):
                         emu_info = emu_info_mmap["emu"]
                         if emu_info_mmap["emu"]["emuFPS"]: emu_speed = emu_info_mmap["emu"]["emuFPS"]/60
             except:
-                if args.d: debug_log.exception('')
+                if args.dm: debug_log.exception('')
                 continue
+            time.sleep(max((1/max(emu_speed,1))*0.016,0.002))
+
     except:
-        debug_log.exception('')
-        pass
+        if args.d: debug_log.exception('')
+
+def mem_getTrainerInfo(): # Loop repeatedly to read trainer info from memory
+    global trainer_info
+
+    while True:
+        try:
+            trainer_info_mmap = load_json_mmap(4096, "bizhawk_trainer_info")
+            if trainer_info_mmap:
+                if validate_trainer_info(trainer_info_mmap["trainer"]):
+                    if trainer_info_mmap["trainer"]["posX"] < 0: trainer_info_mmap["trainer"]["posX"] = 0
+                    if trainer_info_mmap["trainer"]["posY"] < 0: trainer_info_mmap["trainer"]["posY"] = 0
+                    trainer_info = trainer_info_mmap["trainer"]
+            time.sleep(max((1/max(emu_speed,1))*0.016,0.002))
+        except:
+            if args.dm: debug_log.exception('')
+            continue
+
+def mem_getPartyInfo(): # Loop repeatedly to read party info from memory
+    global party_info
+
+    while True:
+        try:
+            party_info_mmap = load_json_mmap(8192, "bizhawk_party_info")
+            if party_info_mmap:
+                enriched_party_obj = []
+                for pokemon in party_info_mmap["party"]:
+                    if validate_pokemon(pokemon):
+                        pokemon = enrich_mon_data(pokemon)
+                        enriched_party_obj.append(pokemon)
+                    else: continue
+                party_info = enriched_party_obj
+            time.sleep(max((1/max(emu_speed,1))*0.016,0.002))
+        except:
+            if args.dm: debug_log.exception('')
+            continue
+
+def mem_getOpponentInfo(): # Loop repeatedly to read opponent info from memory
+    global opponent_info, last_opponent_personality
+
+    while True:
+        try:
+            opponent_info_mmap = load_json_mmap(4096, "bizhawk_opponent_info")
+            if config["bot_mode"] == "Starters": 
+                if party_info: opponent_info = party_info[0]
+            elif opponent_info_mmap:
+                if validate_pokemon(opponent_info_mmap):
+                    enriched_opponent_obj = enrich_mon_data(opponent_info_mmap["opponent"])
+                    if enriched_opponent_obj:
+                        opponent_info = enriched_opponent_obj
+            elif not opponent_info: opponent_info = json.loads(read_file("data/placeholder_pokemon.json"))
+            time.sleep(max((1/max(emu_speed,1))*0.016,0.002))
+        except:
+            if args.d: debug_log.exception('')
+            continue
+        
+def mem_sendInputs():
+    while True:
+        try:
+            press_input_mmap.seek(0)
+            press_input_mmap.write(bytes(json.dumps(press_input), encoding="utf-8"))
+            hold_input_mmap.seek(0)
+            hold_input_mmap.write(bytes(json.dumps(hold_input), encoding="utf-8"))
+        except:
+            if args.d: debug_log.exception('')
+            continue
+        time.sleep(0.001) #The less sleep the better but without sleep it will hit CPU hard
 
 def httpServer(): # Run HTTP server to make data available via HTTP GET
     try:
@@ -970,6 +1023,8 @@ def mainLoop(): # 🔁 Main loop
                 if opponent_info: last_opponent_personality = opponent_info["personality"]
                 release_all_inputs()
                 time.sleep(0.2)
+            time.sleep(max((1/max(emu_speed,1))*0.016,0.002))
+
     except:
         debug_log.exception('')
 
@@ -1031,6 +1086,13 @@ try:
     type_list = json.loads(read_file("data/types.json"))
     nature_list = json.loads(read_file("data/natures.json"))
 
+    pokemon_schema = json.loads(read_file("data/schemas/pokemon.json"))
+    validate_pokemon = fastjsonschema.compile(pokemon_schema)
+    trainer_info_schema = json.loads(read_file("data/schemas/trainer_info.json"))
+    validate_trainer_info = fastjsonschema.compile(trainer_info_schema)
+    emu_info_schema = json.loads(read_file("data/schemas/emu_info.json"))
+    validate_emu_info = fastjsonschema.compile(emu_info_schema)
+
     os.makedirs("stats", exist_ok=True) # Sets up stats files if they don't exist
     if read_file("stats/totals.json"): stats = json.loads(read_file("stats/totals.json")) # Open totals stats file
     else: stats = {"pokemon": {}, "totals": {"longest_phase_encounters": 0, "shortest_phase_encounters": "-", "phase_lowest_sv": 99999, "phase_lowest_sv_pokemon": "", "encounters": 0, "phase_encounters": 0, "shiny_average": "-", "shiny_encounters": 0}}
@@ -1048,7 +1110,7 @@ try:
     hold_input = default_input
 
     last_trainer_state, last_opponent_personality, trainer_info, opponent_info, emu_info, party_info, emu_speed = None, None, None, None, None, None, 1
-    mmap_screenshot_size, mmap_screenshot_file = 12288, "bizhawk_screenshot"
+    mmap_screenshot_size, mmap_screenshot_file = 24576, "bizhawk_screenshot"
     ImageFile.LOAD_TRUNCATED_IMAGES = True
 
     def on_window_close(): os._exit(1)
@@ -1057,8 +1119,24 @@ try:
 
     # Set up and launch threads if screenshot is detected in memory (Lua script is running in Bizhawk)
     if mmap.mmap(0, mmap_screenshot_size, mmap_screenshot_file):
-        mem_handler = Thread(target=memHandler)
-        mem_handler.start()
+
+        poll_screenshot = Thread(target=mem_pollScreenshot)
+        poll_screenshot.start()
+
+        get_emu_info = Thread(target=mem_getEmuInfo)
+        get_emu_info.start()
+
+        get_trainer_info = Thread(target=mem_getTrainerInfo)
+        get_trainer_info.start()
+
+        get_party_info = Thread(target=mem_getPartyInfo)
+        get_party_info.start()
+
+        get_opponent_info = Thread(target=mem_getOpponentInfo)
+        get_opponent_info.start()
+        
+        send_inputs = Thread(target=mem_sendInputs)
+        send_inputs.start()
 
         http_server = Thread(target=httpServer)
         http_server.start()
