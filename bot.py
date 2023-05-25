@@ -723,74 +723,61 @@ def mem_getEmuInfo(): # Loop repeatedly to read emulator info from memory
         pass
 
 def mem_getTrainerInfo(): # Loop repeatedly to read trainer info from memory
-    try:
-        global trainer_info
+    global trainer_info
 
-        while True:
-            try:
-                trainer_info_mmap = load_json_mmap(4096, "bizhawk_trainer_info")
-                if trainer_info_mmap:
-                    if validate_trainer_info(trainer_info_mmap["trainer"]):
-                        if trainer_info_mmap["trainer"]["posX"] < 0: trainer_info_mmap["trainer"]["posX"] = 0
-                        if trainer_info_mmap["trainer"]["posY"] < 0: trainer_info_mmap["trainer"]["posY"] = 0
-                        trainer_info = trainer_info_mmap["trainer"]
-            except:
-                if args.d: debug_log.exception('')
-                continue
+    while True:
+        try:
+            trainer_info_mmap = load_json_mmap(4096, "bizhawk_trainer_info")
+            if trainer_info_mmap:
+                if validate_trainer_info(trainer_info_mmap["trainer"]):
+                    if trainer_info_mmap["trainer"]["posX"] < 0: trainer_info_mmap["trainer"]["posX"] = 0
+                    if trainer_info_mmap["trainer"]["posY"] < 0: trainer_info_mmap["trainer"]["posY"] = 0
+                    trainer_info = trainer_info_mmap["trainer"]
             if config["eco_mode"]: time.sleep(max((1/max(emu_speed,1))*0.016,0.002))
-    except:
-        debug_log.exception('')
-        pass
+        except:
+            if args.d: debug_log.exception('')
+            continue
 
 def mem_getPartyInfo(): # Loop repeatedly to read party info from memory
-    try:
-        global party_info
+    global party_info
 
-        while True:
-            try:
-                party_info_mmap = load_json_mmap(8192, "bizhawk_party_info")
-                if party_info_mmap:
-                    enriched_party_obj = []
-                    for pokemon in party_info_mmap["party"]:
-                        if validate_pokemon(pokemon):
-                            pokemon = enrich_mon_data(pokemon)
-                            enriched_party_obj.append(pokemon)
-                        else:
-                            print(validate(pokemon, pokemon_schema))
-                            continue
-                    party_info = enriched_party_obj
-            except:
-                if args.d: debug_log.exception('')
-                continue
+    while True:
+        try:
+            party_info_mmap = load_json_mmap(8192, "bizhawk_party_info")
+            if party_info_mmap:
+                enriched_party_obj = []
+                for pokemon in party_info_mmap["party"]:
+                    if validate_pokemon(pokemon):
+                        pokemon = enrich_mon_data(pokemon)
+                        enriched_party_obj.append(pokemon)
+                    else:
+                        print(validate(pokemon, pokemon_schema))
+                        continue
+                party_info = enriched_party_obj
             if config["eco_mode"]: time.sleep(max((1/max(emu_speed,1))*0.016,0.002))
-    except:
-        debug_log.exception('')
-        pass
+        except:
+            if args.d: debug_log.exception('')
+            continue
 
 def mem_getOpponentInfo(): # Loop repeatedly to read opponent info from memory
-    try:
-        global opponent_info, last_opponent_personality
+    global opponent_info, last_opponent_personality
 
-        while True:
-            try:
-                opponent_info_mmap = load_json_mmap(4096, "bizhawk_opponent_info")
-                if config["bot_mode"] == "Starters": 
-                    if party_info: opponent_info = party_info[0]
-                elif opponent_info_mmap:
-                    if validate_pokemon(opponent_info_mmap):
-                        enriched_opponent_obj = enrich_mon_data(opponent_info_mmap["opponent"])
-                        if enriched_opponent_obj:
-                            opponent_info = enriched_opponent_obj
-                elif not opponent_info: opponent_info = json.loads(read_file("data/placeholder_pokemon.json"))
-
-            except:
-                if args.d: debug_log.exception('')
-                continue
+    while True:
+        try:
+            opponent_info_mmap = load_json_mmap(4096, "bizhawk_opponent_info")
+            if config["bot_mode"] == "Starters": 
+                if party_info: opponent_info = party_info[0]
+            elif opponent_info_mmap:
+                if validate_pokemon(opponent_info_mmap):
+                    enriched_opponent_obj = enrich_mon_data(opponent_info_mmap["opponent"])
+                    if enriched_opponent_obj:
+                        opponent_info = enriched_opponent_obj
+            elif not opponent_info: opponent_info = json.loads(read_file("data/placeholder_pokemon.json"))
             if config["eco_mode"]: time.sleep(max((1/max(emu_speed,1))*0.016,0.002))
-    except:
-        debug_log.exception('')
-        pass
-
+        except:
+            if args.d: debug_log.exception('')
+            continue
+        
 def mem_sendInputs():
     while True:
         try:
