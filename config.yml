@@ -1,3 +1,4 @@
+eco_mode: True
 bot_mode: Run/Surf between coords
 run_surf:
   coord1:
