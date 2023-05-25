@@ -331,10 +331,10 @@ def flee_battle(): # Function to run from wild pokemon
         debug_log.info("Running from battle...")
         while trainer_info["state"] != 80: # State 80 = overworld
 
-            while find_image("data/templates/battle/run.png") and trainer_info["state"] != 80:
+            while (find_image("data/templates/battle/run.png")==False) and trainer_info["state"] != 80:
                 emu_combo(["Right","Down", "B"]) # Press right + down until RUN is selected
 
-            while find_image("data/templates/battle/run.png") and trainer_info["state"] != 80:
+            while (find_image("data/templates/battle/run.png")==True) and trainer_info["state"] != 80:
                 press_button("A")
 
             press_button("B")
