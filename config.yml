@@ -16,6 +16,7 @@ catch:
 - perfect_ivs
 battle: []
 starter_pokemon: Mudkip
+eco_mode: true
 game_save:
 - save_game_after_catch
 encounter_log_limit: 100
