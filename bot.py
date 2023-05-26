@@ -79,7 +79,9 @@ def emu_combo(sequence: list): # Function to send a sequence of inputs and delay
         sleep_pattern = "^\d*\.?\d*ms$"
 
         for k in sequence:
-            if re.match(sleep_pattern, k):
+            if k == "button_release:all":
+                release_all_inputs()  
+            elif re.match(sleep_pattern, k):
                 delay = float(re.sub(r"ms$", "", k))
                 time.sleep((delay/1000)/emu_speed)
             else: press_button(k)
@@ -125,6 +127,7 @@ def opponent_changed(): # This function checks if there is a different opponent 
         if args.di:
             debug_log.exception('')
         return False
+
 def mem_pollScreenshot():
     global g_bizhawk_screenshot
     while True:
@@ -145,7 +148,6 @@ def mem_pollScreenshot():
         if args.di:
             cv2.imshow("pollScreenShotData",g_bizhawk_screenshot)
             cv2.waitKey(1)
-        
 
 def find_image(file: str): # Function to find an image in a BizHawk screenshot
     try:
@@ -184,67 +186,69 @@ def find_image(file: str): # Function to find an image in a BizHawk screenshot
 def catch_pokemon(): # Function to catch pokemon
     try:
         if config["manual_catch"]: return True
-        else:
-            debug_log.info("Attempting to catch Pokemon...")
-            while not find_image("data/templates/battle/fight.png"):
-                emu_combo(["button_release:all", "B", "Up", "Left"]) # Press B + up + left until FIGHT menu is visible
+        
+        debug_log.info("Attempting to catch Pokemon...")
+        
+        while not find_image("data/templates/battle/fight.png"):
+            emu_combo(["button_release:all", "B", "Up", "Left"]) # Press B + up + left until FIGHT menu is visible
+        
+        if "spore" in config["catch"]: # Use Spore to put opponent to sleep to make catches much easier
+            debug_log.info("Attempting to sleep the opponent...")
+            i = 0
+            spore_pp = 0
+            
+            if (opponent_info["status"] == 0) and (opponent_info["name"] not in config["no_sleep_pokemon"]):
+                for move in party_info[0]["enrichedMoves"]:
+                    if move["name"] == "Spore":
+                        spore_pp = move["pp"]
+                        spore_move_num = i
+                    i += 1
 
-            if "spore" in config["catch"]: # Use Spore to put opponent to sleep to make catches much easier
-                debug_log.info("Attempting to sleep the opponent...")
-                i, spore_pp = 0, 0
-    
-                if (opponent_info["status"] == 0) and (opponent_info["name"] not in config["no_sleep_pokemon"]):
-                    for move in party_info[0]["enrichedMoves"]:
-                        if move["name"] == "Spore":
-                            spore_pp = move["pp"]
-                            spore_move_num = i
-                        i += 1
-    
-                    if spore_pp != 0:
-                        emu_combo(["A", "100ms"])
-                        if spore_move_num == 0: seq = ["Up", "Left"]
-                        elif spore_move_num == 1: seq = ["Up", "Right"]
-                        elif spore_move_num == 2: seq = ["Left", "Down"]
-                        elif spore_move_num == 3: seq = ["Right", "Down"]
-    
-                        while not find_image("data/templates/spore.png"):
-                            emu_combo(seq)
-    
-                        emu_combo(["A", "4000ms"]) # Select move and wait for animations
-    
-                while not find_image("data/templates/battle/bag.png"): emu_combo(["button_release:all", "B", "Up", "Right"]) # Press B + up + right until BAG menu is visible
+                if spore_pp != 0:
+                    emu_combo(["A", "100ms"])
+                    if spore_move_num == 0: seq = ["Up", "Left"]
+                    elif spore_move_num == 1: seq = ["Up", "Right"]
+                    elif spore_move_num == 2: seq = ["Left", "Down"]
+                    elif spore_move_num == 3: seq = ["Right", "Down"]
 
-            while True:
-                if find_image("data/templates/battle/bag.png"): press_button("A")
+                    while not find_image("data/templates/spore.png"):
+                        emu_combo(seq)
 
-                # TODO Safari Zone
-                #if opponent_info["metLocationName"] == "Safari Zone":
-                #    while not find_image("data/templates/battle/safari_zone/ball.png"):
-                #        if trainer_info["state"] == 80: # State 80 = overworld
-                #            return False
-                #        emu_combo(["B", "Up", "Left"]) # Press B + up + left until BALL menu is visible
+                    emu_combo(["A", "4000ms"]) # Select move and wait for animations
 
-                # Preferred ball order to catch wild mons + exceptions # TODO move pokeball preference to config
-                # TODO read this data from memory instead
-                if trainer_info["state"] == 0:
-                    if not bag_menu(category="pokeballs", item="premier_ball") and opponent_info["name"] not in ["Abra"]:
-                        if not bag_menu(category="pokeballs", item="ultra_ball"):
-                            if not bag_menu(category="pokeballs", item="great_ball"):
-                                if not bag_menu(category="pokeballs", item="poke_ball"):
-                                    debug_log.info("No balls to catch the Pokemon found. Killing the script!")
-                                    os._exit(1)
+            while not find_image("data/templates/battle/bag.png"): emu_combo(["button_release:all", "B", "Up", "Right"]) # Press B + up + right until BAG menu is visible
 
-                if find_image("data/templates/gotcha.png"): # Check for gotcha! text when a pokemon is successfully caught
-                    debug_log.info("Pokemon caught!")
+        while True:
+            if find_image("data/templates/battle/bag.png"): press_button("A")
 
-                    while trainer_info["state"] != 80: # State 80 = overworld
-                        press_button("B")
-                    time.sleep(2/emu_speed) # Wait for animations
-                    if "save_game_after_catch" in config["game_save"]: save_game()
-                    return True
+            # TODO Safari Zone
+            #if opponent_info["metLocationName"] == "Safari Zone":
+            #    while not find_image("data/templates/battle/safari_zone/ball.png"):
+            #        if trainer_info["state"] == 80: # State 80 = overworld
+            #            return False
+            #        emu_combo(["B", "Up", "Left"]) # Press B + up + left until BALL menu is visible
 
-                if trainer_info["state"] == 80: # State 80 = overworld
-                    return False
+            # Preferred ball order to catch wild mons + exceptions # TODO move pokeball preference to config
+            # TODO read this data from memory instead
+            if trainer_info["state"] == 0:
+                if not bag_menu(category="pokeballs", item="premier_ball") and opponent_info["name"] not in ["Abra"]:
+                    if not bag_menu(category="pokeballs", item="ultra_ball"):
+                        if not bag_menu(category="pokeballs", item="great_ball"):
+                            if not bag_menu(category="pokeballs", item="poke_ball"):
+                                debug_log.info("No balls to catch the Pokemon found. Killing the script!")
+                                os._exit(1)
+
+            if find_image("data/templates/gotcha.png"): # Check for gotcha! text when a pokemon is successfully caught
+                debug_log.info("Pokemon caught!")
+
+                while trainer_info["state"] != 80: # State 80 = overworld
+                    press_button("B")
+                time.sleep(2/emu_speed) # Wait for animations
+                if "save_game_after_catch" in config["game_save"]: save_game()
+                return True
+
+            if trainer_info["state"] == 80: # State 80 = overworld
+                return False
     except:
         if args.di:
             debug_log.exception('')
@@ -349,8 +353,8 @@ def run_until_obstructed(direction: str, run: bool = True): # Function to run un
         last_x = trainer_info["posX"]
         last_y = trainer_info["posY"]
 
-        if run: move_speed = 8
-        else: move_speed = 16
+        if run: move_speed = 16
+        else: move_speed = 32
 
         dir_unchanged = 0
         while dir_unchanged < move_speed:
@@ -680,9 +684,13 @@ def identify_pokemon(starter: bool = False): # Identify opponent pokemon and inc
             if config["bot_mode"] == "Manual Mode":
                 while trainer_info["state"] != 80: time.sleep(1/emu_speed)
             elif not starter:
-                if "perfect_ivs" in config["catch"] and pokemon["hpIV"] == 31 and pokemon["attackIV"] == 31 and pokemon["defenseIV"] == 31 and pokemon["speedIV"] == 31 and pokemon["spAttackIV"] == 31 and pokemon["spDefenseIV"] == 31: catch_pokemon()
-                elif "zero_ivs" in config["catch"] and pokemon["hpIV"] == 0 and pokemon["attackIV"] == 0 and pokemon["defenseIV"] == 0 and pokemon["speedIV"] == 0 and pokemon["spAttackIV"] == 0 and pokemon["spDefenseIV"] == 0: catch_pokemon()
-
+                if "perfect_ivs" in config["catch"] and mon_ivs_meets_threshold(pokemon, 31):
+                    catch_pokemon()
+                elif "zero_ivs" in config["catch"] and not mon_ivs_meets_threshold(pokemon, 1):
+                    catch_pokemon()
+                elif "good_ivs" in config["catch"] and mon_ivs_meets_threshold(pokemon, 25):
+                    catch_pokemon()
+                
                 ### Custom Filters ###
                 # Add custom filters here (make sure to uncomment the line), examples:
                 # If you want to pause the bot instead of automatically catching, replace `catch_pokemon()` with `input("Pausing bot for manual catch. Press Enter to continue...")`
@@ -702,6 +710,14 @@ def identify_pokemon(starter: bool = False): # Identify opponent pokemon and inc
             return False
     except:
         if args.dm: debug_log.exception('')
+
+def mon_ivs_meets_threshold(pokemon: dict, threshold: int):
+    return (pokemon["hpIV"] >= threshold and
+            pokemon["attackIV"] >= threshold and
+            pokemon["defenseIV"] >= threshold and
+            pokemon["speedIV"] >= threshold and
+            pokemon["spAttackIV"] >= threshold and
+            pokemon["spDefenseIV"] >= threshold)
 
 def enrich_mon_data(pokemon: dict): # Function to add information to the pokemon data extracted from Bizhawk
     try:
