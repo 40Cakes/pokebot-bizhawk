@@ -291,9 +291,11 @@ while true do
 
 		joypad.set(input)
 	end
+	
 	if input["Screenshot"] then
 		comm.mmfScreenshot()
 	end
+
 	emu_info = getEmu()
 	comm.mmfWrite("bizhawk_emu_info", json.encode({["emu"] = emu_info}) .. "\x00")
 	-- Save screenshot and other data to memory mapped files, as FPS is higher, reduce the number of reads and writes to memory

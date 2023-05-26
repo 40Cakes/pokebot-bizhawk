@@ -933,8 +933,7 @@ def mainLoop(): # 🔁 Main loop
                 if config["bot_mode"] == "Fishing":
                     debug_log.info(f"Fishing...")
                     emu_combo(["Select", "800ms"]) # Cast rod and wait for fishing animation
-                    started_fishing = time.time()
-                    while not opponent_changed(): # State 80 = overworld
+                    while not opponent_changed():
                         if find_image("data/templates/oh_a_bite.png") or find_image("data/templates/on_the_hook.png"): emu_combo(["100ms", "A", "100ms"])
                         if find_image("data/templates/not_even_a_nibble.png") or find_image("data/templates/it_got_away.png"): emu_combo(["B", "100ms", "Select"])
                         if not find_image("data/templates/text_period.png"): emu_combo(["Select", "800ms"]) # Re-cast rod if the fishing text prompt is not visible
