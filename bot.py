@@ -344,28 +344,27 @@ def run_until_obstructed(direction: str, run: bool = True): # Function to run un
     try:
         debug_log.info(f"Pathing {direction.lower()} until obstructed...")
         if run: hold_button("B")
+        hold_button(direction)
 
         last_x = trainer_info["posX"]
         last_y = trainer_info["posY"]
 
+        if run: move_speed = 8
+        else: move_speed = 16
+
         dir_unchanged = 0
-        while dir_unchanged < 35:
+        while dir_unchanged < move_speed:
             time.sleep(0.01/emu_speed)
-            hold_button(direction)
-            if direction == "Left" or direction == "Right":
-                if last_x == trainer_info["posX"]: dir_unchanged += 1
-                else:
-                    last_x = trainer_info["posX"]
-                    dir_unchanged = 0
-            if direction == "Up" or direction == "Down":
-                if last_y == trainer_info["posY"]: dir_unchanged += 1
-                else:
-                    last_y = trainer_info["posY"]
-                    dir_unchanged = 0
+            if last_x == trainer_info["posX"] and last_y == trainer_info["posY"]: 
+                dir_unchanged += 1
+                continue
+            
+            last_x = trainer_info["posX"]
+            last_y = trainer_info["posY"]
+            dir_unchanged = 0
         
         release_button(direction)
-        debug_log.info("Bonk!")
-        if run: release_button("B")
+        press_button("B") # press and release B in case of a random pokenav call
     except:
         debug_log.exception('')
 
