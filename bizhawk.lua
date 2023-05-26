@@ -7,17 +7,19 @@
 -- https://github.com/besteon/Ironmon-Tracker/
 -- https://github.com/Gikkman/bizhawk-communication
 
+local utils = require("utils")
+
 enable_input = true -- Toggle inputs to the emulator, useful for testing
 write_files = false   -- Toggle output of data to files, also useful for testing
 
-dofile ("data\\lua\\Memory.lua")
-dofile ("data\\lua\\GameSettings.lua")
+dofile (utils.translatePath("data\\lua\\Memory.lua"))
+dofile (utils.translatePath("data\\lua\\GameSettings.lua"))
 
 -- Initialize game settings before loading other files
 GameSettings.initialize()
 
 console.log("Lua Version: ".._VERSION)
-package.path = ";.\\data\\lua\\?.lua;"
+package.path = utils.translatePath(";.\\data\\lua\\?.lua;")
 
 json = require "json"
 PokemonNames = require "PokemonNames"
@@ -218,15 +220,21 @@ function mainLoop()
 	if write_files then
 		check_input = joypad.get()
 		if check_input["L"] and check_input["R"] then
-			trainer_info_file = io.open("testing\\trainer_info.json", "w")
+			trainer_info_file = io.open(
+				utils.translatePath("testing\\trainer_info.json"), "w"
+			)
 			trainer_info_file:write(json.encode({["trainer"] = trainer}))
 			trainer_info_file:close()
 			
-			party_info_file = io.open("testing\\party_info.json", "w")
+			party_info_file = io.open(
+				utils.translatePath("testing\\party_info.json"), "w"
+			)
 			party_info_file:write(json.encode({["party"] = party}))
 			party_info_file:close()
 
-			opponent_info_file = io.open("testing\\opponent_info.json", "w")
+			opponent_info_file = io.open(
+				utils.translatePath("testing\\opponent_info.json"), "w"
+			)
 			opponent_info_file:write(json.encode({["opponent"] = opponent}))
 			opponent_info_file:close()
 		end
