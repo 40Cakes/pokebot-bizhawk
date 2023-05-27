@@ -528,7 +528,7 @@
         "name": "Clefairy",
         "number": 35,
         "type": [
-            "Fairy"
+            "Normal"
         ],
         "base": {
             "HP": 70,
@@ -543,7 +543,7 @@
         "name": "Clefable",
         "number": 36,
         "type": [
-            "Fairy"
+            "Normal"
         ],
         "base": {
             "HP": 95,
@@ -588,8 +588,7 @@
         "name": "Jigglypuff",
         "number": 39,
         "type": [
-            "Normal",
-            "Fairy"
+            "Normal"
         ],
         "base": {
             "HP": 115,
@@ -604,8 +603,7 @@
         "name": "Wigglytuff",
         "number": 40,
         "type": [
-            "Normal",
-            "Fairy"
+            "Normal"
         ],
         "base": {
             "HP": 140,
@@ -1871,8 +1869,7 @@
         "name": "Mr. Mime",
         "number": 122,
         "type": [
-            "Psychic",
-            "Fairy"
+            "Psychic"
         ],
         "base": {
             "HP": 40,
@@ -2659,7 +2656,7 @@
         "name": "Cleffa",
         "number": 173,
         "type": [
-            "Fairy"
+            "Normal"
         ],
         "base": {
             "HP": 50,
@@ -2674,8 +2671,7 @@
         "name": "Igglybuff",
         "number": 174,
         "type": [
-            "Normal",
-            "Fairy"
+            "Normal"
         ],
         "base": {
             "HP": 90,
@@ -2690,7 +2686,7 @@
         "name": "Togepi",
         "number": 175,
         "type": [
-            "Fairy"
+            "Normal"
         ],
         "base": {
             "HP": 35,
@@ -2705,7 +2701,7 @@
         "name": "Togetic",
         "number": 176,
         "type": [
-            "Fairy",
+            "Normal",
             "Flying"
         ],
         "base": {
@@ -2813,8 +2809,7 @@
         "name": "Marill",
         "number": 183,
         "type": [
-            "Water",
-            "Fairy"
+            "Water"
         ],
         "base": {
             "HP": 70,
@@ -2829,8 +2824,7 @@
         "name": "Azumarill",
         "number": 184,
         "type": [
-            "Water",
-            "Fairy"
+            "Water"
         ],
         "base": {
             "HP": 100,
@@ -3217,7 +3211,7 @@
         "name": "Snubbull",
         "number": 209,
         "type": [
-            "Fairy"
+            "Normal"
         ],
         "base": {
             "HP": 60,
@@ -3232,7 +3226,7 @@
         "name": "Granbull",
         "number": 210,
         "type": [
-            "Fairy"
+            "Normal"
         ],
         "base": {
             "HP": 90,
@@ -4319,8 +4313,7 @@
         "name": "Ralts",
         "number": 280,
         "type": [
-            "Psychic",
-            "Fairy"
+            "Psychic"
         ],
         "base": {
             "HP": 28,
@@ -4335,8 +4328,7 @@
         "name": "Kirlia",
         "number": 281,
         "type": [
-            "Psychic",
-            "Fairy"
+            "Psychic"
         ],
         "base": {
             "HP": 38,
@@ -4351,8 +4343,7 @@
         "name": "Gardevoir",
         "number": 282,
         "type": [
-            "Psychic",
-            "Fairy"
+            "Psychic"
         ],
         "base": {
             "HP": 68,
@@ -4598,8 +4589,7 @@
         "name": "Azurill",
         "number": 298,
         "type": [
-            "Normal",
-            "Fairy"
+            "Normal"
         ],
         "base": {
             "HP": 50,
@@ -4675,8 +4665,7 @@
         "name": "Mawile",
         "number": 303,
         "type": [
-            "Steel",
-            "Fairy"
+            "Steel"
         ],
         "base": {
             "HP": 50,

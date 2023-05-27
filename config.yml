@@ -15,6 +15,11 @@ catch:
 - spore
 - perfect_ivs
 battle: []
+pokeball_priority:
+- premier_ball
+- ultra_ball
+- great_ball
+- poke_ball
 starter_pokemon: Mudkip
 eco_mode: true
 game_save:
@@ -40,31 +45,70 @@ control_map:
   - r
 banned_moves:
 - None
+  # 2-turn
+- Bounce
+- Dig
+- Dive
+- Fly
+- Sky Attack
+- Razor Wind
+- Doom Desire
+- Solar Beam
+  # Inconsistent
+- Fake Out
+- False Swipe
+- Nature Power
+- Present
+- Destiny Bond
+- Wrap
+- Snore
+- Spit Up
 - Bide
 - Bind
 - Counter
-- Destiny Bond
-- Dig
-- Dive
-- Doom Desire
-- Explosion
-- Fake Out
-- False Swipe
-- Fly
 - Future Sight
 - Mirror Coat
-- Nature Power
-- Perish Song
-- Present
-- Razor Wind
+- Grudge
+- Snatch
+- Spite
+- Curse
+- Endeavor
 - Revenge
-- Selfdestruct
-- Sky Attack
-- Snore
-- Spit Up
+- Assist
+- Focus Punch
+- Eruption
+- Flail
+  # Ends battle
+- Roar
 - Whirlwind
-- Wrap
+- Selfdestruct
+- Perish Song
+- Explosion
+- Memento
 no_sleep_pokemon:
+  # Shed Skin
+- Metapod
+- Kakuna
+- Ekans
+- Arbok
+- Dratini
+- Dragonair
+- Pupitar
+- Silcoon
+- Cascoon
+- Seviper
+  # Vital Spirit
+- Mankey
+- Primeape
+- Electabuzz
+- Magmar
+- Tyrogue
+- Elekid
+- Magby
+- Vigoroth
+  # Insomnia
+- Drowzee
+- Hypno
 - Hoothoot
 - Noctowl
 - Spinarak
@@ -73,6 +117,3 @@ no_sleep_pokemon:
 - Delibird
 - Shuppet
 - Banette
-- Honchkrow
-- Pumpkaboo
-- Ghourgeist

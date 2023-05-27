@@ -16,7 +16,7 @@ from datetime import datetime                    # https://docs.python.org/3/lib
 from threading import Thread, Event              # https://docs.python.org/3/library/threading.html
 import logging                                   # https://docs.python.org/3/library/logging.html
 from logging.handlers import RotatingFileHandler # https://docs.python.org/3/library/logging.html
-from enum import IntEnum
+from enum import IntEnum                         # https://docs.python.org/3/library/enum.html
 # Image processing and detection modules            
 import cv2                                       # https://pypi.org/project/opencv-python/
 import numpy                                     # https://pypi.org/project/numpy/
@@ -261,15 +261,19 @@ def catch_pokemon(): # Function to catch pokemon
             #            return False
             #        emu_combo(["B", "Up", "Left"]) # Press B + up + left until BALL menu is visible
 
-            # Preferred ball order to catch wild mons + exceptions # TODO move pokeball preference to config
+            # Preferred ball order to catch wild mons + exceptions 
             # TODO read this data from memory instead
             if trainer_info["state"] == GameState.BAG_MENU:
-                if not bag_menu(category="pokeballs", item="premier_ball") and opponent_info["name"] not in ["Abra"]:
-                    if not bag_menu(category="pokeballs", item="ultra_ball"):
-                        if not bag_menu(category="pokeballs", item="great_ball"):
-                            if not bag_menu(category="pokeballs", item="poke_ball"):
-                                debug_log.info("No balls to catch the Pokemon found. Killing the script!")
-                                os._exit(1)
+                can_catch = False
+
+                for ball in config["pokeball_priority"]:
+                    if bag_menu(category="pokeballs", item=ball):
+                        can_catch = True
+                        break
+
+                if not can_catch:
+                    debug_log.info("No balls to catch the Pokemon found. Killing the script!")
+                    os._exit(1)
 
             if find_image("data/templates/gotcha.png"): # Check for gotcha! text when a pokemon is successfully caught
                 debug_log.info("Pokemon caught!")
@@ -277,7 +281,10 @@ def catch_pokemon(): # Function to catch pokemon
                 while trainer_info["state"] != GameState.OVERWORLD:
                     press_button("B")
                 time.sleep(frames_to_ms(200)) # Wait for animations
-                if "save_game_after_catch" in config["game_save"]: save_game()
+                
+                if "save_game_after_catch" in config["game_save"]: 
+                    save_game()
+                
                 return True
 
             if trainer_info["state"] == GameState.OVERWORLD:
@@ -289,65 +296,49 @@ def catch_pokemon(): # Function to catch pokemon
 def battle(): # Function to battle wild pokemon
     try:
         # This will only battle with the lead pokemon of the party, and will run if it dies or runs out of PP
+        ally_fainted = False
+        foe_fainted = False
+
         debug_log.info("Battling Pokemon...")
 
-        while opponent_info["hp"] != 0 and party_info[0]["hp"] != 0:
+        while not ally_fainted and not foe_fainted:
             while not find_image("data/templates/battle/fight.png"):
                 if trainer_info["state"] == GameState.OVERWORLD:
                     return
                 emu_combo(["B", "Up", "Left"]) # Press B + up + left until FIGHT menu is visible
 
-            debug_log.info("Finding a damaging attack with PP...")
-
-            i, effective_pp, power_pp = 0, 0, 0
-            for move in party_info[0]["enrichedMoves"]:
-                if move["name"] not in config["banned_moves"]:
-                    if move["power"] != 0:
-                        power_pp += party_info[0]["pp"][i]
-                        for type in opponent_info["type"]:
-                            if type in type_list[move["type"]]["immunes"] or type in type_list[move["type"]]["weaknesses"]: debug_log.info(f"Opponent type {opponent_info['type']} is immune/weak against move {move['name']}") 
-                            else: effective_pp += party_info[0]["pp"][i]
-                i += 1
-
-            if effective_pp == 0 and power_pp > 0:
-                debug_log.info("Lead Pokemon has no effective PP to damage opponent!")
+            best_move = find_effective_move(party_info[0], opponent_info)
+            
+            if best_move["power"] <= 10:
+                debug_log.info("Lead Pokemon has no effective moves to battle the foe!")
                 flee_battle()
                 return False
+            
+            emu_combo(["A", "100ms"])
+            
+            debug_log.info(f"Best move against foe is {best_move['name']} (Effective power is {best_move['power']})")
 
-            if effective_pp == 0 and power_pp == 0:
-                debug_log.info("Lead Pokemon has no more damaging PP!")
-                flee_battle()
-                return False
+            i = int(best_move["index"])
+            
+            debug_log.info(i)
 
-            i = 0
-            if effective_pp > 0:
-                for move in party_info[0]["enrichedMoves"]:
-                    immune = False
-                    if move["name"] not in config["banned_moves"]:
-                        if move["power"] != 0:
-                            for type in opponent_info["type"]:
-                                if type in type_list[move["type"]]["immunes"]: # TODO add option to avoid using ineffective (0.5x) moves
-                                    immune = True
+            if i == 0:
+                emu_combo(["Up", "Left"])
+            elif i == 1:
+                emu_combo(["Up", "Right"])
+            elif i == 2:
+                emu_combo(["Down", "Left"])
+            elif i == 3:
+                emu_combo(["Down", "Right"])
+            
+            emu_combo(["A", "4000ms"])
 
-                            if party_info[0]["pp"][i] != 0 and not immune:
-                                emu_combo(["A", "50ms"])
-                                if i == 0:
-                                    emu_combo(["Up", "Left"])
-                                    break
-                                elif i == 1:
-                                    emu_combo(["Up", "Right"])
-                                    break
-                                elif i == 2:
-                                    emu_combo(["Left", "Down"])
-                                    break
-                                elif i == 3:
-                                    emu_combo(["Right", "Down"])
-                                    break
-                    i += 1
-                if i <= 3: emu_combo(["A", "4000ms"]) # Select move and wait for animations
-
-        if party_info[0]["hp"] == 0:
-            debug_log.info("Lead Pokemon out of HP!")
+            if opponent_info["hp"] == 0:
+                foe_fainted = True
+            elif party_info[0]["hp"] == 0:
+                ally_fainted = True
+        if ally_fainted:
+            debug_log.info("Lead Pokemon fainted!")
             flee_battle()
             return False
 
@@ -356,12 +347,52 @@ def battle(): # Function to battle wild pokemon
                 press_button("A")
             press_button("B")
 
-        if opponent_info["hp"] == 0:
+        if foe_fainted:
             debug_log.info("Battle won!")
             return True
     except Exception as e:
         if args.di: debug_log.exception(str(e))
         return False
+
+def find_effective_move(ally: dict, foe: dict):
+    i = 0
+    move_power = []
+
+    for move in ally["enrichedMoves"]:
+        power = move["power"]
+
+        # Ignore banned moves and those with 0 PP
+        if move["name"] in config["banned_moves"] or power == 0 or ally["pp"][i] == 0:
+            move_power.append(0)
+            i += 1
+            continue
+
+        # Calculate effectiveness against opponent's type(s)
+        matchups = type_list[move["type"]]
+
+        for foe_type in foe["type"]:
+            if foe_type in matchups["immunes"]:
+                power *= 0
+            elif foe_type in matchups["weaknesses"]:
+                power *= 0.5
+            elif foe_type in matchups["strengths"]:
+                power *= 2
+
+        # STAB
+        for ally_type in ally["type"]:
+            if ally_type == move["type"]:
+                power *= 1.5
+
+        move_power.append(power)
+        i += 1
+
+    # Return info on the best move
+    move_idx = move_power.index(max(move_power))
+    return {
+        "name": ally["enrichedMoves"][move_idx]["name"],
+        "index": move_idx,
+        "power": max(move_power)
+    }
 
 def flee_battle(): # Function to run from wild pokemon
     try:
@@ -517,7 +548,7 @@ def bag_menu(category: str, item: str): # Function to find an item in the bag an
 
             while not find_image(f"data/templates/start_menu/bag/{category.lower()}.png"):
                 emu_combo(["Right", "300ms"]) # Press right until the correct category is selected
-            time.sleep(frames_to_ms(200)) # Wait for animations
+            time.sleep(frames_to_ms(60)) # Wait for animations
 
             debug_log.info(f"Scanning for item: {item}...")
             i = 0
@@ -722,7 +753,8 @@ def identify_pokemon(starter: bool = False): # Identify opponent pokemon and inc
                     catch_pokemon()
                 elif "good_ivs" in config["catch"] and mon_ivs_meets_threshold(pokemon, 25):
                     catch_pokemon()
-                
+                elif "all" in config["catch"]:
+                    catch_pokemon()
                 ### Custom Filters ###
                 # Add custom filters here (make sure to uncomment the line), examples:
                 # If you want to pause the bot instead of automatically catching, replace `catch_pokemon()` with `input("Pausing bot for manual catch. Press Enter to continue...")`
