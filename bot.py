@@ -875,7 +875,7 @@ def mem_getOpponentInfo(): # Loop repeatedly to read opponent info from memory
     while True:
         try:
             opponent_info_mmap = load_json_mmap(4096, "bizhawk_opponent_info")
-            if config["bot_mode"] == "starters":    #lowercase
+            if config["bot_mode"] == "starters":
                 if party_info: opponent_info = party_info[0]
             elif opponent_info_mmap:
                 if validate_pokemon(opponent_info_mmap):
@@ -971,29 +971,29 @@ def mainLoop(): # 🔁 Main loop
                     pickup_items()
 
                 match config["bot_mode"]:
-                    case "manual mode":    #lowercase
+                    case "manual mode":
                         while not opponent_changed(): 
                             time.sleep(frames_to_ms(20))
                         identify_pokemon()
-                    case "sweet scent":    #lowercase
+                    case "sweet scent":
                         mode_sweetScent()
-                    case "bunny hop":    #lowercase
+                    case "bunny hop":
                         mode_bunnyHop()
-                    case "run/surf between coords" | "run/surf until obstructed":    #lowercase
+                    case "run/surf between coords" | "run/surf until obstructed":
                         mode_runSurf()
-                    case "fishing":    #lowercase
+                    case "fishing":
                         mode_fishing()
-                    case "starters":    #lowercase
+                    case "starters":
                         mode_starters()
-                    case "rayquaza":    #lowercase
+                    case "rayquaza":
                         if not mode_rayquaza(): return
-                    case "groudon":    #lowercase
+                    case "groudon":
                         if not mode_groudon(): return
-                    case "kyogre":    #lowercase
+                    case "kyogre":
                         if not mode_kyogre(): return
-                    case "southern island":    #lowercase
+                    case "southern island":
                         if not mode_southernIsland(): return
-                    case "buy premier balls":    #lowercase
+                    case "buy premier balls":
                         purchase_success = mode_buyPremierBalls()
 
                         if not purchase_success:
