@@ -875,7 +875,7 @@ def mem_getOpponentInfo(): # Loop repeatedly to read opponent info from memory
     while True:
         try:
             opponent_info_mmap = load_json_mmap(4096, "bizhawk_opponent_info")
-            if config["bot_mode"] == "Starters": 
+            if config["bot_mode"] == "starters":    #lowercase
                 if party_info: opponent_info = party_info[0]
             elif opponent_info_mmap:
                 if validate_pokemon(opponent_info_mmap):
@@ -971,29 +971,29 @@ def mainLoop(): # 🔁 Main loop
                     pickup_items()
 
                 match config["bot_mode"]:
-                    case "Manual Mode":
+                    case "manual mode":    #lowercase
                         while not opponent_changed(): 
                             time.sleep(frames_to_ms(20))
                         identify_pokemon()
-                    case "Sweet Scent":
+                    case "sweet scent":    #lowercase
                         mode_sweetScent()
-                    case "Bunny Hop":
+                    case "bunny hop":    #lowercase
                         mode_bunnyHop()
-                    case "Run/Surf between coords" | "Run/Surf until obstructed":
+                    case "run/surf between coords" | "run/surf until obstructed":    #lowercase
                         mode_runSurf()
-                    case "Fishing":
+                    case "fishing":    #lowercase
                         mode_fishing()
-                    case "Starters":
+                    case "starters":    #lowercase
                         mode_starters()
-                    case "Rayquaza":
+                    case "rayquaza":    #lowercase
                         if not mode_rayquaza(): return
-                    case "Groudon":
+                    case "groudon":    #lowercase
                         if not mode_groudon(): return
-                    case "Kyogre":
+                    case "kyogre":    #lowercase
                         if not mode_kyogre(): return
-                    case "Southern Island":
+                    case "southern island":    #lowercase
                         if not mode_southernIsland(): return
-                    case "Buy Premier Balls":
+                    case "buy premier balls":    #lowercase
                         purchase_success = mode_buyPremierBalls()
 
                         if not purchase_success:
@@ -1217,6 +1217,7 @@ try:
     yaml.default_flow_style = False
 
     config = yaml.load(read_file("config.yml")) # Load config
+    config["bot_mode"] = config["bot_mode"].lower()                 #Hacky hack to decase all bot modes
 
     if args.s: config["game_save"].append("save_game_on_start")
     if args.m: config["bot_mode"] = "Manual Mode"
