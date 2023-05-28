@@ -73,7 +73,7 @@ def read_file(file: str): # Simple function to read data from a file, return Fal
         with open(file, mode="r", encoding="utf-8") as open_file:
             return open_file.read()
     except Exception as e:
-        debug_log.exception(str(e))
+        if args.d: debug_log.exception(str(e))
         return False
 
 def write_file(file: str, value: str): # Simple function to write data to a file, will create the file if doesn't exist
@@ -83,7 +83,7 @@ def write_file(file: str, value: str): # Simple function to write data to a file
             save_file.write(value)
             return True
     except Exception as e:
-        debug_log.exception(str(e))
+        if args.d: debug_log.exception(str(e))
         return False
 
 def load_json_mmap(size, file): # Function to load a JSON object from a memory mapped file
@@ -1213,6 +1213,18 @@ except Exception as e:
     os._exit(1)
 
 try:
+    # Validate python version
+    min_major = 3
+    min_minor = 10
+    v_major = sys.version_info[0]
+    v_minor = sys.version_info[1]
+
+    if v_major < min_major or v_minor < min_minor:
+        debug_log.error(f"\n\nPython version is out of date! (Minimum required version for pokebot is {min_major}.{min_minor})\nPlease install the latest version at https://www.python.org/downloads/\n")
+        os._exit(1)
+
+    debug_log.info(f"Running pokebot on Python {v_major}.{v_minor}")
+
     yaml = YAML()
     yaml.default_flow_style = False
 
