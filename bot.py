@@ -150,6 +150,10 @@ def release_all_inputs(): # Function to release all keys in all input objects
 
 def opponent_changed(): # This function checks if there is a different opponent since last check, indicating the game state is probably now in a battle
     try:
+        # Fixes a bug where the bot checks the opponent for up to 20 seconds if it was last closed in a battle
+        if trainer_info["state"] == GameState.OVERWORLD:
+            return False
+
         global last_opponent_personality
 
         if opponent_info and last_opponent_personality != opponent_info["personality"]:
@@ -218,12 +222,14 @@ def find_image(file: str): # Function to find an image in a BizHawk screenshot
 
 def catch_pokemon(): # Function to catch pokemon
     try:
-        if config["manual_catch"]: return True
-        
-        debug_log.info("Attempting to catch Pokemon...")
-        
         while not find_image("data/templates/battle/fight.png"):
             emu_combo(["button_release:all", "B", "Up", "Left"]) # Press B + up + left until FIGHT menu is visible
+        
+        if config["manual_catch"]:
+            input("Pausing bot for manual catch. Press Enter to continue...")
+            return True
+        else:
+            debug_log.info("Attempting to catch Pokemon...")
         
         if "spore" in config["catch"]: # Use Spore to put opponent to sleep to make catches much easier
             debug_log.info("Attempting to sleep the opponent...")
@@ -721,12 +727,12 @@ def identify_pokemon(starter: bool = False): # Identify opponent pokemon and inc
 
             if not args.n: write_file("stats/totals.json", json.dumps(stats, indent=4, sort_keys=True)) # Save stats file
 
-            if not starter and config["bot_mode"] not in ["Manual Mode", "Rayquaza", "Kyogre", "Groudon"] and "shinies" in config["catch"]: catch_pokemon()
-
             if not args.n: write_file("stats/totals.json", json.dumps(stats, indent=4, sort_keys=True)) # Save stats file
-            if config["manual_catch"]: input("Pausing bot for manual catch. Press Enter to continue...")
-            else: return True
 
+            if not starter and config["bot_mode"] not in ["Manual Mode", "Rayquaza", "Kyogre", "Groudon"] and "shinies" in config["catch"]: 
+                catch_pokemon()
+
+            return True
         else:
             debug_log.info("Non shiny Pokemon detected...")
     
@@ -755,6 +761,7 @@ def identify_pokemon(starter: bool = False): # Identify opponent pokemon and inc
                     catch_pokemon()
                 elif "all" in config["catch"]:
                     catch_pokemon()
+
                 ### Custom Filters ###
                 # Add custom filters here (make sure to uncomment the line), examples:
                 # If you want to pause the bot instead of automatically catching, replace `catch_pokemon()` with `input("Pausing bot for manual catch. Press Enter to continue...")`
@@ -768,9 +775,10 @@ def identify_pokemon(starter: bool = False): # Identify opponent pokemon and inc
                 # --- Catch Lonely natured Ralts with >25 attackIV and spAttackIV ---
                 #elif pokemon["name"] == "Ralts" and pokemon["attackIV"] > 25 and pokemon["spAttackIV"] > 25 and pokemon["nature"] == "Lonely": catch_pokemon()
 
-                elif "wild_pokemon" in config["battle"]: battle()
-                else: flee_battle()
-    
+                elif "wild_pokemon" in config["battle"]: 
+                    battle()
+                else: 
+                    flee_battle()
             return False
     except Exception as e:
         if args.dm: debug_log.exception(str(e))
@@ -1101,7 +1109,7 @@ def mode_rayquaza():
         emu_combo(["A", "Up"])
         if trainer_info["posY"] < 7:
             break
-        if trainer_info["state"] != 80:
+        if trainer_info["state"] != GameState.OVERWORLD:
             if opponent_changed():
                 if identify_pokemon(): input("Pausing bot for manual catch. Press Enter to continue...") # Kill bot and wait for manual intervention to manually catch Rayquaza
             break

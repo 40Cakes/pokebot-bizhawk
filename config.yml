@@ -1,11 +1,11 @@
-bot_mode: starters
+bot_mode: Run/Surf until obstructed
 run_surf:
   coord1:
-    - 10
-    - 5
-  coord2:
+    - 11
     - 3
-    - 5
+  coord2:
+    - 18
+    - 13
 obstructed_dir:
   - Left
   - Right
