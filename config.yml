@@ -20,6 +20,7 @@ pokeball_priority:
 - ultra_ball
 - great_ball
 - poke_ball
+language: en # Supported languages: English (en), Spanish (es). Must match your ROM language to function properly.
 starter_pokemon: Mudkip
 eco_mode: true
 game_save:

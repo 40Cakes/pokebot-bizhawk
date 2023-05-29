@@ -192,7 +192,7 @@ def find_image(file: str): # Function to find an image in a BizHawk screenshot
         profile_start = time.time() # Performance profiling
         threshold = 0.999
         if args.di: debug_log.debug(f"Searching for image {file} (threshold: {threshold})")
-        template = cv2.imread(file, cv2.IMREAD_UNCHANGED)
+        template = cv2.imread(f"data/templates/{lang}/" + file, cv2.IMREAD_UNCHANGED)
         hh, ww = template.shape[:2]
     
         correlation = cv2.matchTemplate(g_bizhawk_screenshot, template[:,:,0:3], cv2.TM_CCORR_NORMED) # Do masked template matching and save correlation image
@@ -222,7 +222,7 @@ def find_image(file: str): # Function to find an image in a BizHawk screenshot
 
 def catch_pokemon(): # Function to catch pokemon
     try:
-        while not find_image("data/templates/battle/fight.png"):
+        while not find_image("battle/fight.png"):
             emu_combo(["button_release:all", "B", "Up", "Left"]) # Press B + up + left until FIGHT menu is visible
         
         if config["manual_catch"]:
@@ -250,19 +250,19 @@ def catch_pokemon(): # Function to catch pokemon
                     elif spore_move_num == 2: seq = ["Left", "Down"]
                     elif spore_move_num == 3: seq = ["Right", "Down"]
 
-                    while not find_image("data/templates/spore.png"):
+                    while not find_image("spore.png"):
                         emu_combo(seq)
 
                     emu_combo(["A", "4000ms"]) # Select move and wait for animations
 
-            while not find_image("data/templates/battle/bag.png"): emu_combo(["button_release:all", "B", "Up", "Right"]) # Press B + up + right until BAG menu is visible
+            while not find_image("battle/bag.png"): emu_combo(["button_release:all", "B", "Up", "Right"]) # Press B + up + right until BAG menu is visible
 
         while True:
-            if find_image("data/templates/battle/bag.png"): press_button("A")
+            if find_image("battle/bag.png"): press_button("A")
 
             # TODO Safari Zone
             #if opponent_info["metLocationName"] == "Safari Zone":
-            #    while not find_image("data/templates/battle/safari_zone/ball.png"):
+            #    while not find_image("battle/safari_zone/ball.png"):
             #        if trainer_info["state"] == GameState.OVERWORLD:
             #            return False
             #        emu_combo(["B", "Up", "Left"]) # Press B + up + left until BALL menu is visible
@@ -281,7 +281,7 @@ def catch_pokemon(): # Function to catch pokemon
                     debug_log.info("No balls to catch the Pokemon found. Killing the script!")
                     os._exit(1)
 
-            if find_image("data/templates/gotcha.png"): # Check for gotcha! text when a pokemon is successfully caught
+            if find_image("gotcha.png"): # Check for gotcha! text when a pokemon is successfully caught
                 debug_log.info("Pokemon caught!")
 
                 while trainer_info["state"] != GameState.OVERWORLD:
@@ -305,10 +305,9 @@ def battle(): # Function to battle wild pokemon
         ally_fainted = False
         foe_fainted = False
 
-        debug_log.info("Battling Pokemon...")
-
         while not ally_fainted and not foe_fainted:
-            while not find_image("data/templates/battle/fight.png"):
+            debug_log.info("Navigating to the FIGHT button...")
+            while not find_image("battle/fight.png"):
                 if trainer_info["state"] == GameState.OVERWORLD:
                     return
                 emu_combo(["B", "Up", "Left"]) # Press B + up + left until FIGHT menu is visible
@@ -349,7 +348,7 @@ def battle(): # Function to battle wild pokemon
             return False
 
         while trainer_info["state"] != GameState.OVERWORLD:
-            if find_image("data/templates/stop_learning.png"): # Check if our Pokemon is trying to learn a move and skip learning
+            if find_image("stop_learning.png"): # Check if our Pokemon is trying to learn a move and skip learning
                 press_button("A")
             press_button("B")
 
@@ -404,9 +403,9 @@ def flee_battle(): # Function to run from wild pokemon
     try:
         debug_log.info("Running from battle...")
         while trainer_info["state"] != GameState.OVERWORLD:
-            while not find_image("data/templates/battle/run.png") and trainer_info["state"] != GameState.OVERWORLD: 
+            while not find_image("battle/run.png") and trainer_info["state"] != GameState.OVERWORLD: 
                 emu_combo(["Right","Down", "B"])
-            while find_image("data/templates/battle/run.png") and trainer_info["state"] != GameState.OVERWORLD: 
+            while find_image("battle/run.png") and trainer_info["state"] != GameState.OVERWORLD: 
                 press_button("A")
             press_button("B")
         time.sleep(frames_to_ms(30)) # Wait for battle fade animation
@@ -531,7 +530,7 @@ def start_menu(entry: str): # Function to open any start menu item - presses STA
     try:
         if entry in ["bag", "bot", "exit", "option", "pokedex", "pokemon", "pokenav", "save"]:
             debug_log.info(f"Opening start menu entry: {entry}")
-            filename = f"data/templates/start_menu/{entry.lower()}.png"
+            filename = f"start_menu/{entry.lower()}.png"
             
             release_all_inputs()
             emu_combo(["Start", "200ms"]) # Open start menu
@@ -552,18 +551,18 @@ def bag_menu(category: str, item: str): # Function to find an item in the bag an
         if category in ["berries", "items", "key_items", "pokeballs", "tms&hms"]:
             debug_log.info(f"Scrolling to bag category: {category}...")
 
-            while not find_image(f"data/templates/start_menu/bag/{category.lower()}.png"):
+            while not find_image(f"start_menu/bag/{category.lower()}.png"):
                 emu_combo(["Right", "300ms"]) # Press right until the correct category is selected
             time.sleep(frames_to_ms(60)) # Wait for animations
 
             debug_log.info(f"Scanning for item: {item}...")
             i = 0
-            while not find_image(f"data/templates/start_menu/bag/items/{item}.png") and i < 50:
+            while not find_image(f"start_menu/bag/items/{item}.png") and i < 50:
                 if i < 25: emu_combo(["Down", "50ms"])
                 else: emu_combo(["Up", "50ms"])
                 i += 1
 
-            if find_image(f"data/templates/start_menu/bag/items/{item}.png"):
+            if find_image(f"start_menu/bag/items/{item}.png"):
                 debug_log.info(f"Using item: {item}...")
                 while trainer_info["state"] == GameState.BAG_MENU: emu_combo(["A", "500ms"]) # Press A to use the item
                 return True
@@ -612,9 +611,9 @@ def save_game(): # Function to save the game via the save option in the start me
         i = 0
         start_menu("save")
         while i < 2:
-            while not find_image("data/templates/start_menu/save/yes.png"):
+            while not find_image("start_menu/save/yes.png"):
                 time.sleep(frames_to_ms(10))
-            while find_image("data/templates/start_menu/save/yes.png"):
+            while find_image("start_menu/save/yes.png"):
                 emu_combo(["A", "500ms"])
                 i += 1
         time.sleep(frames_to_ms(800)) # Wait for game to save
@@ -1025,7 +1024,7 @@ def mode_sweetScent():
     press_button("A") # Select first pokemon in party
 
     # Search for sweet scent in menu
-    while not find_image("data/templates/sweet_scent.png"): 
+    while not find_image("sweet_scent.png"): 
         press_button("Down")
 
     emu_combo(["A", "5000ms"]) # Select sweet scent and wait for animation
@@ -1060,9 +1059,9 @@ def mode_fishing():
     debug_log.info(f"Fishing...")
     emu_combo(["Select", "800ms"]) # Cast rod and wait for fishing animation
     while not opponent_changed():
-        if find_image("data/templates/oh_a_bite.png") or find_image("data/templates/on_the_hook.png"): emu_combo(["100ms", "A", "100ms"])
-        if find_image("data/templates/not_even_a_nibble.png") or find_image("data/templates/it_got_away.png"): emu_combo(["B", "100ms", "Select"])
-        if not find_image("data/templates/text_period.png"): emu_combo(["Select", "800ms"]) # Re-cast rod if the fishing text prompt is not visible
+        if find_image("oh_a_bite.png") or find_image("on_the_hook.png"): emu_combo(["100ms", "A", "100ms"])
+        if find_image("not_even_a_nibble.png") or find_image("it_got_away.png"): emu_combo(["B", "100ms", "Select"])
+        if not find_image("text_period.png"): emu_combo(["Select", "800ms"]) # Re-cast rod if the fishing text prompt is not visible
     identify_pokemon()
 
 def mode_starters():
@@ -1075,9 +1074,9 @@ def mode_starters():
 
     while trainer_info["state"] == GameState.OVERWORLD: press_button("A")
     if config["starter_pokemon"] == "Mudkip":
-        while not find_image("data/templates/mudkip.png"): press_button("Right")
+        while not find_image("mudkip.png"): press_button("Right")
     elif config["starter_pokemon"] == "Treecko":
-        while not find_image("data/templates/treecko.png"): press_button("Left")
+        while not find_image("treecko.png"): press_button("Left")
 
     while emu_info["rngState"] in starter_frames["rngState"][config["starter_pokemon"]]:
         debug_log.debug(f"Already rolled on RNG state: {emu_info['rngState']}, waiting...")
@@ -1085,7 +1084,7 @@ def mode_starters():
         starter_frames["rngState"][config["starter_pokemon"]].append(emu_info["rngState"])
         write_file(f"stats/{trainer_info['tid']}.json", json.dumps(starter_frames, indent=4, sort_keys=True))
         while trainer_info["state"] == GameState.MISC_MENU: press_button("A")
-        while not find_image("data/templates/battle/fight.png"):
+        while not find_image("battle/fight.png"):
             release_all_inputs()
             emu_combo(["B", "Up", "Left"]) # Press B + up + left until FIGHT menu is visible
         while True:
@@ -1153,7 +1152,7 @@ def mode_southernIsland():
             if i < 500:
                 follow_path([(13, 12)])
                 emu_combo(["A", "1000ms"])
-                if find_image("data/templates/dreams.png"):
+                if find_image("dreams.png"):
                     press_button("B")
                     break
                 i += 1
@@ -1161,22 +1160,22 @@ def mode_southernIsland():
         else: identify_pokemon()
 
 def mode_buyPremierBalls():
-    while not find_image("data/templates/mart/times_01.png"):
+    while not find_image("mart/times_01.png"):
         release_all_inputs()
         emu_combo(["A", "400ms"])
 
-        if find_image("data/templates/mart/you_dont.png"): # Not enough money to buy a single ball
+        if find_image("mart/you_dont.png"): # Not enough money to buy a single ball
             return False
 
     press_count = 0
-    while not find_image("data/templates/mart/times_11.png") and not find_image("data/templates/mart/times_10.png"):
+    while not find_image("mart/times_11.png") and not find_image("mart/times_10.png"):
         emu_combo(["Right", "100ms"])
 
         if press_count > 3: # Not enough money to buy at least 10
             return False
         press_count += 1
 
-    while not find_image("data/templates/mart/times_10.png"):
+    while not find_image("mart/times_10.png"):
         emu_combo(["Down", "100ms"])
 
     return True
@@ -1251,6 +1250,7 @@ try:
     pokemon_list = json.loads(read_file("data/pokemon.json"))
     type_list = json.loads(read_file("data/types.json"))
     nature_list = json.loads(read_file("data/natures.json"))
+    lang = config["language"]
 
     pokemon_schema = json.loads(read_file("data/schemas/pokemon.json"))
     validate_pokemon = fastjsonschema.compile(pokemon_schema)
