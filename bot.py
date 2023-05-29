@@ -1041,9 +1041,9 @@ def mode_bunnyHop():
 def mode_runSurf():
     debug_log.info(f"Running/Surfing...")
     while not opponent_changed():
-        if config["bot_mode"] == "Run/Surf between coords":
+        if config["bot_mode"] == "run/surf between coords":
             follow_path([(config["run_surf"]["coord1"][0], config["run_surf"]["coord1"][1]), (config["run_surf"]["coord2"][0], config["run_surf"]["coord2"][1])])
-        elif config["bot_mode"] == "Run/Surf until obstructed":
+        elif config["bot_mode"] == "run/surf until obstructed":
             run_until_obstructed(config["obstructed_dir"][0])
             run_until_obstructed(config["obstructed_dir"][1])
     identify_pokemon()
