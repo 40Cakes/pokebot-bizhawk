@@ -272,10 +272,22 @@ def catch_pokemon(): # Function to catch pokemon
             if trainer_info["state"] == GameState.BAG_MENU:
                 can_catch = False
 
-                for ball in config["pokeball_priority"]:
-                    if bag_menu(category="pokeballs", item=ball):
-                        can_catch = True
-                        break
+                # Check if current species has a preferred ball
+                foe_name = opponent_info["speciesName"]
+                if foe_name in config["pokeball_override"]:
+                    species_rule = config["pokeball_override"][foe_name]
+                    
+                    for ball in species_rule:
+                        if bag_menu(category="pokeballs", item=ball):
+                            can_catch = True
+                            break
+
+                # Check global pokeball priority 
+                if not can_catch:
+                    for ball in config["pokeball_priority"]:
+                        if bag_menu(category="pokeballs", item=ball):
+                            can_catch = True
+                            break
 
                 if not can_catch:
                     debug_log.info("No balls to catch the Pokemon found. Killing the script!")
@@ -286,7 +298,8 @@ def catch_pokemon(): # Function to catch pokemon
 
                 while trainer_info["state"] != GameState.OVERWORLD:
                     press_button("B")
-                time.sleep(frames_to_ms(200)) # Wait for animations
+
+                time.sleep(frames_to_ms(120)) # Wait for animations
                 
                 if "save_game_after_catch" in config["game_save"]: 
                     save_game()
@@ -616,7 +629,7 @@ def save_game(): # Function to save the game via the save option in the start me
             while find_image("start_menu/save/yes.png"):
                 emu_combo(["A", "500ms"])
                 i += 1
-        time.sleep(frames_to_ms(800)) # Wait for game to save
+        time.sleep(frames_to_ms(500)) # Wait for game to save
     except Exception as e:
         if args.dm: debug_log.exception(str(e))
 
