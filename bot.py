@@ -78,7 +78,7 @@ def load_json_mmap(size, file): # Function to load a JSON object from a memory m
         return False
 
 def frames_to_ms(frames: float):
-    return (frames/60.0)/emu_speed
+    return max((frames/60.0) / emu_speed, 0.033)
 
 # Pre-compile sleep pattern regex
 sleep_pattern = re.compile("^\d*\.?\d*ms$")
@@ -312,8 +312,6 @@ def battle(): # Function to battle wild pokemon
 
             i = int(best_move["index"])
             
-            debug_log.info(i)
-
             if i == 0:
                 emu_combo(["Up", "Left"])
             elif i == 1:
@@ -513,17 +511,25 @@ def follow_path(coords: list):
         if args.dm: debug_log.exception(str(e))
         return False
 
+menus = ["bag", "bot", "exit", "option", "pokedex", "pokemon", "pokenav", "save"]
+
 def start_menu(entry: str): # Function to open any start menu item - presses START, finds the menu entry and opens it
     try:
-        if entry in ["bag", "bot", "exit", "option", "pokedex", "pokemon", "pokenav", "save"]:
+        if entry in menus:
             debug_log.info(f"Opening start menu entry: {entry}")
             filename = f"start_menu/{entry.lower()}.png"
             
             release_all_inputs()
-            emu_combo(["Start", "200ms"]) # Open start menu
+
+            # Press start until menu is visible
+            while True:
+                emu_combo(["Start", "200ms"])
+
+                if find_image(f"start_menu/select.png"):
+                    break
 
             while not find_image(filename): # Find menu entry
-                emu_combo(["Down", "200ms"])
+                emu_combo(["Down", "150ms"])
 
             while find_image(filename): # Press menu entry
                 emu_combo(["A", "200ms"])
@@ -559,35 +565,49 @@ def bag_menu(category: str, item: str): # Function to find an item in the bag an
         if args.di: debug_log.exception(str(e))
         return False
 
+pickup_pokemon = ["Meowth", "Aipom", "Phanpy", "Teddiursa", "Zigzagoon", "Linoone"]
+
 def pickup_items(): # If using a team of Pokemon with the ability "pickup", this function will take the items from the pokemon in your party if 3 or more Pokemon have an item
     try:
+        if trainer_info["state"] != GameState.OVERWORLD:
+            return
+
         debug_log.info("Checking for pickup items...")
         item_count = 0
-        pickup_pokemon = ["ZIGZAGOON", "LINOONE"]
+        pickup_mon_count = 0
 
-        for i in range(1, 6):
-            try:
-                pokemon = party_info[i]
-                if pokemon["speciesName"] in pickup_pokemon:
-                    debug_log.info(f"Pokemon {i}: {pokemon['speciesName']} has item: {item_list[pokemon['heldItem']]}")
-                    if pokemon["heldItem"] != 0: item_count += 1
-            except Exception as e: 
-                if args.dm: debug_log.exception(str(e))
+        for i in range(0, 6):
+            pokemon = party_info[i]
+            held_item = pokemon['heldItem']
 
-        if item_count >= 3: # Only run if 3 or more Pokemon have an item
-            time.sleep(frames_to_ms(30)) # Wait for animations
-            start_menu("pokemon") # Open Pokemon menu
+            if pokemon["speciesName"] in pickup_pokemon:
+                if held_item != 0:
+                    item_count += 1
 
-            for i in range(1, 6):
-                pokemon = party_info[i]
+                pickup_mon_count += 1
+                debug_log.info(f"Pokemon {i}: {pokemon['speciesName']} has item: {item_list[held_item]}")
 
-                if item_count > 0:
-                    if pokemon["speciesName"] in pickup_pokemon:
-                        if pokemon["heldItem"] != 0:
-                            emu_combo(["Down", "50ms", "A", "50ms", "Down", "50ms", "Down", "50ms", "A", "50ms", "Down", "50ms", "A", "1000ms", "B", "50ms"]) # Take the item from the pokemon
-                            item_count -= 1
-                        else: emu_combo(["50ms", "Down"])
-            emu_combo(["B", "1500ms", "B"]) # Close out of menus
+        # Don't collect items if less than half the pickup mons are holding anything
+        if item_count < math.floor(pickup_mon_count / 2):
+            return
+
+        time.sleep(frames_to_ms(60)) # Wait for animations
+        start_menu("pokemon") # Open Pokemon menu
+        time.sleep(frames_to_ms(60))
+
+        for i in range(0, 6):
+            pokemon = party_info[i]
+            if pokemon["speciesName"] in pickup_pokemon and pokemon["heldItem"] != 0:
+                # Take the item from the pokemon
+                emu_combo(["200ms", "A", "50ms", "Up", "50ms", "Up", "50ms", "A", "50ms", "Down", "50ms", "A", "500ms", "B", "200ms"])
+                item_count -= 1
+            
+            if item_count == 0:
+                break
+
+            emu_combo(["200ms", "Down"])
+
+        emu_combo(["50ms", "B", "300ms", "B", "50ms"]) # Close out of menus
     except Exception as e:
         if args.dm: debug_log.exception(str(e))
 
@@ -1306,6 +1326,7 @@ try:
     else: shiny_log = {"shiny_log": []}
 
     def on_window_close(): 
+        release_all_inputs()
         debug_log.info("Dashboard closed on user input")
         os._exit(1)
 
