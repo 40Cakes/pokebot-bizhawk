@@ -15,6 +15,8 @@ catch:
 - spore
 - perfect_ivs
 battle: []
+pickup_threshold: 2 # Number of pickup items to find before collection
+cycle_lead_pokemon: true
 pokeball_priority:
 - premier_ball
 - ultra_ball
@@ -24,7 +26,6 @@ pokeball_override: # Per-species exceptions to pokeball_priority. Falls back to 
   Abra: 
   - ultra_ball
   - great_ball
-language: en # Supported languages: English (en), Spanish (es). Must match your ROM language to function properly.
 starter_pokemon: Mudkip
 eco_mode: true
 game_save:

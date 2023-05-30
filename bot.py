@@ -124,7 +124,7 @@ def release_all_inputs(): # Function to release all keys in all input objects
 def opponent_changed(): # This function checks if there is a different opponent since last check, indicating the game state is probably now in a battle
     try:
         global last_opponent_personality
-        debug_log.info(f"Checking if opponent has changed... Previous PID: {last_opponent_personality}, New PID: {opponent_info['personality']}")
+        #debug_log.info(f"Checking if opponent has changed... Previous PID: {last_opponent_personality}, New PID: {opponent_info['personality']}")
 
         # Fixes a bug where the bot checks the opponent for up to 20 seconds if it was last closed in a battle
         if trainer_info["state"] == GameState.OVERWORLD:
@@ -166,7 +166,7 @@ def find_image(file: str): # Function to find an image in a BizHawk screenshot
         profile_start = time.time() # Performance profiling
         threshold = 0.999
         if args.di: debug_log.debug(f"Searching for image {file} (threshold: {threshold})")
-        template = cv2.imread(f"data/templates/{lang}/" + file, cv2.IMREAD_UNCHANGED)
+        template = cv2.imread(f"data/templates/{language}/" + file, cv2.IMREAD_UNCHANGED)
         hh, ww = template.shape[:2]
     
         correlation = cv2.matchTemplate(g_bizhawk_screenshot, template[:,:,0:3], cv2.TM_CCORR_NORMED) # Do masked template matching and save correlation image
@@ -587,8 +587,7 @@ def pickup_items(): # If using a team of Pokemon with the ability "pickup", this
                 pickup_mon_count += 1
                 debug_log.info(f"Pokemon {i}: {pokemon['speciesName']} has item: {item_list[held_item]}")
 
-        # Don't collect items if less than half the pickup mons are holding anything
-        if item_count < math.floor(pickup_mon_count / 2):
+        if item_count < config["pickup_threshold"]:
             return
 
         time.sleep(frames_to_ms(60)) # Wait for animations
@@ -829,9 +828,18 @@ def enrich_mon_data(pokemon: dict): # Function to add information to the pokemon
             moves = pokemon["moves"]
             debug_log.info(f"Moves: {moves}") 
 
+def language_id_to_iso_639(lang: int):
+    match lang:
+        case 1: return "en"
+        case 2: return "jp"
+        case 3: return "fr"
+        case 4: return "es"
+        case 5: return "de"
+        case 6: return "it"
+
 def mem_getEmuInfo(): # Loop repeatedly to read emulator info from memory
     try:
-        global emu_info, emu_speed
+        global emu_info, emu_speed, language
 
         while True:
             try:
@@ -840,6 +848,10 @@ def mem_getEmuInfo(): # Loop repeatedly to read emulator info from memory
                     if validate_emu_info(emu_info_mmap["emu"]):
                         emu_info = emu_info_mmap["emu"]
                         if emu_info_mmap["emu"]["emuFPS"]: emu_speed = emu_info_mmap["emu"]["emuFPS"]/60
+
+                        if language == None:
+                            language = language_id_to_iso_639(emu_info["language"])
+                            debug_log.info(f"Language was set to {language}")                        
             except Exception as e:
                 if args.dm: debug_log.exception(str(e))
                 continue
@@ -980,6 +992,10 @@ def mainLoop(): # 🔁 Main loop
         release_all_inputs()
 
         while True:
+            # Don't start bot until language is set
+            if language == None:
+                continue
+
             if trainer_info and emu_info:
                 if "pickup" in config["battle"]: 
                     pickup_items()
@@ -1061,6 +1077,7 @@ def mode_runSurf():
             run_until_obstructed(config["obstructed_dir"][0])
             run_until_obstructed(config["obstructed_dir"][1])
     identify_pokemon()
+    return True
 
 def mode_fishing():
     debug_log.info(f"Fishing...")
@@ -1257,7 +1274,7 @@ try:
 
     config = yaml.load(read_file("config.yml")) # Load config
 
-    last_trainer_state, last_opponent_personality, trainer_info, opponent_info, emu_info, party_info, emu_speed = None, None, None, None, None, None, 1
+    last_trainer_state, last_opponent_personality, trainer_info, opponent_info, emu_info, party_info, emu_speed, language = None, None, None, None, None, None, 1, None
     ImageFile.LOAD_TRUNCATED_IMAGES = True
 
     # Main bot functionality
@@ -1296,33 +1313,36 @@ try:
         main_loop = Thread(target=mainLoop)
         main_loop.start()
 
+        item_list = json.loads(read_file("data/items.json"))
+        location_list = json.loads(read_file("data/locations.json"))
+        move_list = json.loads(read_file("data/moves.json"))
+        pokemon_list = json.loads(read_file("data/pokemon.json"))
+        type_list = json.loads(read_file("data/types.json"))
+        nature_list = json.loads(read_file("data/natures.json"))
+
+        pokemon_schema = json.loads(read_file("data/schemas/pokemon.json"))
+        validate_pokemon = fastjsonschema.compile(pokemon_schema)
+        trainer_info_schema = json.loads(read_file("data/schemas/trainer_info.json"))
+        validate_trainer_info = fastjsonschema.compile(trainer_info_schema)
+        emu_info_schema = json.loads(read_file("data/schemas/emu_info.json"))
+        validate_emu_info = fastjsonschema.compile(emu_info_schema)
+
     # Dashboard
     http_server = Thread(target=httpServer)
     http_server.start()
 
-    item_list = json.loads(read_file("data/items.json"))
-    location_list = json.loads(read_file("data/locations.json"))
-    move_list = json.loads(read_file("data/moves.json"))
-    pokemon_list = json.loads(read_file("data/pokemon.json"))
-    type_list = json.loads(read_file("data/types.json"))
-    nature_list = json.loads(read_file("data/natures.json"))
-    lang = config["language"]
-
-    pokemon_schema = json.loads(read_file("data/schemas/pokemon.json"))
-    validate_pokemon = fastjsonschema.compile(pokemon_schema)
-    trainer_info_schema = json.loads(read_file("data/schemas/trainer_info.json"))
-    validate_trainer_info = fastjsonschema.compile(trainer_info_schema)
-    emu_info_schema = json.loads(read_file("data/schemas/emu_info.json"))
-    validate_emu_info = fastjsonschema.compile(emu_info_schema)
-
     os.makedirs("stats", exist_ok=True) # Sets up stats files if they don't exist
-    if read_file("stats/totals.json"): stats = json.loads(read_file("stats/totals.json")) # Open totals stats file
+
+    totals = read_file("stats/totals.json")
+    if totals: stats = json.loads(totals)
     else: stats = {"pokemon": {}, "totals": {"longest_phase_encounters": 0, "shortest_phase_encounters": "-", "phase_lowest_sv": 99999, "phase_lowest_sv_pokemon": "", "encounters": 0, "phase_encounters": 0, "shiny_average": "-", "shiny_encounters": 0}}
 
-    if read_file("stats/encounter_log.json"): encounter_log = json.loads(read_file("stats/encounter_log.json")) # Open encounter log file
+    encounters = read_file("stats/encounter_log.json")
+    if encounters: encounter_log = json.loads(encounters)
     else: encounter_log = {"encounter_log": []}
 
-    if read_file("stats/shiny_log.json"): shiny_log = json.loads(read_file("stats/shiny_log.json")) # Open shiny log file
+    shinies = read_file("stats/shiny_log.json")
+    if shinies: shiny_log = json.loads(shinies) # Open shiny log file
     else: shiny_log = {"shiny_log": []}
 
     def on_window_close():

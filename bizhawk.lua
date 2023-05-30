@@ -201,7 +201,8 @@ function getEmu()
 		frameCount = emu.framecount(),
 		emuFPS = client.get_approx_framerate(),
 		detectedGame = GameSettings.gamename,
-		rngState = Memory.readdword(GameSettings.rng)
+		rngState = Memory.readdword(GameSettings.rng),
+		language = GameSettings.language
 	}
 
 	return emu_info
