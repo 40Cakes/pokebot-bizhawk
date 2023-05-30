@@ -1245,6 +1245,16 @@ try:
 
     debug_log.info(f"Running pokebot on Python {v_major}.{v_minor}")
 
+    # Confirm that the Lua Console is open by doing a test screenshot
+    mmap_screenshot_size, mmap_screenshot_file = 24576, "bizhawk_screenshot"
+
+    try:
+        shmem = mmap.mmap(0, mmap_screenshot_size, mmap_screenshot_file)
+        screenshot = Image.open(io.BytesIO(shmem))
+    except:
+        debug_log.error("\n\nUnable to initialize pokebot!\nPlease confirm that the Lua Console is open in BizHawk, and that it remains open while the bot is active.\n\nIt can be opened through 'Tools > Lua Console'.\n")
+        os._exit(1)
+
     yaml = YAML()
     yaml.default_flow_style = False
 
@@ -1254,7 +1264,6 @@ try:
     if args.s: config["game_save"].append("save_game_on_start")
     if args.m: config["bot_mode"] = "Manual Mode"
 
-    debug_log.info("Starting bot!")
     debug_log.info(f"Mode: {config['bot_mode']}")
 
     item_list = json.loads(read_file("data/items.json"))
@@ -1289,7 +1298,6 @@ try:
     hold_input = default_input
 
     last_trainer_state, last_opponent_personality, trainer_info, opponent_info, emu_info, party_info, emu_speed = None, None, None, None, None, None, 1
-    mmap_screenshot_size, mmap_screenshot_file = 24576, "bizhawk_screenshot"
     ImageFile.LOAD_TRUNCATED_IMAGES = True
 
     def on_window_close(): os._exit(1)
