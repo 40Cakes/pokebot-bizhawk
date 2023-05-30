@@ -16,7 +16,6 @@ from datetime import datetime                    # https://docs.python.org/3/lib
 from threading import Thread, Event              # https://docs.python.org/3/library/threading.html
 import logging                                   # https://docs.python.org/3/library/logging.html
 from logging.handlers import RotatingFileHandler # https://docs.python.org/3/library/logging.html
-from enum import IntEnum                         # https://docs.python.org/3/library/enum.html
 # Image processing and detection modules            
 import cv2                                       # https://pypi.org/project/opencv-python/
 import numpy                                     # https://pypi.org/project/numpy/
@@ -29,35 +28,9 @@ import webview                                   # https://pypi.org/project/pywe
 from ruamel.yaml import YAML                     # https://pypi.org/project/ruamel.yaml/
 import fastjsonschema                            # https://pypi.org/project/fastjsonschema/
 # Helper functions
-import calculateHiddenPower
-
-class GameState(IntEnum):
-    OVERWORLD = 80
-    MISC_MENU = 255
-    BAG_MENU = 0
-    # Needs further investigation; these values have multiple meanings
-    # BATTLE = 3
-    # BATTLE_2 = 2
-    # FOE_DEFEATED = 5
-
-class MapBank(IntEnum):
-    DUNGEONS = 24
-    SPECIAL = 26
-
-class MapID(IntEnum):
-    # Dungeons
-    REGIROCK_CAVE = 6
-    REGICE_CAVE = 67
-    REGISTEEL_CAVE = 68
-    RAYQUAZA_PILLAR = 85
-    KYOGRE_CAVE = 103
-    GROUDON_CAVE = 105
-    # Special
-    LATI_ISLAND = 10
-    MEW_ISLAND = 57
-    DEOXYS_ISLAND = 58
-    HO_OH_ROCK = 75
-    LUGIA_ROCK = 87
+from data.HiddenPower import calculate_hidden_power
+from data.GameState import GameState
+from data.MapData import MapBank, MapID
 
 def player_on_map(map_bank: int, map_id: int):
     on_map = trainer_info["mapBank"] == map_bank and trainer_info["mapId"] == map_id
@@ -150,11 +123,12 @@ def release_all_inputs(): # Function to release all keys in all input objects
 
 def opponent_changed(): # This function checks if there is a different opponent since last check, indicating the game state is probably now in a battle
     try:
+        global last_opponent_personality
+        debug_log.info(f"Checking if opponent has changed... Previous PID: {last_opponent_personality}, New PID: {opponent_info['personality']}")
+
         # Fixes a bug where the bot checks the opponent for up to 20 seconds if it was last closed in a battle
         if trainer_info["state"] == GameState.OVERWORLD:
             return False
-
-        global last_opponent_personality
 
         if opponent_info and last_opponent_personality != opponent_info["personality"]:
             last_opponent_personality = opponent_info["personality"]
@@ -163,7 +137,7 @@ def opponent_changed(): # This function checks if there is a different opponent 
         
         return False
     except Exception as e:
-        if args.di: debug_log.exception(str(e))
+        if args.d: debug_log.exception(str(e))
         return False
 
 def mem_pollScreenshot():
@@ -226,7 +200,7 @@ def catch_pokemon(): # Function to catch pokemon
             emu_combo(["button_release:all", "B", "Up", "Left"]) # Press B + up + left until FIGHT menu is visible
         
         if config["manual_catch"]:
-            input("Pausing bot for manual catch. Press Enter to continue...")
+            input("Pausing bot for manual catch (don't forget to pause bizhawk.lua script so you can provide inputs). Press Enter to continue...")
             return True
         else:
             debug_log.info("Attempting to catch Pokemon...")
@@ -776,7 +750,7 @@ def identify_pokemon(starter: bool = False): # Identify opponent pokemon and inc
 
                 ### Custom Filters ###
                 # Add custom filters here (make sure to uncomment the line), examples:
-                # If you want to pause the bot instead of automatically catching, replace `catch_pokemon()` with `input("Pausing bot for manual catch. Press Enter to continue...")`
+                # If you want to pause the bot instead of automatically catching, replace `catch_pokemon()` with `input("Pausing bot for manual catch (don't forget to pause bizhawk.lua script so you can provide inputs). Press Enter to continue...")`
 
                 # --- Catch any species that the trainer has not already caught ---
                 #elif pokemon["hasSpecies"] == 0: catch_pokemon()
@@ -808,7 +782,7 @@ def enrich_mon_data(pokemon: dict): # Function to add information to the pokemon
         pokemon["name"] = pokemon["speciesName"].capitalize() # Capitalise name
         pokemon["metLocationName"] = location_list[pokemon["metLocation"]] # Add a human readable location
         pokemon["type"] = pokemon_list[pokemon["name"]]["type"] # Get pokemon types
-        pokemon["hiddenPowerType"] = calculateHiddenPower.calculate_hidden_power(pokemon)
+        pokemon["hiddenPowerType"] = calculate_hidden_power(pokemon)
         pokemon["nature"] = nature_list[pokemon["personality"] % 25] # Get pokemon nature
         pokemon["zeroPadNumber"] = f"{pokemon_list[pokemon['name']]['number']:03}" # Get zero pad number - e.g.: #5 becomes #005
         pokemon["itemName"] = item_list[pokemon['heldItem']] # Get held item's name
@@ -1006,13 +980,13 @@ def mainLoop(): # 🔁 Main loop
                     case "starters":
                         mode_starters()
                     case "rayquaza":
-                        if not mode_rayquaza(): return
+                        mode_rayquaza()
                     case "groudon":
-                        if not mode_groudon(): return
+                        mode_groudon()
                     case "kyogre":
-                        if not mode_kyogre(): return
+                        mode_kyogre()
                     case "southern island":
-                        if not mode_southernIsland(): return
+                        mode_southernIsland()
                     case "buy premier balls":
                         purchase_success = mode_buyPremierBalls()
 
@@ -1103,7 +1077,7 @@ def mode_starters():
         while True:
             try:
                 if party_info[0]:
-                    if identify_pokemon(starter=True): input("Pausing bot for manual catch. Press Enter to continue...") # Kill bot and wait for manual intervention to manually catch the shiny starter
+                    if identify_pokemon(starter=True): input("Pausing bot for manual catch (don't forget to pause bizhawk.lua script so you can provide inputs). Press Enter to continue...") # Kill bot and wait for manual intervention to manually catch the shiny starter
                     else:
                         hold_button("Power")
                         time.sleep(frames_to_ms(50))
@@ -1118,13 +1092,15 @@ def mode_rayquaza():
         return
 
     while True:
-        emu_combo(["A", "Up"])
-        if trainer_info["posY"] < 7:
+        emu_combo(["A", "Up"]) # Walk up toward Rayquaza while mashing A
+
+        if player_on_map(MapBank.DUNGEONS, MapID.RAYQUAZA_PILLAR) and trainer_info["posY"] < 7: # break if trainer passes the point where Rayquaza is meant to be (indicates Rayquaza has flown away)
             break
-        if trainer_info["state"] != GameState.OVERWORLD:
+
+        if trainer_info["state"] != GameState.OVERWORLD:    
             if opponent_changed():
                 if identify_pokemon(): input("Pausing bot for manual catch. Press Enter to continue...") # Kill bot and wait for manual intervention to manually catch Rayquaza
-            break
+                break
 
     time.sleep(frames_to_ms(100))
     press_button("B")

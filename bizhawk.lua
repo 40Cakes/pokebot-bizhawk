@@ -10,7 +10,7 @@
 local utils = require("utils")
 
 enable_input = true -- Toggle inputs to the emulator, useful for testing
-write_files = false   -- Toggle output of data to files, also useful for testing
+write_files = false -- Toggle output of data to files (press L+R in emulator to save files to testing/ folder)
 
 dofile (utils.translatePath("data\\lua\\Memory.lua"))
 dofile (utils.translatePath("data\\lua\\GameSettings.lua"))

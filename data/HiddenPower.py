@@ -1,5 +1,6 @@
 import numpy
 import logging
+
 class HiddenPowers:
     hidden_powers = {
         '0'  : 'Fighting',
@@ -19,6 +20,7 @@ class HiddenPowers:
         '14' : 'Dragon',
         '15' : 'Dark'
     }
+
 def calculate_hidden_power(pokemon): #validate mon before calling
     hp = pokemon['hpIV'] % 2
     atk = pokemon['attackIV'] % 2
