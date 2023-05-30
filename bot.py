@@ -1325,8 +1325,10 @@ try:
     if read_file("stats/shiny_log.json"): shiny_log = json.loads(read_file("stats/shiny_log.json")) # Open shiny log file
     else: shiny_log = {"shiny_log": []}
 
-    def on_window_close(): 
-        release_all_inputs()
+    def on_window_close():
+        if can_start_bot:
+            release_all_inputs()
+
         debug_log.info("Dashboard closed on user input")
         os._exit(1)
 
