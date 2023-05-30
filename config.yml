@@ -1,15 +1,15 @@
-bot_mode: starters
+bot_mode: Run/Surf until obstructed
 run_surf:
   coord1:
-    - 10
-    - 5
-  coord2:
+    - 11
     - 3
-    - 5
+  coord2:
+    - 18
+    - 13
 obstructed_dir:
   - Left
   - Right
-manual_catch: true
+manual_catch: false
 catch:
 - shinies
 - spore
@@ -20,6 +20,11 @@ pokeball_priority:
 - ultra_ball
 - great_ball
 - poke_ball
+pokeball_override: # Per-species exceptions to pokeball_priority. Falls back to pokeball_priority if it has no Pokeballs in the list
+  Abra: 
+  - ultra_ball
+  - great_ball
+language: en # Supported languages: English (en), Spanish (es). Must match your ROM language to function properly.
 starter_pokemon: Mudkip
 eco_mode: true
 game_save:
