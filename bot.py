@@ -78,7 +78,7 @@ def load_json_mmap(size, file): # Function to load a JSON object from a memory m
         return False
 
 def frames_to_ms(frames: float):
-    return max((frames/60.0) / emu_speed, 0.033)
+    return max((frames/60.0) / emu_speed, 0.02)
 
 # Pre-compile sleep pattern regex
 sleep_pattern = re.compile("^\d*\.?\d*ms$")
@@ -599,7 +599,7 @@ def pickup_items(): # If using a team of Pokemon with the ability "pickup", this
             pokemon = party_info[i]
             if pokemon["speciesName"] in pickup_pokemon and pokemon["heldItem"] != 0:
                 # Take the item from the pokemon
-                emu_combo(["200ms", "A", "50ms", "Up", "50ms", "Up", "50ms", "A", "50ms", "Down", "50ms", "A", "500ms", "B", "200ms"])
+                emu_combo(["200ms", "A", "50ms", "Up", "50ms", "Up", "50ms", "A", "50ms", "Down", "50ms", "A", "1000ms", "B", "200ms"])
                 item_count -= 1
             
             if item_count == 0:
