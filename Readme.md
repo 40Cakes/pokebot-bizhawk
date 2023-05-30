@@ -1,13 +1,17 @@
 # PokeBot for BizHawk
 ### An automated shiny hunting bot for Pokemon Emerald
-
-## Supported games
-- ✅ Emerald Version (U)
-- ❌ Support for all other gen 3 games are coming soon (high priority)!
-
 These scripts are currently being used to complete and stream a Prof. Oak living ✨shiny✨ dex challenge in Pokemon emerald on [YouTube](https://www.youtube.com/watch?v=nVEONn19lZY) and [Twitch](https://www.twitch.tv/fortycakes). Feel free to join the [Discord](https://discord.gg/CXQDjGSeyV) to discuss the stream and get support for this bot.
 
 [![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/nVEONn19lZY/0.jpg)](https://www.youtube.com/watch?v=nVEONn19lZY)
+
+## Supported games
+|  | Ruby | Sapphire | Emerald | FireRed | LeafGreen | 
+|--| :--: | :--: | :--: | :--: | :--: |
+| English | ❌ | ❌ | ✅ | ❌ | ❌ |
+| Spanish | ❌ | ❌ | ✅ | ❌ | ❌ |
+| Japanese| ❌ | ❌ | ✅ | ❌ | ❌ |
+
+Support for all other gen 3 games are coming soon (high priority)!
 
 # Getting started
 For a guide on how to download and run this bot, check out [Wiki: Getting started](https://github.com/40Cakes/pokebot-bizhawk/wiki/Getting-started).
