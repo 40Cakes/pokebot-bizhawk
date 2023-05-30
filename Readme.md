@@ -48,9 +48,7 @@ This project is just the result of a bored holiday, I am by no means a professio
 - Only 1 bot instance can run at a time (for now)
 
 # Todo
-- Finish the GUI
-- Add egg hatching/breeding
-- Add roamer Pokemon tracking
+See the ([Milestones page](https://github.com/40Cakes/pokebot-bizhawk/milestones)) for this repo.
 
 # Credits
 I'd like to give a huge shout out to the following projects and authors, as well as the devs of Bizhawk, all were instrumental in getting this bot working.
