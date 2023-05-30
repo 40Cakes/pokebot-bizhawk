@@ -1,22 +1,22 @@
-bot_mode: Run/Surf until obstructed
-run_surf:
-  coord1:
-    - 11
-    - 3
-  coord2:
-    - 18
-    - 13
-obstructed_dir:
-  - Left
-  - Right
+# Bot Setup
+bot_mode: Move until obstructed
+coords:
+  pos1:
+    - 38
+    - 6
+  pos2:
+    - 39
+    - 6
+direction: Horizontal
+starter_pokemon: Mudkip
+
+# Wild Battles
 manual_catch: false
+use_spore: true
 catch:
 - shinies
-- spore
 - perfect_ivs
-battle: []
-pickup_threshold: 2 # Number of pickup items to find before collection
-cycle_lead_pokemon: true
+battle_others: true
 pokeball_priority:
 - premier_ball
 - ultra_ball
@@ -26,14 +26,21 @@ pokeball_override: # Per-species exceptions to pokeball_priority. Falls back to 
   Abra: 
   - ultra_ball
   - great_ball
-starter_pokemon: Mudkip
-eco_mode: true
-game_save:
-- save_game_after_catch
+cycle_lead_pokemon: true
+save_game_after_catch: true
+save_game_on_start: false
+
+# Pickup
+pickup: true
+pickup_threshold: 2 # Number of pickup items to find before collection
+
+# Logging
 encounter_log_limit: 100
 log:
 - all_encounters
 - shiny_encounters
+  
+# Preferences
 control_map:
   a: x
   b: z
@@ -91,35 +98,3 @@ banned_moves:
 - Perish Song
 - Explosion
 - Memento
-no_sleep_pokemon:
-  # Shed Skin
-- Metapod
-- Kakuna
-- Ekans
-- Arbok
-- Dratini
-- Dragonair
-- Pupitar
-- Silcoon
-- Cascoon
-- Seviper
-  # Vital Spirit
-- Mankey
-- Primeape
-- Electabuzz
-- Magmar
-- Tyrogue
-- Elekid
-- Magby
-- Vigoroth
-  # Insomnia
-- Drowzee
-- Hypno
-- Hoothoot
-- Noctowl
-- Spinarak
-- Ariados
-- Murkrow
-- Delibird
-- Shuppet
-- Banette

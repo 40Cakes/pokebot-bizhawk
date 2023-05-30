@@ -194,6 +194,8 @@ def find_image(file: str): # Function to find an image in a BizHawk screenshot
         if args.di: debug_log.exception(str(e))
         return False
 
+no_sleep_abilities = ["Shed Skin", "Insomnia", "Vital Spirit"]
+
 def catch_pokemon(): # Function to catch pokemon
     try:
         while not find_image("battle/fight.png"):
@@ -205,12 +207,14 @@ def catch_pokemon(): # Function to catch pokemon
         else:
             debug_log.info("Attempting to catch Pokemon...")
         
-        if "spore" in config["catch"]: # Use Spore to put opponent to sleep to make catches much easier
+        if config["use_spore"]: # Use Spore to put opponent to sleep to make catches much easier
             debug_log.info("Attempting to sleep the opponent...")
-            i = 0
-            spore_pp = 0
+            i, spore_pp = 0, 0
             
-            if (opponent_info["status"] == 0) and (opponent_info["name"] not in config["no_sleep_pokemon"]):
+            ability = opponent_info["ability"][opponent_info["altAbility"]]
+            can_sleep = ability not in no_sleep_abilities
+
+            if (opponent_info["status"] == 0) and can_sleep:
                 for move in party_info[0]["enrichedMoves"]:
                     if move["name"] == "Spore":
                         spore_pp = move["pp"]
@@ -228,6 +232,8 @@ def catch_pokemon(): # Function to catch pokemon
                         emu_combo(seq)
 
                     emu_combo(["A", "4000ms"]) # Select move and wait for animations
+            elif not can_sleep:
+                debug_log.info(f"Can't sleep the opponent! Ability is {ability}")
 
             while not find_image("battle/bag.png"): emu_combo(["button_release:all", "B", "Up", "Right"]) # Press B + up + right until BAG menu is visible
 
@@ -275,7 +281,7 @@ def catch_pokemon(): # Function to catch pokemon
 
                 time.sleep(frames_to_ms(120)) # Wait for animations
                 
-                if "save_game_after_catch" in config["game_save"]: 
+                if config["save_game_after_catch"]: 
                     save_game()
                 
                 return True
@@ -422,6 +428,8 @@ def run_until_obstructed(direction: str, run: bool = True): # Function to run un
         
         release_button(direction)
         press_button("B") # press and release B in case of a random pokenav call
+
+        return [last_x, last_y]
     except Exception as e:
         if args.d: debug_log.exception(str(e))
 
@@ -503,8 +511,8 @@ def follow_path(coords: list):
 
     try:
         for x, y, *map_data in coords:
-            debug_log.info(f"Current: X: {trainer_info['posX']}, Y: {trainer_info['posY']}, Map: [({trainer_info['mapBank']},{trainer_info['mapId']})]")
-            debug_log.info(f"Pathing: X: {x}, Y: {y}, Map: {map_data}")
+            #debug_log.info(f"Current: X: {trainer_info['posX']}, Y: {trainer_info['posY']}, Map: [({trainer_info['mapBank']},{trainer_info['mapId']})]")
+            #debug_log.info(f"Pathing: X: {x}, Y: {y}, Map: {map_data}")
             while not run_to_pos(x, y, map_data): continue
             else: release_all_inputs()
     except Exception as e:
@@ -545,7 +553,7 @@ def bag_menu(category: str, item: str): # Function to find an item in the bag an
             debug_log.info(f"Scrolling to bag category: {category}...")
 
             while not find_image(f"start_menu/bag/{category.lower()}.png"):
-                emu_combo(["Right", "300ms"]) # Press right until the correct category is selected
+                emu_combo(["Right", "400ms"]) # Press right until the correct category is selected
             time.sleep(frames_to_ms(60)) # Wait for animations
 
             debug_log.info(f"Scanning for item: {item}...")
@@ -711,7 +719,8 @@ def identify_pokemon(starter: bool = False): # Identify opponent pokemon and inc
         debug_log.info(f"HP: {pokemon['hpIV']} | ATK: {pokemon['attackIV']} | DEF: {pokemon['defenseIV']} | SPATK: {pokemon['spAttackIV']} | SPDEF: {pokemon['spDefenseIV']} | SPE: {pokemon['speedIV']}")
         debug_log.info(f"Shiny Value (SV): {pokemon['shinyValue']:,} (is {pokemon['shinyValue']:,} < 8 = {pokemon['shiny']})")
 
-        if not pokemon["name"] in stats["pokemon"]: stats["pokemon"].update({pokemon["name"]: {"encounters": 0, "shiny_encounters": 0, "phase_lowest_sv": "-", "phase_encounters": 0, "shiny_average": "-", "total_lowest_sv": "-"}}) # Set up pokemon stats if first encounter
+        if not pokemon["name"] in stats["pokemon"]: 
+            stats["pokemon"].update({pokemon["name"]: {"encounters": 0, "shiny_encounters": 0, "phase_lowest_sv": "-", "phase_encounters": 0, "shiny_average": "-", "total_lowest_sv": "-"}}) # Set up pokemon stats if first encounter
 
         if pokemon["shiny"]:
             debug_log.info("Shiny Pokemon detected!")
@@ -732,7 +741,7 @@ def identify_pokemon(starter: bool = False): # Identify opponent pokemon and inc
 
             if not args.n: write_file("stats/totals.json", json.dumps(stats, indent=4, sort_keys=True)) # Save stats file
 
-            if not starter and config["bot_mode"] not in ["Manual Mode", "Rayquaza", "Kyogre", "Groudon"] and "shinies" in config["catch"]: 
+            if not starter and config["bot_mode"] not in ["manual", "rayquaza", "kyogre", "groudon"] and "shinies" in config["catch"]: 
                 catch_pokemon()
 
             if not args.n: write_file("stats/totals.json", json.dumps(stats, indent=4, sort_keys=True)) # Save stats file
@@ -754,7 +763,7 @@ def identify_pokemon(starter: bool = False): # Identify opponent pokemon and inc
     
             common_stats()
     
-            if config["bot_mode"] == "Manual Mode":
+            if config["bot_mode"] == "manual":
                 while trainer_info["state"] != GameState.OVERWORLD: 
                     time.sleep(frames_to_ms(100))
             elif not starter:
@@ -780,9 +789,10 @@ def identify_pokemon(starter: bool = False): # Identify opponent pokemon and inc
                 # --- Catch Lonely natured Ralts with >25 attackIV and spAttackIV ---
                 #elif pokemon["name"] == "Ralts" and pokemon["attackIV"] > 25 and pokemon["spAttackIV"] > 25 and pokemon["nature"] == "Lonely": catch_pokemon()
 
-                elif "wild_pokemon" in config["battle"]: 
+                elif config["battle_others"]: 
                     battle()
                 else: 
+                else:
                     flee_battle()
             return False
     except Exception as e:
@@ -801,6 +811,7 @@ def enrich_mon_data(pokemon: dict): # Function to add information to the pokemon
         pokemon["name"] = pokemon["speciesName"].capitalize() # Capitalise name
         pokemon["metLocationName"] = location_list[pokemon["metLocation"]] # Add a human readable location
         pokemon["type"] = pokemon_list[pokemon["name"]]["type"] # Get pokemon types
+        pokemon["ability"] = pokemon_list[pokemon["name"]]["ability"] # Get pokemon abilities
         pokemon["hiddenPowerType"] = calculate_hidden_power(pokemon)
         pokemon["nature"] = nature_list[pokemon["personality"] % 25] # Get pokemon nature
         pokemon["zeroPadNumber"] = f"{pokemon_list[pokemon['name']]['number']:03}" # Get zero pad number - e.g.: #5 becomes #005
@@ -988,7 +999,8 @@ def httpServer(): # Run HTTP server to make data available via HTTP GET
 def mainLoop(): # 🔁 Main loop
     try:
         global last_opponent_personality
-        if "save_game_on_start" in config["game_save"]: save_game()
+        
+        if config["save_game_on_start"]: save_game()
         release_all_inputs()
 
         while True:
@@ -997,11 +1009,8 @@ def mainLoop(): # 🔁 Main loop
                 continue
 
             if trainer_info and emu_info:
-                if "pickup" in config["battle"]: 
-                    pickup_items()
-
                 match config["bot_mode"]:
-                    case "manual mode":
+                    case "manual":
                         while not opponent_changed(): 
                             time.sleep(frames_to_ms(20))
                         identify_pokemon()
@@ -1009,8 +1018,10 @@ def mainLoop(): # 🔁 Main loop
                         mode_sweetScent()
                     case "bunny hop":
                         mode_bunnyHop()
-                    case "run/surf between coords" | "run/surf until obstructed":
-                        mode_runSurf()
+                    case "move between coords":
+                        mode_move_between_coords()
+                    case "move until obstructed":
+                        mode_move_until_obstructed()
                     case "fishing":
                         mode_fishing()
                     case "starters":
@@ -1032,6 +1043,9 @@ def mainLoop(): # 🔁 Main loop
                     case other:
                         debug_log.exception("Couldn't interpret bot mode: " + config["bot_mode"])
                         return
+
+                if config["pickup"]: 
+                    pickup_items()
             else:
                 if opponent_info: last_opponent_personality = opponent_info["personality"]
                 release_all_inputs()
@@ -1068,14 +1082,37 @@ def mode_bunnyHop():
     release_all_inputs()
     identify_pokemon()
 
-def mode_runSurf():
-    debug_log.info(f"Running/Surfing...")
+def mode_move_between_coords():
+    coords = config["coords"]
+    pos1, pos2 = coords["pos1"], coords["pos2"]
+
     while not opponent_changed():
-        if config["bot_mode"] == "run/surf between coords":
-            follow_path([(config["run_surf"]["coord1"][0], config["run_surf"]["coord1"][1]), (config["run_surf"]["coord2"][0], config["run_surf"]["coord2"][1])])
-        elif config["bot_mode"] == "run/surf until obstructed":
-            run_until_obstructed(config["obstructed_dir"][0])
-            run_until_obstructed(config["obstructed_dir"][1])
+        follow_path([(pos1[0], pos1[1]), (pos2[0], pos2[1])])
+
+    identify_pokemon()
+    return True
+
+def mode_move_until_obstructed():
+    global bound1, bound2
+    pos1, pos2 = None, None
+    direction = config["direction"].lower()
+
+    while not opponent_changed():
+        if bound1 == None or bound2 == None:
+            if direction == "horizontal":
+                pos1 = run_until_obstructed("Left")
+                pos2 = run_until_obstructed("Right")
+            else:
+                pos1 = run_until_obstructed("Up")
+                pos2 = run_until_obstructed("Down")
+
+            if bound1 == None: 
+                bound1 = pos1
+            if bound2 == None: 
+                bound2 = pos2
+        else:
+            follow_path([(bound1[0], bound1[1]), (bound2[0], bound2[1])])
+
     identify_pokemon()
     return True
 
@@ -1274,15 +1311,15 @@ try:
 
     config = yaml.load(read_file("config.yml")) # Load config
 
-    last_trainer_state, last_opponent_personality, trainer_info, opponent_info, emu_info, party_info, emu_speed, language = None, None, None, None, None, None, 1, None
+    last_trainer_state, last_opponent_personality, trainer_info, opponent_info, emu_info, party_info, emu_speed, language, bound1, bound2 = None, None, None, None, None, None, 1, None, None, None
     ImageFile.LOAD_TRUNCATED_IMAGES = True
 
     # Main bot functionality
-    if can_start_bot:
+    if can_start_bot:        
+        if args.s: config["save_game_on_start"] = True
+        if args.m: config["bot_mode"] = "Manual"
+
         config["bot_mode"] = config["bot_mode"].lower() # Decase all bot modes
-        
-        if args.s: config["game_save"].append("save_game_on_start")
-        if args.m: config["bot_mode"] = "Manual Mode"
 
         debug_log.info(f"Mode: {config['bot_mode']}")
 
