@@ -1247,24 +1247,62 @@ try:
 
     # Confirm that the Lua Console is open by doing a test screenshot
     mmap_screenshot_size, mmap_screenshot_file = 24576, "bizhawk_screenshot"
+    can_start_bot = True
 
     try:
         shmem = mmap.mmap(0, mmap_screenshot_size, mmap_screenshot_file)
         screenshot = Image.open(io.BytesIO(shmem))
     except:
-        debug_log.error("\n\nUnable to initialize pokebot!\nPlease confirm that the Lua Console is open in BizHawk, and that it remains open while the bot is active.\n\nIt can be opened through 'Tools > Lua Console'.\n")
-        os._exit(1)
+        debug_log.error("\n\nUnable to initialize pokebot!\nPlease confirm that the Lua Console is open in BizHawk, and that it remains open while the bot is active.\nIt can be opened through 'Tools > Lua Console'.\n\nStarting in dashboard-only mode...\n")
+        can_start_bot = False
 
     yaml = YAML()
     yaml.default_flow_style = False
 
     config = yaml.load(read_file("config.yml")) # Load config
-    config["bot_mode"] = config["bot_mode"].lower()                 #Hacky hack to decase all bot modes
 
-    if args.s: config["game_save"].append("save_game_on_start")
-    if args.m: config["bot_mode"] = "Manual Mode"
+    last_trainer_state, last_opponent_personality, trainer_info, opponent_info, emu_info, party_info, emu_speed = None, None, None, None, None, None, 1
+    ImageFile.LOAD_TRUNCATED_IMAGES = True
 
-    debug_log.info(f"Mode: {config['bot_mode']}")
+    # Main bot functionality
+    if can_start_bot:
+        config["bot_mode"] = config["bot_mode"].lower() # Decase all bot modes
+        
+        if args.s: config["game_save"].append("save_game_on_start")
+        if args.m: config["bot_mode"] = "Manual Mode"
+
+        debug_log.info(f"Mode: {config['bot_mode']}")
+
+        default_input = {"A": False, "B": False, "L": False, "R": False, "Up": False, "Down": False, "Left": False, "Right": False, "Select": False, "Start": False, "Light Sensor": 0, "Power": False, "Tilt X": 0, "Tilt Y": 0, "Tilt Z": 0, "Screenshot": False}
+        press_input_mmap = mmap.mmap(-1, 256, tagname="bizhawk_press_input", access=mmap.ACCESS_WRITE)
+        press_input = default_input
+        hold_input_mmap = mmap.mmap(-1, 256, tagname="bizhawk_hold_input", access=mmap.ACCESS_WRITE)
+        hold_input = default_input
+
+        poll_screenshot = Thread(target=mem_pollScreenshot)
+        poll_screenshot.start()
+
+        get_emu_info = Thread(target=mem_getEmuInfo)
+        get_emu_info.start()
+
+        get_trainer_info = Thread(target=mem_getTrainerInfo)
+        get_trainer_info.start()
+
+        get_party_info = Thread(target=mem_getPartyInfo)
+        get_party_info.start()
+
+        get_opponent_info = Thread(target=mem_getOpponentInfo)
+        get_opponent_info.start()
+        
+        send_inputs = Thread(target=mem_sendInputs)
+        send_inputs.start()
+
+        main_loop = Thread(target=mainLoop)
+        main_loop.start()
+
+    # Dashboard
+    http_server = Thread(target=httpServer)
+    http_server.start()
 
     item_list = json.loads(read_file("data/items.json"))
     location_list = json.loads(read_file("data/locations.json"))
@@ -1291,47 +1329,15 @@ try:
     if read_file("stats/shiny_log.json"): shiny_log = json.loads(read_file("stats/shiny_log.json")) # Open shiny log file
     else: shiny_log = {"shiny_log": []}
 
-    default_input = {"A": False, "B": False, "L": False, "R": False, "Up": False, "Down": False, "Left": False, "Right": False, "Select": False, "Start": False, "Light Sensor": 0, "Power": False, "Tilt X": 0, "Tilt Y": 0, "Tilt Z": 0, "Screenshot": False}
-    press_input_mmap = mmap.mmap(-1, 256, tagname="bizhawk_press_input", access=mmap.ACCESS_WRITE)
-    press_input = default_input
-    hold_input_mmap = mmap.mmap(-1, 256, tagname="bizhawk_hold_input", access=mmap.ACCESS_WRITE)
-    hold_input = default_input
+    def on_window_close(): 
+        debug_log.info("Dashboard closed on user input")
+        os._exit(1)
 
-    last_trainer_state, last_opponent_personality, trainer_info, opponent_info, emu_info, party_info, emu_speed = None, None, None, None, None, None, 1
-    ImageFile.LOAD_TRUNCATED_IMAGES = True
-
-    def on_window_close(): os._exit(1)
     window = webview.create_window("PokeBot", url="interface/dashboard.html", width=1280, height=720, resizable=True, hidden=False, frameless=False, easy_drag=True, fullscreen=False, text_select=True, zoomable=True)
     window.events.closed += on_window_close
 
-    # Set up and launch threads if screenshot is detected in memory (Lua script is running in Bizhawk)
-    if mmap.mmap(0, mmap_screenshot_size, mmap_screenshot_file):
+    webview.start()
 
-        poll_screenshot = Thread(target=mem_pollScreenshot)
-        poll_screenshot.start()
-
-        get_emu_info = Thread(target=mem_getEmuInfo)
-        get_emu_info.start()
-
-        get_trainer_info = Thread(target=mem_getTrainerInfo)
-        get_trainer_info.start()
-
-        get_party_info = Thread(target=mem_getPartyInfo)
-        get_party_info.start()
-
-        get_opponent_info = Thread(target=mem_getOpponentInfo)
-        get_opponent_info.start()
-        
-        send_inputs = Thread(target=mem_sendInputs)
-        send_inputs.start()
-
-        http_server = Thread(target=httpServer)
-        http_server.start()
-
-        main_loop = Thread(target=mainLoop)
-        main_loop.start()
-
-        webview.start()
 except Exception as e:
     debug_log.exception(str(e))
     os._exit(1)
