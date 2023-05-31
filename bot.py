@@ -803,40 +803,44 @@ def identify_pokemon(starter: bool = False): # Identify opponent pokemon and inc
                 pickup_items()
 
             if replace_battler:
-                start_menu("pokemon")
-
-                # Find another healthy battler
-                party_pp = [0, 0, 0, 0, 0, 0]
-                i = 0
-                for mon in party_info:
-                    if mon["hp"] > 0 and i != 0:
-                        for move in mon["enrichedMoves"]:
-                            if is_valid_move(move):
-                                party_pp[i] += move["pp"]
-
-                    i += 1
-
-                highest_pp = max(party_pp)
-                lead_idx = party_pp.index(highest_pp)
-
-                if highest_pp == 0:
-                    debug_log.info("Ran out of Pokemon to battle with. Ending the script!")
+                if not config["cycle_lead_pokemon"]:
+                    debug_log.info("Lead Pokemon can no longer battle. Ending the script!")
                     os._exit(1)
+                else:
+                    start_menu("pokemon")
 
-                debug_log.info(f"Replacing lead battler with {party_info[lead_idx]['speciesName']} (Party slot {lead_idx})")
+                    # Find another healthy battler
+                    party_pp = [0, 0, 0, 0, 0, 0]
+                    i = 0
+                    for mon in party_info:
+                        if mon["hp"] > 0 and i != 0:
+                            for move in mon["enrichedMoves"]:
+                                if is_valid_move(move):
+                                    party_pp[i] += move["pp"]
 
-                # Scroll to and select SWITCH
-                while not find_image("start_menu/select.png"):
+                        i += 1
+
+                    highest_pp = max(party_pp)
+                    lead_idx = party_pp.index(highest_pp)
+
+                    if highest_pp == 0:
+                        debug_log.info("Ran out of Pokemon to battle with. Ending the script!")
+                        os._exit(1)
+
+                    debug_log.info(f"Replacing lead battler with {party_info[lead_idx]['speciesName']} (Party slot {lead_idx})")
+
+                    # Scroll to and select SWITCH
+                    while not find_image("start_menu/select.png"):
+                        emu_combo(["A", "100ms"])
+                    
+                    emu_combo(["Up", "500ms", "Up", "500ms", "Up", "500ms", "A", "500ms"])
+
+                    for i in range(0, lead_idx):
+                        emu_combo(["Down", "100ms"])
+
+                    # Select target Pokemon and close out menu
                     emu_combo(["A", "100ms"])
-                
-                emu_combo(["Up", "500ms", "Up", "500ms", "Up", "500ms", "A", "500ms"])
-
-                for i in range(0, lead_idx):
-                    emu_combo(["Down", "100ms"])
-
-                # Select target Pokemon and close out menu
-                emu_combo(["A", "100ms"])
-                emu_combo(["50ms", "B", "300ms", "B", "50ms"])
+                    emu_combo(["50ms", "B", "300ms", "B", "50ms"])
             return False
     except Exception as e:
         if args.dm: debug_log.exception(str(e))
