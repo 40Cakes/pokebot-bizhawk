@@ -78,7 +78,7 @@ def load_json_mmap(size, file): # Function to load a JSON object from a memory m
         return False
 
 def frames_to_ms(frames: float):
-    return (frames/60.0)/emu_speed
+    return max((frames/60.0) / emu_speed, 0.02)
 
 # Pre-compile sleep pattern regex
 sleep_pattern = re.compile("^\d*\.?\d*ms$")
@@ -124,7 +124,7 @@ def release_all_inputs(): # Function to release all keys in all input objects
 def opponent_changed(): # This function checks if there is a different opponent since last check, indicating the game state is probably now in a battle
     try:
         global last_opponent_personality
-        debug_log.info(f"Checking if opponent has changed... Previous PID: {last_opponent_personality}, New PID: {opponent_info['personality']}")
+        #debug_log.info(f"Checking if opponent has changed... Previous PID: {last_opponent_personality}, New PID: {opponent_info['personality']}")
 
         # Fixes a bug where the bot checks the opponent for up to 20 seconds if it was last closed in a battle
         if trainer_info["state"] == GameState.OVERWORLD:
@@ -166,7 +166,7 @@ def find_image(file: str): # Function to find an image in a BizHawk screenshot
         profile_start = time.time() # Performance profiling
         threshold = 0.999
         if args.di: debug_log.debug(f"Searching for image {file} (threshold: {threshold})")
-        template = cv2.imread(f"data/templates/{lang}/" + file, cv2.IMREAD_UNCHANGED)
+        template = cv2.imread(f"data/templates/{language}/" + file, cv2.IMREAD_UNCHANGED)
         hh, ww = template.shape[:2]
     
         correlation = cv2.matchTemplate(g_bizhawk_screenshot, template[:,:,0:3], cv2.TM_CCORR_NORMED) # Do masked template matching and save correlation image
@@ -194,6 +194,8 @@ def find_image(file: str): # Function to find an image in a BizHawk screenshot
         if args.di: debug_log.exception(str(e))
         return False
 
+no_sleep_abilities = ["Shed Skin", "Insomnia", "Vital Spirit"]
+
 def catch_pokemon(): # Function to catch pokemon
     try:
         while not find_image("battle/fight.png"):
@@ -205,12 +207,14 @@ def catch_pokemon(): # Function to catch pokemon
         else:
             debug_log.info("Attempting to catch Pokemon...")
         
-        if "spore" in config["catch"]: # Use Spore to put opponent to sleep to make catches much easier
+        if config["use_spore"]: # Use Spore to put opponent to sleep to make catches much easier
             debug_log.info("Attempting to sleep the opponent...")
-            i = 0
-            spore_pp = 0
+            i, spore_pp = 0, 0
             
-            if (opponent_info["status"] == 0) and (opponent_info["name"] not in config["no_sleep_pokemon"]):
+            ability = opponent_info["ability"][opponent_info["altAbility"]]
+            can_sleep = ability not in no_sleep_abilities
+
+            if (opponent_info["status"] == 0) and can_sleep:
                 for move in party_info[0]["enrichedMoves"]:
                     if move["name"] == "Spore":
                         spore_pp = move["pp"]
@@ -228,6 +232,8 @@ def catch_pokemon(): # Function to catch pokemon
                         emu_combo(seq)
 
                     emu_combo(["A", "4000ms"]) # Select move and wait for animations
+            elif not can_sleep:
+                debug_log.info(f"Can't sleep the opponent! Ability is {ability}")
 
             while not find_image("battle/bag.png"): emu_combo(["button_release:all", "B", "Up", "Right"]) # Press B + up + right until BAG menu is visible
 
@@ -275,7 +281,7 @@ def catch_pokemon(): # Function to catch pokemon
 
                 time.sleep(frames_to_ms(120)) # Wait for animations
                 
-                if "save_game_after_catch" in config["game_save"]: 
+                if config["save_game_after_catch"]: 
                     save_game()
                 
                 return True
@@ -312,8 +318,6 @@ def battle(): # Function to battle wild pokemon
 
             i = int(best_move["index"])
             
-            debug_log.info(i)
-
             if i == 0:
                 emu_combo(["Up", "Left"])
             elif i == 1:
@@ -328,11 +332,9 @@ def battle(): # Function to battle wild pokemon
             if opponent_info["hp"] == 0:
                 foe_fainted = True
             elif party_info[0]["hp"] == 0:
-                ally_fainted = True
-        if ally_fainted:
-            debug_log.info("Lead Pokemon fainted!")
-            flee_battle()
-            return False
+                debug_log.info("Lead Pokemon fainted!")
+                flee_battle()
+                return False
 
         while trainer_info["state"] != GameState.OVERWORLD:
             if find_image("stop_learning.png"): # Check if our Pokemon is trying to learn a move and skip learning
@@ -424,6 +426,8 @@ def run_until_obstructed(direction: str, run: bool = True): # Function to run un
         
         release_button(direction)
         press_button("B") # press and release B in case of a random pokenav call
+
+        return [last_x, last_y]
     except Exception as e:
         if args.d: debug_log.exception(str(e))
 
@@ -505,25 +509,33 @@ def follow_path(coords: list):
 
     try:
         for x, y, *map_data in coords:
-            debug_log.info(f"Current: X: {trainer_info['posX']}, Y: {trainer_info['posY']}, Map: [({trainer_info['mapBank']},{trainer_info['mapId']})]")
-            debug_log.info(f"Pathing: X: {x}, Y: {y}, Map: {map_data}")
+            #debug_log.info(f"Current: X: {trainer_info['posX']}, Y: {trainer_info['posY']}, Map: [({trainer_info['mapBank']},{trainer_info['mapId']})]")
+            #debug_log.info(f"Pathing: X: {x}, Y: {y}, Map: {map_data}")
             while not run_to_pos(x, y, map_data): continue
             else: release_all_inputs()
     except Exception as e:
         if args.dm: debug_log.exception(str(e))
         return False
 
+menus = ["bag", "bot", "exit", "option", "pokedex", "pokemon", "pokenav", "save"]
+
 def start_menu(entry: str): # Function to open any start menu item - presses START, finds the menu entry and opens it
     try:
-        if entry in ["bag", "bot", "exit", "option", "pokedex", "pokemon", "pokenav", "save"]:
+        if entry in menus:
             debug_log.info(f"Opening start menu entry: {entry}")
             filename = f"start_menu/{entry.lower()}.png"
             
             release_all_inputs()
-            emu_combo(["Start", "200ms"]) # Open start menu
+
+            # Press start until menu is visible
+            while True:
+                emu_combo(["Start", "200ms"])
+
+                if find_image(f"start_menu/select.png"):
+                    break
 
             while not find_image(filename): # Find menu entry
-                emu_combo(["Down", "200ms"])
+                emu_combo(["Down", "150ms"])
 
             while find_image(filename): # Press menu entry
                 emu_combo(["A", "200ms"])
@@ -539,7 +551,7 @@ def bag_menu(category: str, item: str): # Function to find an item in the bag an
             debug_log.info(f"Scrolling to bag category: {category}...")
 
             while not find_image(f"start_menu/bag/{category.lower()}.png"):
-                emu_combo(["Right", "300ms"]) # Press right until the correct category is selected
+                emu_combo(["Right", "400ms"]) # Press right until the correct category is selected
             time.sleep(frames_to_ms(60)) # Wait for animations
 
             debug_log.info(f"Scanning for item: {item}...")
@@ -559,35 +571,48 @@ def bag_menu(category: str, item: str): # Function to find an item in the bag an
         if args.di: debug_log.exception(str(e))
         return False
 
+pickup_pokemon = ["Meowth", "Aipom", "Phanpy", "Teddiursa", "Zigzagoon", "Linoone"]
+
 def pickup_items(): # If using a team of Pokemon with the ability "pickup", this function will take the items from the pokemon in your party if 3 or more Pokemon have an item
     try:
+        if trainer_info["state"] != GameState.OVERWORLD:
+            return
+
         debug_log.info("Checking for pickup items...")
         item_count = 0
-        pickup_pokemon = ["ZIGZAGOON", "LINOONE"]
+        pickup_mon_count = 0
 
-        for i in range(1, 6):
-            try:
-                pokemon = party_info[i]
-                if pokemon["speciesName"] in pickup_pokemon:
-                    debug_log.info(f"Pokemon {i}: {pokemon['speciesName']} has item: {item_list[pokemon['heldItem']]}")
-                    if pokemon["heldItem"] != 0: item_count += 1
-            except Exception as e: 
-                if args.dm: debug_log.exception(str(e))
+        for i in range(0, 6):
+            pokemon = party_info[i]
+            held_item = pokemon['heldItem']
 
-        if item_count >= 3: # Only run if 3 or more Pokemon have an item
-            time.sleep(frames_to_ms(30)) # Wait for animations
-            start_menu("pokemon") # Open Pokemon menu
+            if pokemon["speciesName"] in pickup_pokemon:
+                if held_item != 0:
+                    item_count += 1
 
-            for i in range(1, 6):
-                pokemon = party_info[i]
+                pickup_mon_count += 1
+                debug_log.info(f"Pokemon {i}: {pokemon['speciesName']} has item: {item_list[held_item]}")
 
-                if item_count > 0:
-                    if pokemon["speciesName"] in pickup_pokemon:
-                        if pokemon["heldItem"] != 0:
-                            emu_combo(["Down", "50ms", "A", "50ms", "Down", "50ms", "Down", "50ms", "A", "50ms", "Down", "50ms", "A", "1000ms", "B", "50ms"]) # Take the item from the pokemon
-                            item_count -= 1
-                        else: emu_combo(["50ms", "Down"])
-            emu_combo(["B", "1500ms", "B"]) # Close out of menus
+        if item_count < config["pickup_threshold"]:
+            return
+
+        time.sleep(frames_to_ms(60)) # Wait for animations
+        start_menu("pokemon") # Open Pokemon menu
+        time.sleep(frames_to_ms(60))
+
+        for i in range(0, 6):
+            pokemon = party_info[i]
+            if pokemon["speciesName"] in pickup_pokemon and pokemon["heldItem"] != 0:
+                # Take the item from the pokemon
+                emu_combo(["200ms", "A", "50ms", "Up", "50ms", "Up", "50ms", "A", "50ms", "Down", "50ms", "A", "1000ms", "B", "200ms"])
+                item_count -= 1
+            
+            if item_count == 0:
+                break
+
+            emu_combo(["200ms", "Down"])
+
+        emu_combo(["50ms", "B", "300ms", "B", "50ms"]) # Close out of menus
     except Exception as e:
         if args.dm: debug_log.exception(str(e))
 
@@ -686,13 +711,15 @@ def identify_pokemon(starter: bool = False): # Identify opponent pokemon and inc
         if starter: pokemon = party_info[0]
         else: pokemon = opponent_info
 
+        replace_battler = False
         debug_log.info(f"------------------ {pokemon['name']} ------------------")
         debug_log.debug(pokemon)
         debug_log.info(f"Encountered a {pokemon['name']} at {pokemon['metLocationName']}")
         debug_log.info(f"HP: {pokemon['hpIV']} | ATK: {pokemon['attackIV']} | DEF: {pokemon['defenseIV']} | SPATK: {pokemon['spAttackIV']} | SPDEF: {pokemon['spDefenseIV']} | SPE: {pokemon['speedIV']}")
         debug_log.info(f"Shiny Value (SV): {pokemon['shinyValue']:,} (is {pokemon['shinyValue']:,} < 8 = {pokemon['shiny']})")
 
-        if not pokemon["name"] in stats["pokemon"]: stats["pokemon"].update({pokemon["name"]: {"encounters": 0, "shiny_encounters": 0, "phase_lowest_sv": "-", "phase_encounters": 0, "shiny_average": "-", "total_lowest_sv": "-"}}) # Set up pokemon stats if first encounter
+        if not pokemon["name"] in stats["pokemon"]: 
+            stats["pokemon"].update({pokemon["name"]: {"encounters": 0, "shiny_encounters": 0, "phase_lowest_sv": "-", "phase_encounters": 0, "shiny_average": "-", "total_lowest_sv": "-"}}) # Set up pokemon stats if first encounter
 
         if pokemon["shiny"]:
             debug_log.info("Shiny Pokemon detected!")
@@ -713,7 +740,7 @@ def identify_pokemon(starter: bool = False): # Identify opponent pokemon and inc
 
             if not args.n: write_file("stats/totals.json", json.dumps(stats, indent=4, sort_keys=True)) # Save stats file
 
-            if not starter and config["bot_mode"] not in ["Manual Mode", "Rayquaza", "Kyogre", "Groudon"] and "shinies" in config["catch"]: 
+            if not starter and config["bot_mode"] not in ["manual", "rayquaza", "kyogre", "groudon"] and "shinies" in config["catch"]: 
                 catch_pokemon()
 
             if not args.n: write_file("stats/totals.json", json.dumps(stats, indent=4, sort_keys=True)) # Save stats file
@@ -735,7 +762,7 @@ def identify_pokemon(starter: bool = False): # Identify opponent pokemon and inc
     
             common_stats()
     
-            if config["bot_mode"] == "Manual Mode":
+            if config["bot_mode"] == "manual":
                 while trainer_info["state"] != GameState.OVERWORLD: 
                     time.sleep(frames_to_ms(100))
             elif not starter:
@@ -761,10 +788,43 @@ def identify_pokemon(starter: bool = False): # Identify opponent pokemon and inc
                 # --- Catch Lonely natured Ralts with >25 attackIV and spAttackIV ---
                 #elif pokemon["name"] == "Ralts" and pokemon["attackIV"] > 25 and pokemon["spAttackIV"] > 25 and pokemon["nature"] == "Lonely": catch_pokemon()
 
-                elif "wild_pokemon" in config["battle"]: 
-                    battle()
-                else: 
+                elif config["battle_others"]: 
+                    replace_battler = not battle()
+                else:
                     flee_battle()
+
+            if config["pickup"]: 
+                pickup_items()
+
+            if replace_battler:
+                start_menu("pokemon")
+
+                # Find another healthy battler
+                party_pp = [0, 0, 0, 0, 0, 0]
+                i = 0
+                for mon in party_info:
+                    if mon["hp"] > 0 and i != 0:
+                        for move in mon["enrichedMoves"]:
+                            party_pp[i] += move["pp"]
+
+                    i += 1
+
+                lead_idx = party_pp.index(max(party_pp))
+
+                debug_log.info(f"Replacing lead battler with {party_info[lead_idx]['speciesName']} (Party slot {lead_idx})")
+
+                # Scroll to and select SWITCH
+                while not find_image("start_menu/select.png"):
+                    emu_combo(["A", "100ms"])
+                
+                emu_combo(["Up", "500ms", "Up", "500ms", "Up", "500ms", "A", "500ms"])
+
+                for i in range(0, lead_idx):
+                    emu_combo(["Down", "100ms"])
+
+                # Select target Pokemon and close out menu
+                emu_combo(["A", "100ms"])
+                emu_combo(["50ms", "B", "300ms", "B", "50ms"])
             return False
     except Exception as e:
         if args.dm: debug_log.exception(str(e))
@@ -782,6 +842,7 @@ def enrich_mon_data(pokemon: dict): # Function to add information to the pokemon
         pokemon["name"] = pokemon["speciesName"].capitalize() # Capitalise name
         pokemon["metLocationName"] = location_list[pokemon["metLocation"]] # Add a human readable location
         pokemon["type"] = pokemon_list[pokemon["name"]]["type"] # Get pokemon types
+        pokemon["ability"] = pokemon_list[pokemon["name"]]["ability"] # Get pokemon abilities
         pokemon["hiddenPowerType"] = calculate_hidden_power(pokemon)
         pokemon["nature"] = nature_list[pokemon["personality"] % 25] # Get pokemon nature
         pokemon["zeroPadNumber"] = f"{pokemon_list[pokemon['name']]['number']:03}" # Get zero pad number - e.g.: #5 becomes #005
@@ -809,9 +870,18 @@ def enrich_mon_data(pokemon: dict): # Function to add information to the pokemon
             moves = pokemon["moves"]
             debug_log.info(f"Moves: {moves}") 
 
+def language_id_to_iso_639(lang: int):
+    match lang:
+        case 1: return "en"
+        case 2: return "jp"
+        case 3: return "fr"
+        case 4: return "es"
+        case 5: return "de"
+        case 6: return "it"
+
 def mem_getEmuInfo(): # Loop repeatedly to read emulator info from memory
     try:
-        global emu_info, emu_speed
+        global emu_info, emu_speed, language
 
         while True:
             try:
@@ -820,6 +890,10 @@ def mem_getEmuInfo(): # Loop repeatedly to read emulator info from memory
                     if validate_emu_info(emu_info_mmap["emu"]):
                         emu_info = emu_info_mmap["emu"]
                         if emu_info_mmap["emu"]["emuFPS"]: emu_speed = emu_info_mmap["emu"]["emuFPS"]/60
+
+                        if language == None:
+                            language = language_id_to_iso_639(emu_info["language"])
+                            debug_log.info(f"Language was set to {language}")                        
             except Exception as e:
                 if args.dm: debug_log.exception(str(e))
                 continue
@@ -956,16 +1030,18 @@ def httpServer(): # Run HTTP server to make data available via HTTP GET
 def mainLoop(): # 🔁 Main loop
     try:
         global last_opponent_personality
-        if "save_game_on_start" in config["game_save"]: save_game()
+        
+        if config["save_game_on_start"]: save_game()
         release_all_inputs()
 
         while True:
-            if trainer_info and emu_info:
-                if "pickup" in config["battle"]: 
-                    pickup_items()
+            # Don't start bot until language is set
+            if language == None:
+                continue
 
+            if trainer_info and emu_info:
                 match config["bot_mode"]:
-                    case "manual mode":
+                    case "manual":
                         while not opponent_changed(): 
                             time.sleep(frames_to_ms(20))
                         identify_pokemon()
@@ -973,8 +1049,10 @@ def mainLoop(): # 🔁 Main loop
                         mode_sweetScent()
                     case "bunny hop":
                         mode_bunnyHop()
-                    case "run/surf between coords" | "run/surf until obstructed":
-                        mode_runSurf()
+                    case "move between coords":
+                        mode_move_between_coords()
+                    case "move until obstructed":
+                        mode_move_until_obstructed()
                     case "fishing":
                         mode_fishing()
                     case "starters":
@@ -1032,23 +1110,37 @@ def mode_bunnyHop():
     release_all_inputs()
     identify_pokemon()
 
-def mode_runSurf():
-    debug_log.info(f"Running/Surfing...")
+def mode_move_between_coords():
+    coords = config["coords"]
+    pos1, pos2 = coords["pos1"], coords["pos2"]
+
     while not opponent_changed():
-        if config["bot_mode"] == "run/surf between coords":
-            follow_path([(config["run_surf"]["coord1"][0], config["run_surf"]["coord1"][1]), (config["run_surf"]["coord2"][0], config["run_surf"]["coord2"][1])])
-        elif config["bot_mode"] == "run/surf until obstructed":
-            run_until_obstructed(config["obstructed_dir"][0])
-            run_until_obstructed(config["obstructed_dir"][1])
-    identify_pokemon()
+        follow_path([(pos1[0], pos1[1]), (pos2[0], pos2[1])])
+
+def mode_move_until_obstructed():
+    pos1, pos2 = None, None
+    direction = config["direction"].lower()
+
+    while not opponent_changed():
+        if pos1 == None or pos2 == None:
+            if direction == "horizontal":
+                pos1 = run_until_obstructed("Left")
+                pos2 = run_until_obstructed("Right")
+            else:
+                pos1 = run_until_obstructed("Up")
+                pos2 = run_until_obstructed("Down")
+        else:
+            follow_path([(pos1[0], pos1[1]), (pos2[0], pos2[1])])
 
 def mode_fishing():
     debug_log.info(f"Fishing...")
     emu_combo(["Select", "800ms"]) # Cast rod and wait for fishing animation
+
     while not opponent_changed():
         if find_image("oh_a_bite.png") or find_image("on_the_hook.png"): emu_combo(["100ms", "A", "100ms"])
         if find_image("not_even_a_nibble.png") or find_image("it_got_away.png"): emu_combo(["B", "100ms", "Select"])
         if not find_image("text_period.png"): emu_combo(["Select", "800ms"]) # Re-cast rod if the fishing text prompt is not visible
+
     identify_pokemon()
 
 def mode_starters():
@@ -1237,15 +1329,15 @@ try:
 
     config = yaml.load(read_file("config.yml")) # Load config
 
-    last_trainer_state, last_opponent_personality, trainer_info, opponent_info, emu_info, party_info, emu_speed = None, None, None, None, None, None, 1
+    last_trainer_state, last_opponent_personality, trainer_info, opponent_info, emu_info, party_info, emu_speed, language = None, None, None, None, None, None, 1, None
     ImageFile.LOAD_TRUNCATED_IMAGES = True
 
     # Main bot functionality
-    if can_start_bot:
+    if can_start_bot:        
+        if args.s: config["save_game_on_start"] = True
+        if args.m: config["bot_mode"] = "Manual"
+
         config["bot_mode"] = config["bot_mode"].lower() # Decase all bot modes
-        
-        if args.s: config["game_save"].append("save_game_on_start")
-        if args.m: config["bot_mode"] = "Manual Mode"
 
         debug_log.info(f"Mode: {config['bot_mode']}")
 
@@ -1276,36 +1368,42 @@ try:
         main_loop = Thread(target=mainLoop)
         main_loop.start()
 
+        item_list = json.loads(read_file("data/items.json"))
+        location_list = json.loads(read_file("data/locations.json"))
+        move_list = json.loads(read_file("data/moves.json"))
+        pokemon_list = json.loads(read_file("data/pokemon.json"))
+        type_list = json.loads(read_file("data/types.json"))
+        nature_list = json.loads(read_file("data/natures.json"))
+
+        pokemon_schema = json.loads(read_file("data/schemas/pokemon.json"))
+        validate_pokemon = fastjsonschema.compile(pokemon_schema)
+        trainer_info_schema = json.loads(read_file("data/schemas/trainer_info.json"))
+        validate_trainer_info = fastjsonschema.compile(trainer_info_schema)
+        emu_info_schema = json.loads(read_file("data/schemas/emu_info.json"))
+        validate_emu_info = fastjsonschema.compile(emu_info_schema)
+
     # Dashboard
     http_server = Thread(target=httpServer)
     http_server.start()
 
-    item_list = json.loads(read_file("data/items.json"))
-    location_list = json.loads(read_file("data/locations.json"))
-    move_list = json.loads(read_file("data/moves.json"))
-    pokemon_list = json.loads(read_file("data/pokemon.json"))
-    type_list = json.loads(read_file("data/types.json"))
-    nature_list = json.loads(read_file("data/natures.json"))
-    lang = config["language"]
-
-    pokemon_schema = json.loads(read_file("data/schemas/pokemon.json"))
-    validate_pokemon = fastjsonschema.compile(pokemon_schema)
-    trainer_info_schema = json.loads(read_file("data/schemas/trainer_info.json"))
-    validate_trainer_info = fastjsonschema.compile(trainer_info_schema)
-    emu_info_schema = json.loads(read_file("data/schemas/emu_info.json"))
-    validate_emu_info = fastjsonschema.compile(emu_info_schema)
-
     os.makedirs("stats", exist_ok=True) # Sets up stats files if they don't exist
-    if read_file("stats/totals.json"): stats = json.loads(read_file("stats/totals.json")) # Open totals stats file
+
+    totals = read_file("stats/totals.json")
+    if totals: stats = json.loads(totals)
     else: stats = {"pokemon": {}, "totals": {"longest_phase_encounters": 0, "shortest_phase_encounters": "-", "phase_lowest_sv": 99999, "phase_lowest_sv_pokemon": "", "encounters": 0, "phase_encounters": 0, "shiny_average": "-", "shiny_encounters": 0}}
 
-    if read_file("stats/encounter_log.json"): encounter_log = json.loads(read_file("stats/encounter_log.json")) # Open encounter log file
+    encounters = read_file("stats/encounter_log.json")
+    if encounters: encounter_log = json.loads(encounters)
     else: encounter_log = {"encounter_log": []}
 
-    if read_file("stats/shiny_log.json"): shiny_log = json.loads(read_file("stats/shiny_log.json")) # Open shiny log file
+    shinies = read_file("stats/shiny_log.json")
+    if shinies: shiny_log = json.loads(shinies) # Open shiny log file
     else: shiny_log = {"shiny_log": []}
 
-    def on_window_close(): 
+    def on_window_close():
+        if can_start_bot:
+            release_all_inputs()
+
         debug_log.info("Dashboard closed on user input")
         os._exit(1)
 
