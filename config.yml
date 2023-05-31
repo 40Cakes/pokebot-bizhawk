@@ -1,5 +1,5 @@
 # Bot Setup
-bot_mode: Move until obstructed
+bot_mode: starters
 coords:
   pos1:
     - 38

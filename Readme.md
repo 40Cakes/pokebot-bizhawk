@@ -33,7 +33,7 @@ These are also available in the Discord channel `#running-examples`.
 # How it works
 There are 2 components of this bot:
 
-1.  `bizhawk.lua` is a Lua script that runs in Bizhawk's Lua console ([Bizhawk Scripting API](https://tasvideos.org/Bizhawk/LuaFunctions)).
+1.  `bizhawk.lua` is a Lua script that runs in Bizhawk's Lua console [Bizhawk Scripting API](https://tasvideos.org/Bizhawk/LuaFunctions).
 This Lua script reads a bunch of different locations GBA memory to extract information such as:
 
 TODO
