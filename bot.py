@@ -700,13 +700,15 @@ def identify_pokemon(starter: bool = False): # Identify opponent pokemon and inc
         debug_log.info("Identifying Pokemon...")
         release_all_inputs()
 
-        if starter: time.sleep(frames_to_ms(50))
+        if starter: 
+            time.sleep(frames_to_ms(30))
         else:
             i = 0
             while trainer_info["state"] not in [3, 255] and i < 250:
                 press_button("B")
                 i += 1
-        if trainer_info["state"] == GameState.OVERWORLD: return False
+        if trainer_info["state"] == GameState.OVERWORLD: 
+            return False
 
         if starter: pokemon = party_info[0]
         else: pokemon = opponent_info
@@ -1146,30 +1148,42 @@ def mode_fishing():
 def mode_starters():
     debug_log.info(f"Soft resetting starter Pokemon...")
     release_all_inputs()
-    while trainer_info["state"] != GameState.OVERWORLD: press_button("A")
+
+    while trainer_info["state"] != GameState.OVERWORLD: 
+        press_button("A")
 
     if read_file(f"stats/{trainer_info['tid']}.json"): starter_frames = json.loads(read_file(f"stats/{trainer_info['tid']}.json")) # Open starter frames file
     else: starter_frames = {"rngState": {"Treecko": [], "Torchic": [], "Mudkip": []}}
 
-    while trainer_info["state"] == GameState.OVERWORLD: press_button("A")
+    # 50ms delay between A inputs to prevent accidental selection confirmations
+    while trainer_info["state"] == GameState.OVERWORLD: 
+        emu_combo(["A", "50ms"])
+
+    # Press B to back out of an accidental selection when scrolling to chosen starter
     if config["starter_pokemon"] == "Mudkip":
-        while not find_image("mudkip.png"): press_button("Right")
+        while not find_image("mudkip.png"): 
+            emu_combo(["B", "Right"])
     elif config["starter_pokemon"] == "Treecko":
-        while not find_image("treecko.png"): press_button("Left")
+        while not find_image("treecko.png"): 
+            emu_combo(["B", "Left"])
 
     while emu_info["rngState"] in starter_frames["rngState"][config["starter_pokemon"]]:
         debug_log.debug(f"Already rolled on RNG state: {emu_info['rngState']}, waiting...")
     else:
         starter_frames["rngState"][config["starter_pokemon"]].append(emu_info["rngState"])
+
         write_file(f"stats/{trainer_info['tid']}.json", json.dumps(starter_frames, indent=4, sort_keys=True))
-        while trainer_info["state"] == GameState.MISC_MENU: press_button("A")
+        
+        while trainer_info["state"] == GameState.MISC_MENU: 
+            press_button("A")
         while not find_image("battle/fight.png"):
-            release_all_inputs()
-            emu_combo(["B", "Up", "Left"]) # Press B + up + left until FIGHT menu is visible
+            press_button("B")
         while True:
             try:
                 if party_info[0]:
-                    if identify_pokemon(starter=True): input("Pausing bot for manual catch (don't forget to pause bizhawk.lua script so you can provide inputs). Press Enter to continue...") # Kill bot and wait for manual intervention to manually catch the shiny starter
+                    if identify_pokemon(starter=True): 
+                        # Kill bot and wait for manual intervention
+                        input("Pausing bot for manual intervention. (Don't forget to pause the bizhawk.lua script so you can provide inputs). Press Enter to continue...")
                     else:
                         hold_button("Power")
                         time.sleep(frames_to_ms(50))
