@@ -332,11 +332,9 @@ def battle(): # Function to battle wild pokemon
             if opponent_info["hp"] == 0:
                 foe_fainted = True
             elif party_info[0]["hp"] == 0:
-                ally_fainted = True
-        if ally_fainted:
-            debug_log.info("Lead Pokemon fainted!")
-            flee_battle()
-            return False
+                debug_log.info("Lead Pokemon fainted!")
+                flee_battle()
+                return False
 
         while trainer_info["state"] != GameState.OVERWORLD:
             if find_image("stop_learning.png"): # Check if our Pokemon is trying to learn a move and skip learning
@@ -713,6 +711,7 @@ def identify_pokemon(starter: bool = False): # Identify opponent pokemon and inc
         if starter: pokemon = party_info[0]
         else: pokemon = opponent_info
 
+        replace_battler = False
         debug_log.info(f"------------------ {pokemon['name']} ------------------")
         debug_log.debug(pokemon)
         debug_log.info(f"Encountered a {pokemon['name']} at {pokemon['metLocationName']}")
@@ -790,10 +789,42 @@ def identify_pokemon(starter: bool = False): # Identify opponent pokemon and inc
                 #elif pokemon["name"] == "Ralts" and pokemon["attackIV"] > 25 and pokemon["spAttackIV"] > 25 and pokemon["nature"] == "Lonely": catch_pokemon()
 
                 elif config["battle_others"]: 
-                    battle()
-                else: 
+                    replace_battler = not battle()
                 else:
                     flee_battle()
+
+            if config["pickup"]: 
+                pickup_items()
+
+            if replace_battler:
+                start_menu("pokemon")
+
+                # Find another healthy battler
+                party_pp = [0, 0, 0, 0, 0, 0]
+                i = 0
+                for mon in party_info:
+                    if mon["hp"] > 0 and i != 0:
+                        for move in mon["enrichedMoves"]:
+                            party_pp[i] += move["pp"]
+
+                    i += 1
+
+                lead_idx = party_pp.index(max(party_pp))
+
+                debug_log.info(f"Replacing lead battler with {party_info[lead_idx]['speciesName']} (Party slot {lead_idx})")
+
+                # Scroll to and select SWITCH
+                while not find_image("start_menu/select.png"):
+                    emu_combo(["A", "100ms"])
+                
+                emu_combo(["Up", "500ms", "Up", "500ms", "Up", "500ms", "A", "500ms"])
+
+                for i in range(0, lead_idx):
+                    emu_combo(["Down", "100ms"])
+
+                # Select target Pokemon and close out menu
+                emu_combo(["A", "100ms"])
+                emu_combo(["50ms", "B", "300ms", "B", "50ms"])
             return False
     except Exception as e:
         if args.dm: debug_log.exception(str(e))
@@ -1043,9 +1074,6 @@ def mainLoop(): # 🔁 Main loop
                     case other:
                         debug_log.exception("Couldn't interpret bot mode: " + config["bot_mode"])
                         return
-
-                if config["pickup"]: 
-                    pickup_items()
             else:
                 if opponent_info: last_opponent_personality = opponent_info["personality"]
                 release_all_inputs()
@@ -1089,40 +1117,30 @@ def mode_move_between_coords():
     while not opponent_changed():
         follow_path([(pos1[0], pos1[1]), (pos2[0], pos2[1])])
 
-    identify_pokemon()
-    return True
-
 def mode_move_until_obstructed():
-    global bound1, bound2
     pos1, pos2 = None, None
     direction = config["direction"].lower()
 
     while not opponent_changed():
-        if bound1 == None or bound2 == None:
+        if pos1 == None or pos2 == None:
             if direction == "horizontal":
                 pos1 = run_until_obstructed("Left")
                 pos2 = run_until_obstructed("Right")
             else:
                 pos1 = run_until_obstructed("Up")
                 pos2 = run_until_obstructed("Down")
-
-            if bound1 == None: 
-                bound1 = pos1
-            if bound2 == None: 
-                bound2 = pos2
         else:
-            follow_path([(bound1[0], bound1[1]), (bound2[0], bound2[1])])
-
-    identify_pokemon()
-    return True
+            follow_path([(pos1[0], pos1[1]), (pos2[0], pos2[1])])
 
 def mode_fishing():
     debug_log.info(f"Fishing...")
     emu_combo(["Select", "800ms"]) # Cast rod and wait for fishing animation
+
     while not opponent_changed():
         if find_image("oh_a_bite.png") or find_image("on_the_hook.png"): emu_combo(["100ms", "A", "100ms"])
         if find_image("not_even_a_nibble.png") or find_image("it_got_away.png"): emu_combo(["B", "100ms", "Select"])
         if not find_image("text_period.png"): emu_combo(["Select", "800ms"]) # Re-cast rod if the fishing text prompt is not visible
+
     identify_pokemon()
 
 def mode_starters():
@@ -1311,7 +1329,7 @@ try:
 
     config = yaml.load(read_file("config.yml")) # Load config
 
-    last_trainer_state, last_opponent_personality, trainer_info, opponent_info, emu_info, party_info, emu_speed, language, bound1, bound2 = None, None, None, None, None, None, 1, None, None, None
+    last_trainer_state, last_opponent_personality, trainer_info, opponent_info, emu_info, party_info, emu_speed, language = None, None, None, None, None, None, 1, None
     ImageFile.LOAD_TRUNCATED_IMAGES = True
 
     # Main bot functionality
