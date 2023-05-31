@@ -30,13 +30,13 @@ import fastjsonschema                            # https://pypi.org/project/fast
 # Helper functions
 from data.HiddenPower import calculate_hidden_power
 from data.GameState import GameState
-from data.MapData import MapBank, MapID
+from data.MapData import mapRSE #mapFRLG
 
-def player_on_map(map_bank: int, map_id: int):
-    on_map = trainer_info["mapBank"] == map_bank and trainer_info["mapId"] == map_id
+def player_on_map(map_data: tuple):
+    on_map = trainer_info["mapBank"] == map_data[0][0] and trainer_info["mapId"] == map_data[0][1]
 
     if not on_map:
-        debug_log.info(f"Player was not on target map of {map_bank},{map_id}. Map was {trainer_info['mapBank']}, {trainer_info['mapId']}")
+        debug_log.info(f"Player was not on target map of {map_data[0][0]},{map_data[0][1]}. Map was {trainer_info['mapBank']}, {trainer_info['mapId']}")
 
     return on_map
 
@@ -881,7 +881,7 @@ def language_id_to_iso_639(lang: int):
 
 def mem_getEmuInfo(): # Loop repeatedly to read emulator info from memory
     try:
-        global emu_info, emu_speed, language
+        global emu_info, emu_speed, language, MapDataEnum
 
         while True:
             try:
@@ -893,7 +893,15 @@ def mem_getEmuInfo(): # Loop repeatedly to read emulator info from memory
 
                         if language == None:
                             language = language_id_to_iso_639(emu_info["language"])
-                            debug_log.info(f"Language was set to {language}")                        
+                            debug_log.info(f"Language was set to {language}")
+
+                        if not MapDataEnum and emu_info["detectedGame"]:
+                            match emu_info["detectedGame"]:
+                                case "Emerald" | "Ruby" | "Sapphire": 
+                                    debug.log.info("Detected game: " + emu_info["detectedGame"])
+                                    MapDataEnum = mapRSE
+                                #case "Fire Red" | "Leaf Green": MapDataEnum = map_FRLG
+
             except Exception as e:
                 if args.dm: debug_log.exception(str(e))
                 continue
@@ -1039,7 +1047,7 @@ def mainLoop(): # 🔁 Main loop
             if language == None:
                 continue
 
-            if trainer_info and emu_info:
+            if trainer_info and emu_info and MapDataEnum:
                 match config["bot_mode"]:
                     case "manual":
                         while not opponent_changed(): 
@@ -1177,7 +1185,7 @@ def mode_starters():
             except: continue
 
 def mode_rayquaza():
-    if not player_on_map(MapBank.DUNGEONS, MapID.RAYQUAZA_PILLAR):
+    if not player_on_map(MapDataEnum.SKY_PILLAR_G):
         return False
 
     if not trainer_info["posX"] == 14 and trainer_info["posY"] <= 12:
@@ -1186,7 +1194,7 @@ def mode_rayquaza():
     while True:
         emu_combo(["A", "Up"]) # Walk up toward Rayquaza while mashing A
 
-        if player_on_map(MapBank.DUNGEONS, MapID.RAYQUAZA_PILLAR) and trainer_info["posY"] < 7: # break if trainer passes the point where Rayquaza is meant to be (indicates Rayquaza has flown away)
+        if player_on_map(MapDataEnum.SKY_PILLAR_G) and trainer_info["posY"] < 7: # break if trainer passes the point where Rayquaza is meant to be (indicates Rayquaza has flown away)
             break
 
         if trainer_info["state"] != GameState.OVERWORLD:    
@@ -1197,37 +1205,37 @@ def mode_rayquaza():
     time.sleep(frames_to_ms(100))
     press_button("B")
 
-    follow_path([(14, 11), (12, 11), (12, 15), (16, 15), (16, -99, (24, 84)), (10, -99, (24, 85)), (12, 15), (12, 11), (14, 11), (14, 7)])
+    follow_path([(14, 11), (12, 11), (12, 15), (16, 15), (16, -99, MapDataEnum.SKY_PILLAR_F), (10, -99, MapDataEnum.SKY_PILLAR_G), (12, 15), (12, 11), (14, 11), (14, 7)])
 
 def mode_groudon():
-    if not player_on_map(MapBank.DUNGEONS, MapID.GROUDON_CAVE):
+    if not player_on_map(MapDataEnum.TERRA_CAVE_A):
         return False
 
     if not 11 <= trainer_info["posX"] <= 20 and 26 <= trainer_info["posY"] <= 27:
         return
 
     while True:
-        follow_path([(trainer_info["posX"], 26), (17, 26), (7, 26), (7, 15), (9, 15), (9, 4), (5, 4), (5, 99, (24, 104)), (14, -99, (24, 105)), (9, 4), (9, 15), (7, 15), (7, 26), (11, 26)])
+        follow_path([(trainer_info["posX"], 26), (17, 26), (7, 26), (7, 15), (9, 15), (9, 4), (5, 4), (5, 99, MapDataEnum.TERRA_CAVE), (14, -99, MapDataEnum.TERRA_CAVE_A), (9, 4), (9, 15), (7, 15), (7, 26), (11, 26)])
 
 def mode_kyogre():
-    if not player_on_map(MapBank.DUNGEONS, MapID.KYOGRE_CAVE):
+    if not player_on_map(MapDataEnum.MARINE_CAVE_A):
        return False
 
     if not 5 <= trainer_info["posX"] <= 14 and 26 <= trainer_info["posY"] <= 27:
         return
 
     while True:
-        follow_path([(trainer_info["posX"], 26), (9, 26), (9, 27), (18, 27), (18, 14), (14, 14), (14, 4), (20, 4), (20, 99, (24, 102)), (14, -99, (24, 103)), (14, 4), (14, 14), (18, 14), (18, 27), (14, 27)])
+        follow_path([(trainer_info["posX"], 26), (9, 26), (9, 27), (18, 27), (18, 14), (14, 14), (14, 4), (20, 4), (20, 99, MapDataEnum.MARINE_CAVE), (14, -99, MapDataEnum.MARINE_CAVE_A), (14, 4), (14, 14), (18, 14), (18, 27), (14, 27)])
 
 def mode_southernIsland():
-    if not player_on_map(MapBank.SPECIAL, MapID.LATI_ISLAND) :
+    if not player_on_map(MapDataEnum.SOUTHERN_ISLAND_A) :
         return False
 
     if not 5 <= trainer_info["posX"] == 13 and trainer_info["posY"] >= 12:
         return True
 
     while True:
-        follow_path([(13, 99, (26, 9)), (14, -99, (26, 10))])
+        follow_path([(13, 99, MapDataEnum.SOUTHERN_ISLAND), (14, -99, MapDataEnum.SOUTHERN_ISLAND_A)])
         i = 0
         while not opponent_changed():
             if i < 500:
@@ -1329,7 +1337,7 @@ try:
 
     config = yaml.load(read_file("config.yml")) # Load config
 
-    last_trainer_state, last_opponent_personality, trainer_info, opponent_info, emu_info, party_info, emu_speed, language = None, None, None, None, None, None, 1, None
+    last_trainer_state, last_opponent_personality, trainer_info, opponent_info, emu_info, party_info, emu_speed, language, MapDataEnum = None, None, None, None, None, None, 1, None, None
     ImageFile.LOAD_TRUNCATED_IMAGES = True
 
     # Main bot functionality
