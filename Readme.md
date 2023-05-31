@@ -1,13 +1,17 @@
 # PokeBot for BizHawk
 ### An automated shiny hunting bot for Pokemon Emerald
-
-## Supported games
-- ✅ Emerald Version (U)
-- ❌ Support for all other gen 3 games are coming soon (high priority)!
-
 These scripts are currently being used to complete and stream a Prof. Oak living ✨shiny✨ dex challenge in Pokemon emerald on [YouTube](https://www.youtube.com/watch?v=nVEONn19lZY) and [Twitch](https://www.twitch.tv/fortycakes). Feel free to join the [Discord](https://discord.gg/CXQDjGSeyV) to discuss the stream and get support for this bot.
 
 [![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/nVEONn19lZY/0.jpg)](https://www.youtube.com/watch?v=nVEONn19lZY)
+
+## Supported games
+|  | Ruby | Sapphire | Emerald | FireRed | LeafGreen | 
+|--| :--: | :--: | :--: | :--: | :--: |
+| English | ❌ | ❌ | ✅ | ❌ | ❌ |
+| Spanish | ❌ | ❌ | ✅ | ❌ | ❌ |
+| Japanese| ❌ | ❌ | ✅ | ❌ | ❌ |
+
+Support for all other gen 3 games are coming soon (high priority)!
 
 # Getting started
 For a guide on how to download and run this bot, check out [Wiki: Getting started](https://github.com/40Cakes/pokebot-bizhawk/wiki/Getting-started).
@@ -29,7 +33,7 @@ These are also available in the Discord channel `#running-examples`.
 # How it works
 There are 2 components of this bot:
 
-1.  `bizhawk.lua` is a Lua script that runs in Bizhawk's Lua console ([Bizhawk Scripting API](https://tasvideos.org/Bizhawk/LuaFunctions)).
+1.  `bizhawk.lua` is a Lua script that runs in Bizhawk's Lua console [Bizhawk Scripting API](https://tasvideos.org/Bizhawk/LuaFunctions).
 This Lua script reads a bunch of different locations GBA memory to extract information such as:
 
 2. Test
@@ -44,11 +48,7 @@ This project is just the result of a bored holiday, I am by no means a professio
 - Only 1 bot instance can run at a time (for now)
 
 # Todo
-- Fix auto catching (disabled by default, bot will just pause on a shiny)
-- Finish the GUI
-- Add egg hatching/breeding
-- Add roamer Pokemon tracking
-- Add config to catch certain Pokemon with specific balls
+See the ([Milestones page](https://github.com/40Cakes/pokebot-bizhawk/milestones)) for this repo.
 
 # Credits
 I'd like to give a huge shout out to the following projects and authors, as well as the devs of Bizhawk, all were instrumental in getting this bot working.

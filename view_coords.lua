@@ -1,5 +1,7 @@
-dofile ("data\\lua\\Memory.lua")
-dofile ("data\\lua\\GameSettings.lua")
+local utils = require("utils")
+
+dofile (utils.translatePath("data\\lua\\Memory.lua"))
+dofile (utils.translatePath("data\\lua\\GameSettings.lua"))
 
 GameSettings.initialize()
 

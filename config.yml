@@ -1,28 +1,46 @@
-bot_mode: Starters
-run_surf:
-  coord1:
-    - 10
-    - 5
-  coord2:
-    - 3
-    - 5
-obstructed_dir:
-  - Left
-  - Right
-manual_catch: true
+# Bot Setup
+bot_mode: starters
+coords:
+  pos1:
+    - 38
+    - 6
+  pos2:
+    - 39
+    - 6
+direction: Horizontal
+starter_pokemon: Mudkip
+
+# Wild Battles
+manual_catch: false
+use_spore: true
 catch:
 - shinies
-- spore
 - perfect_ivs
-battle: []
-starter_pokemon: Mudkip
-eco_mode: true
-game_save:
-- save_game_after_catch
+battle_others: true
+pokeball_priority:
+- premier_ball
+- ultra_ball
+- great_ball
+- poke_ball
+pokeball_override: # Per-species exceptions to pokeball_priority. Falls back to pokeball_priority if it has no Pokeballs in the list
+  Abra: 
+  - ultra_ball
+  - great_ball
+cycle_lead_pokemon: true
+save_game_after_catch: true
+save_game_on_start: false
+
+# Pickup
+pickup: true
+pickup_threshold: 2 # Number of pickup items to find before collection
+
+# Logging
 encounter_log_limit: 100
 log:
 - all_encounters
 - shiny_encounters
+  
+# Preferences
 control_map:
   a: x
   b: z
@@ -40,39 +58,43 @@ control_map:
   - r
 banned_moves:
 - None
+  # 2-turn
+- Bounce
+- Dig
+- Dive
+- Fly
+- Sky Attack
+- Razor Wind
+- Doom Desire
+- Solar Beam
+  # Inconsistent
+- Fake Out
+- False Swipe
+- Nature Power
+- Present
+- Destiny Bond
+- Wrap
+- Snore
+- Spit Up
 - Bide
 - Bind
 - Counter
-- Destiny Bond
-- Dig
-- Dive
-- Doom Desire
-- Explosion
-- Fake Out
-- False Swipe
-- Fly
 - Future Sight
 - Mirror Coat
-- Nature Power
-- Perish Song
-- Present
-- Razor Wind
+- Grudge
+- Snatch
+- Spite
+- Curse
+- Endeavor
 - Revenge
-- Selfdestruct
-- Sky Attack
-- Snore
-- Spit Up
+- Assist
+- Focus Punch
+- Eruption
+- Flail
+  # Ends battle
+- Roar
 - Whirlwind
-- Wrap
-no_sleep_pokemon:
-- Hoothoot
-- Noctowl
-- Spinarak
-- Ariados
-- Murkrow
-- Delibird
-- Shuppet
-- Banette
-- Honchkrow
-- Pumpkaboo
-- Ghourgeist
+- Selfdestruct
+- Perish Song
+- Explosion
+- Memento

@@ -7,17 +7,19 @@
 -- https://github.com/besteon/Ironmon-Tracker/
 -- https://github.com/Gikkman/bizhawk-communication
 
-enable_input = true -- Toggle inputs to the emulator, useful for testing
-write_files = false   -- Toggle output of data to files, also useful for testing
+local utils = require("utils")
 
-dofile ("data\\lua\\Memory.lua")
-dofile ("data\\lua\\GameSettings.lua")
+enable_input = true -- Toggle inputs to the emulator, useful for testing
+write_files = false -- Toggle output of data to files (press L+R in emulator to save files to testing/ folder)
+
+dofile (utils.translatePath("data\\lua\\Memory.lua"))
+dofile (utils.translatePath("data\\lua\\GameSettings.lua"))
 
 -- Initialize game settings before loading other files
 GameSettings.initialize()
 
 console.log("Lua Version: ".._VERSION)
-package.path = ";.\\data\\lua\\?.lua;"
+package.path = utils.translatePath(";.\\data\\lua\\?.lua;")
 
 json = require "json"
 PokemonNames = require "PokemonNames"
@@ -199,7 +201,8 @@ function getEmu()
 		frameCount = emu.framecount(),
 		emuFPS = client.get_approx_framerate(),
 		detectedGame = GameSettings.gamename,
-		rngState = Memory.readdword(GameSettings.rng)
+		rngState = Memory.readdword(GameSettings.rng),
+		language = GameSettings.language
 	}
 
 	return emu_info
@@ -218,15 +221,21 @@ function mainLoop()
 	if write_files then
 		check_input = joypad.get()
 		if check_input["L"] and check_input["R"] then
-			trainer_info_file = io.open("testing\\trainer_info.json", "w")
+			trainer_info_file = io.open(
+				utils.translatePath("testing\\trainer_info.json"), "w"
+			)
 			trainer_info_file:write(json.encode({["trainer"] = trainer}))
 			trainer_info_file:close()
 			
-			party_info_file = io.open("testing\\party_info.json", "w")
+			party_info_file = io.open(
+				utils.translatePath("testing\\party_info.json"), "w"
+			)
 			party_info_file:write(json.encode({["party"] = party}))
 			party_info_file:close()
 
-			opponent_info_file = io.open("testing\\opponent_info.json", "w")
+			opponent_info_file = io.open(
+				utils.translatePath("testing\\opponent_info.json"), "w"
+			)
 			opponent_info_file:write(json.encode({["opponent"] = opponent}))
 			opponent_info_file:close()
 		end
@@ -291,9 +300,11 @@ while true do
 
 		joypad.set(input)
 	end
+	
 	if input["Screenshot"] then
 		comm.mmfScreenshot()
 	end
+
 	emu_info = getEmu()
 	comm.mmfWrite("bizhawk_emu_info", json.encode({["emu"] = emu_info}) .. "\x00")
 	-- Save screenshot and other data to memory mapped files, as FPS is higher, reduce the number of reads and writes to memory

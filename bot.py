@@ -28,20 +28,25 @@ import webview                                   # https://pypi.org/project/pywe
 from ruamel.yaml import YAML                     # https://pypi.org/project/ruamel.yaml/
 import fastjsonschema                            # https://pypi.org/project/fastjsonschema/
 # Helper functions
-import calculateHiddenPower
+from data.HiddenPower import calculate_hidden_power
+from data.GameState import GameState
+from data.MapData import MapBank, MapID
+
+def player_on_map(map_bank: int, map_id: int):
+    on_map = trainer_info["mapBank"] == map_bank and trainer_info["mapId"] == map_id
+
+    if not on_map:
+        debug_log.info(f"Player was not on target map of {map_bank},{map_id}. Map was {trainer_info['mapBank']}, {trainer_info['mapId']}")
+
+    return on_map
 
 def read_file(file: str): # Simple function to read data from a file, return False if file doesn't exist
     try:
         debug_log.debug(f"Reading file: {file}...")
-        if os.path.isfile(file):
-            with open(file, mode="r", encoding="utf-8") as open_file:
-                file_data = open_file.read()
-                return file_data
-        else:
-            debug_log.error(f"File: {file} does not exist!")
-            return False
-    except:
-        debug_log.exception('')
+        with open(file, mode="r", encoding="utf-8") as open_file:
+            return open_file.read()
+    except Exception as e:
+        if args.d: debug_log.exception(str(e))
         return False
 
 def write_file(file: str, value: str): # Simple function to write data to a file, will create the file if doesn't exist
@@ -50,8 +55,8 @@ def write_file(file: str, value: str): # Simple function to write data to a file
         with open(file, mode="w", encoding="utf-8") as save_file:
             save_file.write(value)
             return True
-    except:
-        debug_log.exception('')
+    except Exception as e:
+        if args.d: debug_log.exception(str(e))
         return False
 
 def load_json_mmap(size, file): # Function to load a JSON object from a memory mapped file
@@ -68,30 +73,36 @@ def load_json_mmap(size, file): # Function to load a JSON object from a memory m
             if args.dm: debug_log.debug(f"JSON result: {json_obj}")
             return json_obj
         else: return False
-    except:
-        if args.dm:
-            debug_log.exception('')
+    except Exception as e:
+        if args.dm: debug_log.exception(str(e))
         return False
+
+def frames_to_ms(frames: float):
+    return max((frames/60.0) / emu_speed, 0.02)
+
+# Pre-compile sleep pattern regex
+sleep_pattern = re.compile("^\d*\.?\d*ms$")
 
 def emu_combo(sequence: list): # Function to send a sequence of inputs and delays to the emulator
     # Example: emu_combo(["B", "Up", "500ms", "Left"])
     try:
-        sleep_pattern = "^\d*\.?\d*ms$"
-
         for k in sequence:
-            if re.match(sleep_pattern, k):
-                delay = float(re.sub(r"ms$", "", k))
-                time.sleep((delay/1000)/emu_speed)
+            if sleep_pattern.match(k):
+                delay = float(k[:-2])  # Remove "ms" from the string
+                time.sleep((delay/1000) / emu_speed)
+            elif k == "button_release:all":
+                release_all_inputs()  
             else: press_button(k)
-    except: debug_log.exception('')
+    except Exception as e:
+        if args.d: debug_log.exception(str(e))
 
 def press_button(button: str): # Function to update the press_input object
     global press_input
     debug_log.debug(f"Pressing: {button}...")
     press_input[button] = True
-    time.sleep(0.01/emu_speed) # Wait ~1 frame
+    time.sleep(frames_to_ms(1))
     press_input[button] = False
-    time.sleep(0.01/emu_speed) # Wait ~1 frame
+    time.sleep(frames_to_ms(1))
 
 def hold_button(button: str): # Function to update the hold_input object
     global hold_input
@@ -113,18 +124,22 @@ def release_all_inputs(): # Function to release all keys in all input objects
 def opponent_changed(): # This function checks if there is a different opponent since last check, indicating the game state is probably now in a battle
     try:
         global last_opponent_personality
+        #debug_log.info(f"Checking if opponent has changed... Previous PID: {last_opponent_personality}, New PID: {opponent_info['personality']}")
 
-        if opponent_info:
-            if last_opponent_personality != opponent_info["personality"]:
-                last_opponent_personality = opponent_info["personality"]
-                debug_log.info("Opponent has changed!")
-                return True
-            else: return False
-        else: return False
-    except:
-        if args.di:
-            debug_log.exception('')
+        # Fixes a bug where the bot checks the opponent for up to 20 seconds if it was last closed in a battle
+        if trainer_info["state"] == GameState.OVERWORLD:
+            return False
+
+        if opponent_info and last_opponent_personality != opponent_info["personality"]:
+            last_opponent_personality = opponent_info["personality"]
+            debug_log.info("Opponent has changed!")
+            return True
+        
         return False
+    except Exception as e:
+        if args.d: debug_log.exception(str(e))
+        return False
+
 def mem_pollScreenshot():
     global g_bizhawk_screenshot
     while True:
@@ -135,24 +150,23 @@ def mem_pollScreenshot():
             screenshot = Image.open(io.BytesIO(shmem))
             g_bizhawk_screenshot = cv2.cvtColor(numpy.array(screenshot), cv2.COLOR_BGR2RGB) # Convert screenshot to numpy array COLOR_BGR2RGB
             screenshot.close()
-        except:
+        except Exception as e:
             if screenshot is not None:
                 screenshot.close()
             if args.dm:
-                debug_log.exception('')
+                debug_log.exception(str(e))
             continue
         release_button("Screenshot")
         if args.di:
             cv2.imshow("pollScreenShotData",g_bizhawk_screenshot)
             cv2.waitKey(1)
-        
 
 def find_image(file: str): # Function to find an image in a BizHawk screenshot
     try:
         profile_start = time.time() # Performance profiling
         threshold = 0.999
         if args.di: debug_log.debug(f"Searching for image {file} (threshold: {threshold})")
-        template = cv2.imread(file, cv2.IMREAD_UNCHANGED)
+        template = cv2.imread(f"data/templates/{language}/" + file, cv2.IMREAD_UNCHANGED)
         hh, ww = template.shape[:2]
     
         correlation = cv2.matchTemplate(g_bizhawk_screenshot, template[:,:,0:3], cv2.TM_CCORR_NORMED) # Do masked template matching and save correlation image
@@ -176,198 +190,246 @@ def find_image(file: str): # Function to find an image in a BizHawk screenshot
             if args.di: debug_log.debug(f"Maximum correlation value ({max_val_corr}) is below threshold ({threshold}), file {file} was not detected on-screen.")
             return False
         
-    except:
-        if args.di:
-            debug_log.exception('')
+    except Exception as e:
+        if args.di: debug_log.exception(str(e))
         return False
+
+no_sleep_abilities = ["Shed Skin", "Insomnia", "Vital Spirit"]
 
 def catch_pokemon(): # Function to catch pokemon
     try:
-        if config["manual_catch"]: return True
+        while not find_image("battle/fight.png"):
+            emu_combo(["button_release:all", "B", "Up", "Left"]) # Press B + up + left until FIGHT menu is visible
+        
+        if config["manual_catch"]:
+            input("Pausing bot for manual catch (don't forget to pause bizhawk.lua script so you can provide inputs). Press Enter to continue...")
+            return True
         else:
             debug_log.info("Attempting to catch Pokemon...")
-            while not find_image("data/templates/battle/fight.png"):
-                emu_combo(["button_release:all", "B", "Up", "Left"]) # Press B + up + left until FIGHT menu is visible
+        
+        if config["use_spore"]: # Use Spore to put opponent to sleep to make catches much easier
+            debug_log.info("Attempting to sleep the opponent...")
+            i, spore_pp = 0, 0
+            
+            ability = opponent_info["ability"][opponent_info["altAbility"]]
+            can_sleep = ability not in no_sleep_abilities
 
-            if "spore" in config["catch"]: # Use Spore to put opponent to sleep to make catches much easier
-                debug_log.info("Attempting to sleep the opponent...")
-                i, spore_pp = 0, 0
-    
-                if (opponent_info["status"] == 0) and (opponent_info["name"] not in config["no_sleep_pokemon"]):
-                    for move in party_info[0]["enrichedMoves"]:
-                        if move["name"] == "Spore":
-                            spore_pp = move["pp"]
-                            spore_move_num = i
-                        i += 1
-    
-                    if spore_pp != 0:
-                        emu_combo(["A", "100ms"])
-                        if spore_move_num == 0: seq = ["Up", "Left"]
-                        elif spore_move_num == 1: seq = ["Up", "Right"]
-                        elif spore_move_num == 2: seq = ["Left", "Down"]
-                        elif spore_move_num == 3: seq = ["Right", "Down"]
-    
-                        while not find_image("data/templates/spore.png"):
-                            emu_combo(seq)
-    
-                        emu_combo(["A", "4000ms"]) # Select move and wait for animations
-    
-                while not find_image("data/templates/battle/bag.png"): emu_combo(["button_release:all", "B", "Up", "Right"]) # Press B + up + right until BAG menu is visible
+            if (opponent_info["status"] == 0) and can_sleep:
+                for move in party_info[0]["enrichedMoves"]:
+                    if move["name"] == "Spore":
+                        spore_pp = move["pp"]
+                        spore_move_num = i
+                    i += 1
 
-            while True:
-                if find_image("data/templates/battle/bag.png"): press_button("A")
+                if spore_pp != 0:
+                    emu_combo(["A", "100ms"])
+                    if spore_move_num == 0: seq = ["Up", "Left"]
+                    elif spore_move_num == 1: seq = ["Up", "Right"]
+                    elif spore_move_num == 2: seq = ["Left", "Down"]
+                    elif spore_move_num == 3: seq = ["Right", "Down"]
 
-                # TODO Safari Zone
-                #if opponent_info["metLocationName"] == "Safari Zone":
-                #    while not find_image("data/templates/battle/safari_zone/ball.png"):
-                #        if trainer_info["state"] == 80: # State 80 = overworld
-                #            return False
-                #        emu_combo(["B", "Up", "Left"]) # Press B + up + left until BALL menu is visible
+                    while not find_image("spore.png"):
+                        emu_combo(seq)
 
-                # Preferred ball order to catch wild mons + exceptions # TODO move pokeball preference to config
-                # TODO read this data from memory instead
-                if trainer_info["state"] == 0:
-                    if not bag_menu(category="pokeballs", item="premier_ball") and opponent_info["name"] not in ["Abra"]:
-                        if not bag_menu(category="pokeballs", item="ultra_ball"):
-                            if not bag_menu(category="pokeballs", item="great_ball"):
-                                if not bag_menu(category="pokeballs", item="poke_ball"):
-                                    debug_log.info("No balls to catch the Pokemon found. Killing the script!")
-                                    os._exit(1)
+                    emu_combo(["A", "4000ms"]) # Select move and wait for animations
+            elif not can_sleep:
+                debug_log.info(f"Can't sleep the opponent! Ability is {ability}")
 
-                if find_image("data/templates/gotcha.png"): # Check for gotcha! text when a pokemon is successfully caught
-                    debug_log.info("Pokemon caught!")
+            while not find_image("battle/bag.png"): emu_combo(["button_release:all", "B", "Up", "Right"]) # Press B + up + right until BAG menu is visible
 
-                    while trainer_info["state"] != 80: # State 80 = overworld
-                        press_button("B")
-                    time.sleep(2/emu_speed) # Wait for animations
-                    if "save_game_after_catch" in config["game_save"]: save_game()
-                    return True
+        while True:
+            if find_image("battle/bag.png"): press_button("A")
 
-                if trainer_info["state"] == 80: # State 80 = overworld
-                    return False
-    except:
-        if args.di:
-            debug_log.exception('')
+            # TODO Safari Zone
+            #if opponent_info["metLocationName"] == "Safari Zone":
+            #    while not find_image("battle/safari_zone/ball.png"):
+            #        if trainer_info["state"] == GameState.OVERWORLD:
+            #            return False
+            #        emu_combo(["B", "Up", "Left"]) # Press B + up + left until BALL menu is visible
+
+            # Preferred ball order to catch wild mons + exceptions 
+            # TODO read this data from memory instead
+            if trainer_info["state"] == GameState.BAG_MENU:
+                can_catch = False
+
+                # Check if current species has a preferred ball
+                foe_name = opponent_info["speciesName"]
+                if foe_name in config["pokeball_override"]:
+                    species_rule = config["pokeball_override"][foe_name]
+                    
+                    for ball in species_rule:
+                        if bag_menu(category="pokeballs", item=ball):
+                            can_catch = True
+                            break
+
+                # Check global pokeball priority 
+                if not can_catch:
+                    for ball in config["pokeball_priority"]:
+                        if bag_menu(category="pokeballs", item=ball):
+                            can_catch = True
+                            break
+
+                if not can_catch:
+                    debug_log.info("No balls to catch the Pokemon found. Killing the script!")
+                    os._exit(1)
+
+            if find_image("gotcha.png"): # Check for gotcha! text when a pokemon is successfully caught
+                debug_log.info("Pokemon caught!")
+
+                while trainer_info["state"] != GameState.OVERWORLD:
+                    press_button("B")
+
+                time.sleep(frames_to_ms(120)) # Wait for animations
+                
+                if config["save_game_after_catch"]: 
+                    save_game()
+                
+                return True
+
+            if trainer_info["state"] == GameState.OVERWORLD:
+                return False
+    except Exception as e:
+        if args.di: debug_log.exception(str(e))
         return False
 
 def battle(): # Function to battle wild pokemon
     try:
         # This will only battle with the lead pokemon of the party, and will run if it dies or runs out of PP
-        debug_log.info("Battling Pokemon...")
+        ally_fainted = False
+        foe_fainted = False
 
-        while opponent_info["hp"] != 0 and party_info[0]["hp"] != 0:
-            while not find_image("data/templates/battle/fight.png"):
-                if trainer_info["state"] == 80: # State 80 = overworld
+        while not ally_fainted and not foe_fainted:
+            debug_log.info("Navigating to the FIGHT button...")
+            while not find_image("battle/fight.png"):
+                if trainer_info["state"] == GameState.OVERWORLD:
                     return
                 emu_combo(["B", "Up", "Left"]) # Press B + up + left until FIGHT menu is visible
 
-            debug_log.info("Finding a damaging attack with PP...")
+            best_move = find_effective_move(party_info[0], opponent_info)
+            
+            if best_move["power"] <= 10:
+                debug_log.info("Lead Pokemon has no effective moves to battle the foe!")
+                flee_battle()
+                return False
+            
+            emu_combo(["A", "100ms"])
+            
+            debug_log.info(f"Best move against foe is {best_move['name']} (Effective power is {best_move['power']})")
 
-            i, effective_pp, power_pp = 0, 0, 0
-            for move in party_info[0]["enrichedMoves"]:
-                if move["name"] not in config["banned_moves"]:
-                    if move["power"] != 0:
-                        power_pp += party_info[0]["pp"][i]
-                        for type in opponent_info["type"]:
-                            if type in type_list[move["type"]]["immunes"] or type in type_list[move["type"]]["weaknesses"]: debug_log.info(f"Opponent type {opponent_info['type']} is immune/weak against move {move['name']}") 
-                            else: effective_pp += party_info[0]["pp"][i]
-                i += 1
+            i = int(best_move["index"])
+            
+            if i == 0:
+                emu_combo(["Up", "Left"])
+            elif i == 1:
+                emu_combo(["Up", "Right"])
+            elif i == 2:
+                emu_combo(["Down", "Left"])
+            elif i == 3:
+                emu_combo(["Down", "Right"])
+            
+            emu_combo(["A", "4000ms"])
 
-            if effective_pp == 0 and power_pp > 0:
-                debug_log.info("Lead Pokemon has no effective PP to damage opponent!")
+            if opponent_info["hp"] == 0:
+                foe_fainted = True
+            elif party_info[0]["hp"] == 0:
+                debug_log.info("Lead Pokemon fainted!")
                 flee_battle()
                 return False
 
-            if effective_pp == 0 and power_pp == 0:
-                debug_log.info("Lead Pokemon has no more damaging PP!")
-                flee_battle()
-                return False
-
-            i = 0
-            if effective_pp > 0:
-                for move in party_info[0]["enrichedMoves"]:
-                    immune = False
-                    if move["name"] not in config["banned_moves"]:
-                        if move["power"] != 0:
-                            for type in opponent_info["type"]:
-                                if type in type_list[move["type"]]["immunes"]: # TODO add option to avoid using ineffective (0.5x) moves
-                                    immune = True
-
-                            if party_info[0]["pp"][i] != 0 and not immune:
-                                emu_combo(["A", "50ms"])
-                                if i == 0:
-                                    emu_combo(["Up", "Left"])
-                                    break
-                                elif i == 1:
-                                    emu_combo(["Up", "Right"])
-                                    break
-                                elif i == 2:
-                                    emu_combo(["Left", "Down"])
-                                    break
-                                elif i == 3:
-                                    emu_combo(["Right", "Down"])
-                                    break
-                    i += 1
-                if i <= 3: emu_combo(["A", "4000ms"]) # Select move and wait for animations
-
-        if party_info[0]["hp"] == 0:
-            debug_log.info("Lead Pokemon out of HP!")
-            flee_battle()
-            return False
-
-        while trainer_info["state"] != 80: # State 80 = overworld
-            if find_image("data/templates/stop_learning.png"): # Check if our Pokemon is trying to learn a move and skip learning
+        while trainer_info["state"] != GameState.OVERWORLD:
+            if find_image("stop_learning.png"): # Check if our Pokemon is trying to learn a move and skip learning
                 press_button("A")
             press_button("B")
 
-        if opponent_info["hp"] == 0:
+        if foe_fainted:
             debug_log.info("Battle won!")
             return True
-    except:
-        if args.di:
-            debug_log.exception('')
+    except Exception as e:
+        if args.di: debug_log.exception(str(e))
         return False
+
+def find_effective_move(ally: dict, foe: dict):
+    i = 0
+    move_power = []
+
+    for move in ally["enrichedMoves"]:
+        power = move["power"]
+
+        # Ignore banned moves and those with 0 PP
+        if move["name"] in config["banned_moves"] or power == 0 or ally["pp"][i] == 0:
+            move_power.append(0)
+            i += 1
+            continue
+
+        # Calculate effectiveness against opponent's type(s)
+        matchups = type_list[move["type"]]
+
+        for foe_type in foe["type"]:
+            if foe_type in matchups["immunes"]:
+                power *= 0
+            elif foe_type in matchups["weaknesses"]:
+                power *= 0.5
+            elif foe_type in matchups["strengths"]:
+                power *= 2
+
+        # STAB
+        for ally_type in ally["type"]:
+            if ally_type == move["type"]:
+                power *= 1.5
+
+        move_power.append(power)
+        i += 1
+
+    # Return info on the best move
+    move_idx = move_power.index(max(move_power))
+    return {
+        "name": ally["enrichedMoves"][move_idx]["name"],
+        "index": move_idx,
+        "power": max(move_power)
+    }
 
 def flee_battle(): # Function to run from wild pokemon
     try:
         debug_log.info("Running from battle...")
-        while trainer_info["state"] != 80: # State 80 = overworld
-            while not find_image("data/templates/battle/run.png") and trainer_info["state"] != 80: emu_combo(["Right","Down", "B"]) # Press right + down until RUN is selected
-            while find_image("data/templates/battle/run.png") and trainer_info["state"] != 80: press_button("A")
+        while trainer_info["state"] != GameState.OVERWORLD:
+            while not find_image("battle/run.png") and trainer_info["state"] != GameState.OVERWORLD: 
+                emu_combo(["Right","Down", "B"])
+            while find_image("battle/run.png") and trainer_info["state"] != GameState.OVERWORLD: 
+                press_button("A")
             press_button("B")
-        time.sleep(0.8/emu_speed) # Wait for battle fade animation
-    except:
-        if args.d:
-            debug_log.exception('')
+        time.sleep(frames_to_ms(30)) # Wait for battle fade animation
+    except Exception as e:
+        if args.d: debug_log.exception(str(e))
 
 def run_until_obstructed(direction: str, run: bool = True): # Function to run until trainer position stops changing
     try:
         debug_log.info(f"Pathing {direction.lower()} until obstructed...")
         if run: hold_button("B")
+        hold_button(direction)
 
         last_x = trainer_info["posX"]
         last_y = trainer_info["posY"]
 
+        if run: move_speed = 8
+        else: move_speed = 16
+
         dir_unchanged = 0
-        while dir_unchanged < 35:
-            time.sleep(0.01/emu_speed)
-            hold_button(direction)
-            if direction == "Left" or direction == "Right":
-                if last_x == trainer_info["posX"]: dir_unchanged += 1
-                else:
-                    last_x = trainer_info["posX"]
-                    dir_unchanged = 0
-            if direction == "Up" or direction == "Down":
-                if last_y == trainer_info["posY"]: dir_unchanged += 1
-                else:
-                    last_y = trainer_info["posY"]
-                    dir_unchanged = 0
+        while dir_unchanged < move_speed:
+            time.sleep(frames_to_ms(1))
+            if last_x == trainer_info["posX"] and last_y == trainer_info["posY"]: 
+                dir_unchanged += 1
+                continue
+            
+            last_x = trainer_info["posX"]
+            last_y = trainer_info["posY"]
+            dir_unchanged = 0
         
         release_button(direction)
-        debug_log.info("Bonk!")
-        if run: release_button("B")
-    except:
-        debug_log.exception('')
+        press_button("B") # press and release B in case of a random pokenav call
+
+        return [last_x, last_y]
+    except Exception as e:
+        if args.d: debug_log.exception(str(e))
 
 def follow_path(coords: list):
     def run_to_pos(x: int, y: int, map_data: tuple, run: bool = True):
@@ -407,12 +469,12 @@ def follow_path(coords: list):
                         if trainer_info[axis] == last_axis: stuck += 1
                         else: stuck = 0
                         last_axis = trainer_info[axis]
-                        time.sleep(0.01/emu_speed)
+                        time.sleep(frames_to_ms(1))
 
                         if not opponent_changed():
                             try: target_pos()
-                            except:
-                                if args.dm: debug_log.exception('')
+                            except Exception as e:
+                                if args.dm: debug_log.exception(str(e))
                         else:
                             identify_pokemon()
                             return False
@@ -428,12 +490,12 @@ def follow_path(coords: list):
                         if trainer_info[axis] == last_axis: stuck += 1
                         else: stuck = 0
                         last_axis = trainer_info[axis]
-                        time.sleep(0.01/emu_speed)
+                        time.sleep(frames_to_ms(1))
 
                         if not opponent_changed():
                             try: target_pos()
-                            except:
-                                if args.dm: debug_log.exception('')
+                            except Exception as e:
+                                if args.dm: debug_log.exception(str(e))
                                 return False
                         else:
                             identify_pokemon()
@@ -441,38 +503,46 @@ def follow_path(coords: list):
                     else:
                         release_all_inputs()
                         return True
-        except:
-            if args.dm: debug_log.exception('')
+        except Exception as e:
+            if args.dm: debug_log.exception(str(e))
             return False
 
     try:
         for x, y, *map_data in coords:
-            debug_log.info(f"Current: X: {trainer_info['posX']}, Y: {trainer_info['posY']}, Map: [({trainer_info['mapBank']},{trainer_info['mapId']})]")
-            debug_log.info(f"Pathing: X: {x}, Y: {y}, Map: {map_data}")
+            #debug_log.info(f"Current: X: {trainer_info['posX']}, Y: {trainer_info['posY']}, Map: [({trainer_info['mapBank']},{trainer_info['mapId']})]")
+            #debug_log.info(f"Pathing: X: {x}, Y: {y}, Map: {map_data}")
             while not run_to_pos(x, y, map_data): continue
             else: release_all_inputs()
-    except:
-        if args.dm: debug_log.exception('')
+    except Exception as e:
+        if args.dm: debug_log.exception(str(e))
         return False
+
+menus = ["bag", "bot", "exit", "option", "pokedex", "pokemon", "pokenav", "save"]
 
 def start_menu(entry: str): # Function to open any start menu item - presses START, finds the menu entry and opens it
     try:
-        if entry in ["bag", "bot", "exit", "option", "pokedex", "pokemon", "pokenav", "save"]:
+        if entry in menus:
             debug_log.info(f"Opening start menu entry: {entry}")
-            filename = f"data/templates/start_menu/{entry.lower()}.png"
+            filename = f"start_menu/{entry.lower()}.png"
             
             release_all_inputs()
-            emu_combo(["Start", "200ms"]) # Open start menu
+
+            # Press start until menu is visible
+            while True:
+                emu_combo(["Start", "200ms"])
+
+                if find_image(f"start_menu/select.png"):
+                    break
 
             while not find_image(filename): # Find menu entry
-                emu_combo(["Down", "200ms"])
+                emu_combo(["Down", "150ms"])
 
             while find_image(filename): # Press menu entry
                 emu_combo(["A", "200ms"])
         else:
             return False
-    except:
-        if args.di: debug_log.exception('')
+    except Exception as e:
+        if args.di: debug_log.exception(str(e))
         return False
 
 def bag_menu(category: str, item: str): # Function to find an item in the bag and use item in battle such as a pokeball
@@ -480,58 +550,71 @@ def bag_menu(category: str, item: str): # Function to find an item in the bag an
         if category in ["berries", "items", "key_items", "pokeballs", "tms&hms"]:
             debug_log.info(f"Scrolling to bag category: {category}...")
 
-            while not find_image(f"data/templates/start_menu/bag/{category.lower()}.png"):
-                emu_combo(["Right", "300ms"]) # Press right until the correct category is selected
-            time.sleep(2/emu_speed) # Wait for animations
+            while not find_image(f"start_menu/bag/{category.lower()}.png"):
+                emu_combo(["Right", "400ms"]) # Press right until the correct category is selected
+            time.sleep(frames_to_ms(60)) # Wait for animations
 
             debug_log.info(f"Scanning for item: {item}...")
             i = 0
-            while not find_image(f"data/templates/start_menu/bag/items/{item}.png") and i < 50:
+            while not find_image(f"start_menu/bag/items/{item}.png") and i < 50:
                 if i < 25: emu_combo(["Down", "50ms"])
                 else: emu_combo(["Up", "50ms"])
                 i += 1
 
-            if find_image(f"data/templates/start_menu/bag/items/{item}.png"):
+            if find_image(f"start_menu/bag/items/{item}.png"):
                 debug_log.info(f"Using item: {item}...")
-                while trainer_info["state"] == 0: emu_combo(["A", "500ms"]) # Press A to use the item
+                while trainer_info["state"] == GameState.BAG_MENU: emu_combo(["A", "500ms"]) # Press A to use the item
                 return True
             else:
                 return False
-    except:
-        if args.di: debug_log.exception('')
+    except Exception as e:
+        if args.di: debug_log.exception(str(e))
         return False
+
+pickup_pokemon = ["Meowth", "Aipom", "Phanpy", "Teddiursa", "Zigzagoon", "Linoone"]
 
 def pickup_items(): # If using a team of Pokemon with the ability "pickup", this function will take the items from the pokemon in your party if 3 or more Pokemon have an item
     try:
+        if trainer_info["state"] != GameState.OVERWORLD:
+            return
+
         debug_log.info("Checking for pickup items...")
         item_count = 0
-        pickup_pokemon = ["ZIGZAGOON", "LINOONE"]
+        pickup_mon_count = 0
 
-        for i in range(1, 6):
-            try:
-                pokemon = party_info[i]
-                if pokemon["speciesName"] in pickup_pokemon:
-                    debug_log.info(f"Pokemon {i}: {pokemon['speciesName']} has item: {item_list[pokemon['heldItem']]}")
-                    if pokemon["heldItem"] != 0: item_count += 1
-            except: 
-                if args.dm: debug_log.exception('')
+        for i in range(0, 6):
+            pokemon = party_info[i]
+            held_item = pokemon['heldItem']
 
-        if item_count >= 3: # Only run if 3 or more Pokemon have an item
-            time.sleep(0.3/emu_speed) # Wait for animations
-            start_menu("pokemon") # Open Pokemon menu
+            if pokemon["speciesName"] in pickup_pokemon:
+                if held_item != 0:
+                    item_count += 1
 
-            for i in range(1, 6):
-                pokemon = party_info[i]
+                pickup_mon_count += 1
+                debug_log.info(f"Pokemon {i}: {pokemon['speciesName']} has item: {item_list[held_item]}")
 
-                if item_count > 0:
-                    if pokemon["speciesName"] in pickup_pokemon:
-                        if pokemon["heldItem"] != 0:
-                            emu_combo(["Down", "50ms", "A", "50ms", "Down", "50ms", "Down", "50ms", "A", "50ms", "Down", "50ms", "A", "1000ms", "B", "50ms"]) # Take the item from the pokemon
-                            item_count -= 1
-                        else: emu_combo(["50ms", "Down"])
-            emu_combo(["B", "1500ms", "B"]) # Close out of menus
-    except:
-        if args.dm: debug_log.exception('')
+        if item_count < config["pickup_threshold"]:
+            return
+
+        time.sleep(frames_to_ms(60)) # Wait for animations
+        start_menu("pokemon") # Open Pokemon menu
+        time.sleep(frames_to_ms(60))
+
+        for i in range(0, 6):
+            pokemon = party_info[i]
+            if pokemon["speciesName"] in pickup_pokemon and pokemon["heldItem"] != 0:
+                # Take the item from the pokemon
+                emu_combo(["200ms", "A", "50ms", "Up", "50ms", "Up", "50ms", "A", "50ms", "Down", "50ms", "A", "1000ms", "B", "200ms"])
+                item_count -= 1
+            
+            if item_count == 0:
+                break
+
+            emu_combo(["200ms", "Down"])
+
+        emu_combo(["50ms", "B", "300ms", "B", "50ms"]) # Close out of menus
+    except Exception as e:
+        if args.dm: debug_log.exception(str(e))
 
 def save_game(): # Function to save the game via the save option in the start menu
     try:
@@ -540,15 +623,14 @@ def save_game(): # Function to save the game via the save option in the start me
         i = 0
         start_menu("save")
         while i < 2:
-            while not find_image("data/templates/start_menu/save/yes.png"):
-                time.sleep(0.1/emu_speed)
-            while find_image("data/templates/start_menu/save/yes.png"):
+            while not find_image("start_menu/save/yes.png"):
+                time.sleep(frames_to_ms(10))
+            while find_image("start_menu/save/yes.png"):
                 emu_combo(["A", "500ms"])
                 i += 1
-        time.sleep(8/emu_speed) # Wait for game to save
-    except:
-        if args.dm:
-            debug_log.exception('')
+        time.sleep(frames_to_ms(500)) # Wait for game to save
+    except Exception as e:
+        if args.dm: debug_log.exception(str(e))
 
 def identify_pokemon(starter: bool = False): # Identify opponent pokemon and incremement statistics, returns True if shiny, else False
     try:
@@ -618,24 +700,26 @@ def identify_pokemon(starter: bool = False): # Identify opponent pokemon and inc
         debug_log.info("Identifying Pokemon...")
         release_all_inputs()
 
-        if starter: time.sleep(0.5/emu_speed)
+        if starter: time.sleep(frames_to_ms(50))
         else:
             i = 0
             while trainer_info["state"] not in [3, 255] and i < 250:
                 press_button("B")
                 i += 1
-        if trainer_info["state"] == 80: return False
+        if trainer_info["state"] == GameState.OVERWORLD: return False
 
         if starter: pokemon = party_info[0]
         else: pokemon = opponent_info
 
+        replace_battler = False
         debug_log.info(f"------------------ {pokemon['name']} ------------------")
         debug_log.debug(pokemon)
         debug_log.info(f"Encountered a {pokemon['name']} at {pokemon['metLocationName']}")
         debug_log.info(f"HP: {pokemon['hpIV']} | ATK: {pokemon['attackIV']} | DEF: {pokemon['defenseIV']} | SPATK: {pokemon['spAttackIV']} | SPDEF: {pokemon['spDefenseIV']} | SPE: {pokemon['speedIV']}")
         debug_log.info(f"Shiny Value (SV): {pokemon['shinyValue']:,} (is {pokemon['shinyValue']:,} < 8 = {pokemon['shiny']})")
 
-        if not pokemon["name"] in stats["pokemon"]: stats["pokemon"].update({pokemon["name"]: {"encounters": 0, "shiny_encounters": 0, "phase_lowest_sv": "-", "phase_encounters": 0, "shiny_average": "-", "total_lowest_sv": "-"}}) # Set up pokemon stats if first encounter
+        if not pokemon["name"] in stats["pokemon"]: 
+            stats["pokemon"].update({pokemon["name"]: {"encounters": 0, "shiny_encounters": 0, "phase_lowest_sv": "-", "phase_encounters": 0, "shiny_average": "-", "total_lowest_sv": "-"}}) # Set up pokemon stats if first encounter
 
         if pokemon["shiny"]:
             debug_log.info("Shiny Pokemon detected!")
@@ -656,12 +740,12 @@ def identify_pokemon(starter: bool = False): # Identify opponent pokemon and inc
 
             if not args.n: write_file("stats/totals.json", json.dumps(stats, indent=4, sort_keys=True)) # Save stats file
 
-            if not starter and config["bot_mode"] not in ["Manual Mode", "Rayquaza", "Kyogre", "Groudon"] and "shinies" in config["catch"]: catch_pokemon()
+            if not starter and config["bot_mode"] not in ["manual", "rayquaza", "kyogre", "groudon"] and "shinies" in config["catch"]: 
+                catch_pokemon()
 
             if not args.n: write_file("stats/totals.json", json.dumps(stats, indent=4, sort_keys=True)) # Save stats file
-            if config["manual_catch"]: input("Pausing bot for manual catch. Press Enter to continue...")
-            else: return True
 
+            return True
         else:
             debug_log.info("Non shiny Pokemon detected...")
     
@@ -678,15 +762,22 @@ def identify_pokemon(starter: bool = False): # Identify opponent pokemon and inc
     
             common_stats()
     
-            if config["bot_mode"] == "Manual Mode":
-                while trainer_info["state"] != 80: time.sleep(1/emu_speed)
+            if config["bot_mode"] == "manual":
+                while trainer_info["state"] != GameState.OVERWORLD: 
+                    time.sleep(frames_to_ms(100))
             elif not starter:
-                if "perfect_ivs" in config["catch"] and pokemon["hpIV"] == 31 and pokemon["attackIV"] == 31 and pokemon["defenseIV"] == 31 and pokemon["speedIV"] == 31 and pokemon["spAttackIV"] == 31 and pokemon["spDefenseIV"] == 31: catch_pokemon()
-                elif "zero_ivs" in config["catch"] and pokemon["hpIV"] == 0 and pokemon["attackIV"] == 0 and pokemon["defenseIV"] == 0 and pokemon["speedIV"] == 0 and pokemon["spAttackIV"] == 0 and pokemon["spDefenseIV"] == 0: catch_pokemon()
+                if "perfect_ivs" in config["catch"] and mon_ivs_meets_threshold(pokemon, 31):
+                    catch_pokemon()
+                elif "zero_ivs" in config["catch"] and not mon_ivs_meets_threshold(pokemon, 1):
+                    catch_pokemon()
+                elif "good_ivs" in config["catch"] and mon_ivs_meets_threshold(pokemon, 25):
+                    catch_pokemon()
+                elif "all" in config["catch"]:
+                    catch_pokemon()
 
                 ### Custom Filters ###
                 # Add custom filters here (make sure to uncomment the line), examples:
-                # If you want to pause the bot instead of automatically catching, replace `catch_pokemon()` with `input("Pausing bot for manual catch. Press Enter to continue...")`
+                # If you want to pause the bot instead of automatically catching, replace `catch_pokemon()` with `input("Pausing bot for manual catch (don't forget to pause bizhawk.lua script so you can provide inputs). Press Enter to continue...")`
 
                 # --- Catch any species that the trainer has not already caught ---
                 #elif pokemon["hasSpecies"] == 0: catch_pokemon()
@@ -697,19 +788,62 @@ def identify_pokemon(starter: bool = False): # Identify opponent pokemon and inc
                 # --- Catch Lonely natured Ralts with >25 attackIV and spAttackIV ---
                 #elif pokemon["name"] == "Ralts" and pokemon["attackIV"] > 25 and pokemon["spAttackIV"] > 25 and pokemon["nature"] == "Lonely": catch_pokemon()
 
-                elif "wild_pokemon" in config["battle"]: battle()
-                else: flee_battle()
-    
+                elif config["battle_others"]: 
+                    replace_battler = not battle()
+                else:
+                    flee_battle()
+
+            if config["pickup"]: 
+                pickup_items()
+
+            if replace_battler:
+                start_menu("pokemon")
+
+                # Find another healthy battler
+                party_pp = [0, 0, 0, 0, 0, 0]
+                i = 0
+                for mon in party_info:
+                    if mon["hp"] > 0 and i != 0:
+                        for move in mon["enrichedMoves"]:
+                            party_pp[i] += move["pp"]
+
+                    i += 1
+
+                lead_idx = party_pp.index(max(party_pp))
+
+                debug_log.info(f"Replacing lead battler with {party_info[lead_idx]['speciesName']} (Party slot {lead_idx})")
+
+                # Scroll to and select SWITCH
+                while not find_image("start_menu/select.png"):
+                    emu_combo(["A", "100ms"])
+                
+                emu_combo(["Up", "500ms", "Up", "500ms", "Up", "500ms", "A", "500ms"])
+
+                for i in range(0, lead_idx):
+                    emu_combo(["Down", "100ms"])
+
+                # Select target Pokemon and close out menu
+                emu_combo(["A", "100ms"])
+                emu_combo(["50ms", "B", "300ms", "B", "50ms"])
             return False
-    except:
-        if args.dm: debug_log.exception('')
+    except Exception as e:
+        if args.dm: debug_log.exception(str(e))
+
+def mon_ivs_meets_threshold(pokemon: dict, threshold: int):
+    return (pokemon["hpIV"] >= threshold and
+            pokemon["attackIV"] >= threshold and
+            pokemon["defenseIV"] >= threshold and
+            pokemon["speedIV"] >= threshold and
+            pokemon["spAttackIV"] >= threshold and
+            pokemon["spDefenseIV"] >= threshold)
 
 def enrich_mon_data(pokemon: dict): # Function to add information to the pokemon data extracted from Bizhawk
     try:
         pokemon["name"] = pokemon["speciesName"].capitalize() # Capitalise name
         pokemon["metLocationName"] = location_list[pokemon["metLocation"]] # Add a human readable location
         pokemon["type"] = pokemon_list[pokemon["name"]]["type"] # Get pokemon types
-        pokemon["hiddenPowerType"] = calculateHiddenPower.calculate_hidden_power(pokemon)
+        pokemon["ability"] = pokemon_list[pokemon["name"]]["ability"] # Get pokemon abilities
+        pokemon["hiddenPowerType"] = calculate_hidden_power(pokemon)
         pokemon["nature"] = nature_list[pokemon["personality"] % 25] # Get pokemon nature
         pokemon["zeroPadNumber"] = f"{pokemon_list[pokemon['name']]['number']:03}" # Get zero pad number - e.g.: #5 becomes #005
         pokemon["itemName"] = item_list[pokemon['heldItem']] # Get held item's name
@@ -730,15 +864,24 @@ def enrich_mon_data(pokemon: dict): # Function to add information to the pokemon
             else: pokemon["pokerusStatus"] = "cured"
         else: pokemon["pokerusStatus"] = "none"
         return pokemon
-    except:
+    except Exception as e:
         if args.dm:
-            debug_log.exception('')
+            debug_log.exception(str(e))
             moves = pokemon["moves"]
             debug_log.info(f"Moves: {moves}") 
 
+def language_id_to_iso_639(lang: int):
+    match lang:
+        case 1: return "en"
+        case 2: return "jp"
+        case 3: return "fr"
+        case 4: return "es"
+        case 5: return "de"
+        case 6: return "it"
+
 def mem_getEmuInfo(): # Loop repeatedly to read emulator info from memory
     try:
-        global emu_info, emu_speed
+        global emu_info, emu_speed, language
 
         while True:
             try:
@@ -747,13 +890,17 @@ def mem_getEmuInfo(): # Loop repeatedly to read emulator info from memory
                     if validate_emu_info(emu_info_mmap["emu"]):
                         emu_info = emu_info_mmap["emu"]
                         if emu_info_mmap["emu"]["emuFPS"]: emu_speed = emu_info_mmap["emu"]["emuFPS"]/60
-            except:
-                if args.dm: debug_log.exception('')
+
+                        if language == None:
+                            language = language_id_to_iso_639(emu_info["language"])
+                            debug_log.info(f"Language was set to {language}")                        
+            except Exception as e:
+                if args.dm: debug_log.exception(str(e))
                 continue
             time.sleep(max((1/max(emu_speed,1))*0.016,0.002))
 
-    except:
-        if args.d: debug_log.exception('')
+    except Exception as e:
+        if args.d: debug_log.exception(str(e))
 
 def mem_getTrainerInfo(): # Loop repeatedly to read trainer info from memory
     global trainer_info
@@ -767,8 +914,8 @@ def mem_getTrainerInfo(): # Loop repeatedly to read trainer info from memory
                     if trainer_info_mmap["trainer"]["posY"] < 0: trainer_info_mmap["trainer"]["posY"] = 0
                     trainer_info = trainer_info_mmap["trainer"]
             time.sleep(max((1/max(emu_speed,1))*0.016,0.002))
-        except:
-            if args.dm: debug_log.exception('')
+        except Exception as e:
+            if args.dm: debug_log.exception(str(e))
             continue
 
 def mem_getPartyInfo(): # Loop repeatedly to read party info from memory
@@ -786,8 +933,8 @@ def mem_getPartyInfo(): # Loop repeatedly to read party info from memory
                     else: continue
                 party_info = enriched_party_obj
             time.sleep(max((1/max(emu_speed,1))*0.016,0.002))
-        except:
-            if args.dm: debug_log.exception('')
+        except Exception as e:
+            if args.dm: debug_log.exception(str(e))
             continue
 
 def mem_getOpponentInfo(): # Loop repeatedly to read opponent info from memory
@@ -796,7 +943,7 @@ def mem_getOpponentInfo(): # Loop repeatedly to read opponent info from memory
     while True:
         try:
             opponent_info_mmap = load_json_mmap(4096, "bizhawk_opponent_info")
-            if config["bot_mode"] == "Starters": 
+            if config["bot_mode"] == "starters":
                 if party_info: opponent_info = party_info[0]
             elif opponent_info_mmap:
                 if validate_pokemon(opponent_info_mmap):
@@ -805,8 +952,8 @@ def mem_getOpponentInfo(): # Loop repeatedly to read opponent info from memory
                         opponent_info = enriched_opponent_obj
             elif not opponent_info: opponent_info = json.loads(read_file("data/placeholder_pokemon.json"))
             time.sleep(max((1/max(emu_speed,1))*0.016,0.002))
-        except:
-            if args.d: debug_log.exception('')
+        except Exception as e:
+            if args.d: debug_log.exception(str(e))
             continue
         
 def mem_sendInputs():
@@ -816,8 +963,8 @@ def mem_sendInputs():
             press_input_mmap.write(bytes(json.dumps(press_input), encoding="utf-8"))
             hold_input_mmap.seek(0)
             hold_input_mmap.write(bytes(json.dumps(hold_input), encoding="utf-8"))
-        except:
-            if args.d: debug_log.exception('')
+        except Exception as e:
+            if args.d: debug_log.exception(str(e))
             continue
         time.sleep(0.001) #The less sleep the better but without sleep it will hit CPU hard
 
@@ -878,158 +1025,241 @@ def httpServer(): # Run HTTP server to make data available via HTTP GET
         #    return response
 
         server.run(debug=False, threaded=True, host="127.0.0.1", port=6969)
-    except: debug_log.exception('')
+    except Exception as e: debug_log.exception(str(e))
 
 def mainLoop(): # 🔁 Main loop
     try:
         global last_opponent_personality
-        if "save_game_on_start" in config["game_save"]: save_game()
+        
+        if config["save_game_on_start"]: save_game()
         release_all_inputs()
 
         while True:
+            # Don't start bot until language is set
+            if language == None:
+                continue
+
             if trainer_info and emu_info:
-                if config["bot_mode"] == "Manual Mode":
-                    while not opponent_changed(): time.sleep(0.2/emu_speed)
-                    identify_pokemon()
-                elif "pickup" in config["battle"]: pickup_items()
+                match config["bot_mode"]:
+                    case "manual":
+                        while not opponent_changed(): 
+                            time.sleep(frames_to_ms(20))
+                        identify_pokemon()
+                    case "sweet scent":
+                        mode_sweetScent()
+                    case "bunny hop":
+                        mode_bunnyHop()
+                    case "move between coords":
+                        mode_move_between_coords()
+                    case "move until obstructed":
+                        mode_move_until_obstructed()
+                    case "fishing":
+                        mode_fishing()
+                    case "starters":
+                        mode_starters()
+                    case "rayquaza":
+                        mode_rayquaza()
+                    case "groudon":
+                        mode_groudon()
+                    case "kyogre":
+                        mode_kyogre()
+                    case "southern island":
+                        mode_southernIsland()
+                    case "buy premier balls":
+                        purchase_success = mode_buyPremierBalls()
 
-                # 🌸 Sweet scent method
-                if config["bot_mode"] == "Sweet Scent":
-                    debug_log.info(f"Using Sweet Scent...")
-                    start_menu("pokemon")
-                    press_button("A") # Select first pokemon in party
-                    while not find_image("data/templates/sweet_scent.png"): press_button("Down") # Search for sweet scent in menu
-                    emu_combo(["A", "5000ms"]) # Select sweet scent and wait for animation
-                    identify_pokemon()
-
-                # 🚲 Bunny hop method
-                if config["bot_mode"] == "Bunny Hop":
-                    debug_log.info("Bunny hopping...")
-                    i = 0
-                    while not opponent_changed():
-                        if i < 250:
-                            hold_button("B")
-                            time.sleep(0.01/emu_speed)
-                        else: 
-                            release_all_inputs()
-                            time.sleep(0.1/emu_speed)
-                            i = 0
-                        i += 1
-                    release_all_inputs()
-                    identify_pokemon()
-
-                # 🏃‍♂️🏄‍♂️ Run/Surf method
-                if "Run/Surf" in config["bot_mode"]:
-                    debug_log.info(f"Running/Surfing...")
-                    while not opponent_changed():
-                        if config["bot_mode"] == "Run/Surf between coords":
-                            follow_path([(config["run_surf"]["coord1"][0], config["run_surf"]["coord1"][1]), (config["run_surf"]["coord2"][0], config["run_surf"]["coord2"][1])])
-                        elif config["bot_mode"] == "Run/Surf until obstructed":
-                            run_until_obstructed(config["obstructed_dir"][0])
-                            run_until_obstructed(config["obstructed_dir"][1])
-                    identify_pokemon()
-
-                # 🐠 Fishing method
-                if config["bot_mode"] == "Fishing":
-                    debug_log.info(f"Fishing...")
-                    emu_combo(["Select", "800ms"]) # Cast rod and wait for fishing animation
-                    started_fishing = time.time()
-                    while not opponent_changed(): # State 80 = overworld
-                        if find_image("data/templates/oh_a_bite.png") or find_image("data/templates/on_the_hook.png"): emu_combo(["100ms", "A", "100ms"])
-                        if find_image("data/templates/not_even_a_nibble.png") or find_image("data/templates/it_got_away.png"): emu_combo(["B", "100ms", "Select"])
-                        if not find_image("data/templates/text_period.png"): emu_combo(["Select", "800ms"]) # Re-cast rod if the fishing text prompt is not visible
-                    identify_pokemon()
-
-                # ➕ Starters soft reset method
-                if config["bot_mode"] == "Starters":
-                    debug_log.info(f"Soft resetting starter Pokemon...")
-                    release_all_inputs()
-                    while trainer_info["state"] != 80: press_button("A") # State 80 = overworld
-
-                    if read_file(f"stats/{trainer_info['tid']}.json"): starter_frames = json.loads(read_file(f"stats/{trainer_info['tid']}.json")) # Open starter frames file
-                    else: starter_frames = {"rngState": {"Treecko": [], "Torchic": [], "Mudkip": []}}
-
-                    while trainer_info["state"] == 80: press_button("A")
-                    if config["starter_pokemon"] == "Mudkip":
-                        while not find_image("data/templates/mudkip.png"): press_button("Right")
-                    elif config["starter_pokemon"] == "Treecko":
-                        while not find_image("data/templates/treecko.png"): press_button("Left")
-
-                    while emu_info["rngState"] in starter_frames["rngState"][config["starter_pokemon"]]:
-                        debug_log.debug(f"Already rolled on RNG state: {emu_info['rngState']}, waiting...")
-                    else:
-                        starter_frames["rngState"][config["starter_pokemon"]].append(emu_info["rngState"])
-                        write_file(f"stats/{trainer_info['tid']}.json", json.dumps(starter_frames, indent=4, sort_keys=True))
-                        while trainer_info["state"] == 255: press_button("A")
-                        while not find_image("data/templates/battle/fight.png"):
-                            release_all_inputs()
-                            emu_combo(["B", "Up", "Left"]) # Press B + up + left until FIGHT menu is visible
-                        while True:
-                            try:
-                                if party_info[0]:
-                                    if identify_pokemon(starter=True): input("Pausing bot for manual catch. Press Enter to continue...") # Kill bot and wait for manual intervention to manually catch the shiny starter
-                                    else:
-                                        hold_button("Power")
-                                        time.sleep(0.5/emu_speed)
-                                        break
-                            except: continue
-
-                # 🐍 Rayquaza method
-                if config["bot_mode"] == "Rayquaza":
-                    if trainer_info["mapBank"] == 24 and trainer_info["mapId"] == 85 and trainer_info["posX"] == 14 and trainer_info["posY"] <= 12:  # 24:85 Top of Sky Pillar in front of Rayquaza
-                        while True:
-                            emu_combo(["A", "Up"])
-                            if trainer_info["posY"] < 7:
-                                break
-                            if trainer_info["state"] != 80:
-                                if opponent_changed():
-                                    if identify_pokemon(): input("Pausing bot for manual catch. Press Enter to continue...") # Kill bot and wait for manual intervention to manually catch Rayquaza
-                                break
-
-                        time.sleep(1/emu_speed)
-                        press_button("B")
-
-                        follow_path([(14, 11), (12, 11), (12, 15), (16, 15), (16, -99, (24, 84)), (10, -99, (24, 85)), (12, 15), (12, 11), (14, 11), (14, 7)])
-
-                # 🌋 Groudon method
-                if config["bot_mode"] == "Groudon":
-                    if trainer_info["mapBank"] == 24 and trainer_info["mapId"] == 105 and 11 <= trainer_info["posX"] <= 20 and 26 <= trainer_info["posY"] <= 27:  # 24:105 Terra Cave in front of Groudon
-                        while True:
-                            follow_path([(trainer_info["posX"], 26), (17, 26), (7, 26), (7, 15), (9, 15), (9, 4), (5, 4), (5, 99, (24, 104)), (14, -99, (24, 105)), (9, 4), (9, 15), (7, 15), (7, 26), (11, 26)])
-
-                # 🌊 Kyogre method
-                if config["bot_mode"] == "Kyogre":
-                    if trainer_info["mapBank"] == 24 and trainer_info["mapId"] == 103 and 5 <= trainer_info["posX"] <= 14 and 26 <= trainer_info["posY"] <= 27:  # 24:103 Marine Cave in front of Kyogre
-                        while True:
-                            follow_path([(trainer_info["posX"], 26), (9, 26), (9, 27), (18, 27), (18, 14), (14, 14), (14, 4), (20, 4), (20, 99, (24, 102)), (14, -99, (24, 103)), (14, 4), (14, 14), (18, 14), (18, 27), (14, 27)])
-
-                # 🧭 Southern Island method
-                if config["bot_mode"] == "Southern Island":
-                    if trainer_info["mapBank"] == 26 and trainer_info["mapId"] == 10 and 5 <= trainer_info["posX"] == 13 and trainer_info["posY"] >= 12:  # 26:10 Southern Island, facing the sphere
-                        while True:
-                            follow_path([(13, 99, (26, 9)), (14, -99, (26, 10))])
-                            i = 0
-                            while not opponent_changed():
-                                if i < 500:
-                                    follow_path([(13, 12)])
-                                    emu_combo(["A", "1000ms"])
-                                    if find_image("data/templates/dreams.png"):
-                                        press_button("B")
-                                        break
-                                    i += 1
-                                else: break
-                            else: identify_pokemon()
-
-                # TODO fix Buy 10x pokeballs method
-                #if config["bot_mode"] == "Buy Premier Balls": while True: emu_combo(["A", "1000ms", "Right", "Down", "A", "1000ms", "A", "800ms", "A", "800ms", "A"])
+                        if not purchase_success:
+                            debug_log.info(f"Ran out of money to buy Premier Balls. Script ended.")
+                            return
+                    case other:
+                        debug_log.exception("Couldn't interpret bot mode: " + config["bot_mode"])
+                        return
             else:
                 if opponent_info: last_opponent_personality = opponent_info["personality"]
                 release_all_inputs()
                 time.sleep(0.2)
             time.sleep(max((1/max(emu_speed,1))*0.016,0.002))
 
-    except:
-        debug_log.exception('')
+    except Exception as e:
+        if args.d: debug_log.exception(str(e))
+
+def mode_sweetScent():
+    debug_log.info(f"Using Sweet Scent...")
+    start_menu("pokemon")
+    press_button("A") # Select first pokemon in party
+
+    # Search for sweet scent in menu
+    while not find_image("sweet_scent.png"): 
+        press_button("Down")
+
+    emu_combo(["A", "5000ms"]) # Select sweet scent and wait for animation
+    identify_pokemon()
+
+def mode_bunnyHop():
+    debug_log.info("Bunny hopping...")
+    i = 0
+    while not opponent_changed():
+        if i < 250:
+            hold_button("B")
+            time.sleep(frames_to_ms(1))
+        else:
+            release_all_inputs()
+            time.sleep(frames_to_ms(10))
+            i = 0
+        i += 1
+    release_all_inputs()
+    identify_pokemon()
+
+def mode_move_between_coords():
+    coords = config["coords"]
+    pos1, pos2 = coords["pos1"], coords["pos2"]
+
+    while not opponent_changed():
+        follow_path([(pos1[0], pos1[1]), (pos2[0], pos2[1])])
+
+def mode_move_until_obstructed():
+    pos1, pos2 = None, None
+    direction = config["direction"].lower()
+
+    while not opponent_changed():
+        if pos1 == None or pos2 == None:
+            if direction == "horizontal":
+                pos1 = run_until_obstructed("Left")
+                pos2 = run_until_obstructed("Right")
+            else:
+                pos1 = run_until_obstructed("Up")
+                pos2 = run_until_obstructed("Down")
+        else:
+            follow_path([(pos1[0], pos1[1]), (pos2[0], pos2[1])])
+
+def mode_fishing():
+    debug_log.info(f"Fishing...")
+    emu_combo(["Select", "800ms"]) # Cast rod and wait for fishing animation
+
+    while not opponent_changed():
+        if find_image("oh_a_bite.png") or find_image("on_the_hook.png"): emu_combo(["100ms", "A", "100ms"])
+        if find_image("not_even_a_nibble.png") or find_image("it_got_away.png"): emu_combo(["B", "100ms", "Select"])
+        if not find_image("text_period.png"): emu_combo(["Select", "800ms"]) # Re-cast rod if the fishing text prompt is not visible
+
+    identify_pokemon()
+
+def mode_starters():
+    debug_log.info(f"Soft resetting starter Pokemon...")
+    release_all_inputs()
+    while trainer_info["state"] != GameState.OVERWORLD: press_button("A")
+
+    if read_file(f"stats/{trainer_info['tid']}.json"): starter_frames = json.loads(read_file(f"stats/{trainer_info['tid']}.json")) # Open starter frames file
+    else: starter_frames = {"rngState": {"Treecko": [], "Torchic": [], "Mudkip": []}}
+
+    while trainer_info["state"] == GameState.OVERWORLD: press_button("A")
+    if config["starter_pokemon"] == "Mudkip":
+        while not find_image("mudkip.png"): press_button("Right")
+    elif config["starter_pokemon"] == "Treecko":
+        while not find_image("treecko.png"): press_button("Left")
+
+    while emu_info["rngState"] in starter_frames["rngState"][config["starter_pokemon"]]:
+        debug_log.debug(f"Already rolled on RNG state: {emu_info['rngState']}, waiting...")
+    else:
+        starter_frames["rngState"][config["starter_pokemon"]].append(emu_info["rngState"])
+        write_file(f"stats/{trainer_info['tid']}.json", json.dumps(starter_frames, indent=4, sort_keys=True))
+        while trainer_info["state"] == GameState.MISC_MENU: press_button("A")
+        while not find_image("battle/fight.png"):
+            release_all_inputs()
+            emu_combo(["B", "Up", "Left"]) # Press B + up + left until FIGHT menu is visible
+        while True:
+            try:
+                if party_info[0]:
+                    if identify_pokemon(starter=True): input("Pausing bot for manual catch (don't forget to pause bizhawk.lua script so you can provide inputs). Press Enter to continue...") # Kill bot and wait for manual intervention to manually catch the shiny starter
+                    else:
+                        hold_button("Power")
+                        time.sleep(frames_to_ms(50))
+                        break
+            except: continue
+
+def mode_rayquaza():
+    if not player_on_map(MapBank.DUNGEONS, MapID.RAYQUAZA_PILLAR):
+        return False
+
+    if not trainer_info["posX"] == 14 and trainer_info["posY"] <= 12:
+        return
+
+    while True:
+        emu_combo(["A", "Up"]) # Walk up toward Rayquaza while mashing A
+
+        if player_on_map(MapBank.DUNGEONS, MapID.RAYQUAZA_PILLAR) and trainer_info["posY"] < 7: # break if trainer passes the point where Rayquaza is meant to be (indicates Rayquaza has flown away)
+            break
+
+        if trainer_info["state"] != GameState.OVERWORLD:    
+            if opponent_changed():
+                if identify_pokemon(): input("Pausing bot for manual catch. Press Enter to continue...") # Kill bot and wait for manual intervention to manually catch Rayquaza
+                break
+
+    time.sleep(frames_to_ms(100))
+    press_button("B")
+
+    follow_path([(14, 11), (12, 11), (12, 15), (16, 15), (16, -99, (24, 84)), (10, -99, (24, 85)), (12, 15), (12, 11), (14, 11), (14, 7)])
+
+def mode_groudon():
+    if not player_on_map(MapBank.DUNGEONS, MapID.GROUDON_CAVE):
+        return False
+
+    if not 11 <= trainer_info["posX"] <= 20 and 26 <= trainer_info["posY"] <= 27:
+        return
+
+    while True:
+        follow_path([(trainer_info["posX"], 26), (17, 26), (7, 26), (7, 15), (9, 15), (9, 4), (5, 4), (5, 99, (24, 104)), (14, -99, (24, 105)), (9, 4), (9, 15), (7, 15), (7, 26), (11, 26)])
+
+def mode_kyogre():
+    if not player_on_map(MapBank.DUNGEONS, MapID.KYOGRE_CAVE):
+       return False
+
+    if not 5 <= trainer_info["posX"] <= 14 and 26 <= trainer_info["posY"] <= 27:
+        return
+
+    while True:
+        follow_path([(trainer_info["posX"], 26), (9, 26), (9, 27), (18, 27), (18, 14), (14, 14), (14, 4), (20, 4), (20, 99, (24, 102)), (14, -99, (24, 103)), (14, 4), (14, 14), (18, 14), (18, 27), (14, 27)])
+
+def mode_southernIsland():
+    if not player_on_map(MapBank.SPECIAL, MapID.LATI_ISLAND) :
+        return False
+
+    if not 5 <= trainer_info["posX"] == 13 and trainer_info["posY"] >= 12:
+        return True
+
+    while True:
+        follow_path([(13, 99, (26, 9)), (14, -99, (26, 10))])
+        i = 0
+        while not opponent_changed():
+            if i < 500:
+                follow_path([(13, 12)])
+                emu_combo(["A", "1000ms"])
+                if find_image("dreams.png"):
+                    press_button("B")
+                    break
+                i += 1
+            else: break
+        else: identify_pokemon()
+
+def mode_buyPremierBalls():
+    while not find_image("mart/times_01.png"):
+        release_all_inputs()
+        emu_combo(["A", "400ms"])
+
+        if find_image("mart/you_dont.png"): # Not enough money to buy a single ball
+            return False
+
+    press_count = 0
+    while not find_image("mart/times_11.png") and not find_image("mart/times_10.png"):
+        emu_combo(["Right", "100ms"])
+
+        if press_count > 3: # Not enough money to buy at least 10
+            return False
+        press_count += 1
+
+    while not find_image("mart/times_10.png"):
+        emu_combo(["Down", "100ms"])
+
+    return True
 
 try:
     # Parse flags to change the behaviour of the bot
@@ -1067,61 +1297,55 @@ try:
     debug_log.addHandler(log_handler)
     debug_log.addHandler(console_handler)
 except Exception as e:
-    print(e)
+    debug_log.exception(str(e))
     os._exit(1)
 
 try:
+    # Validate python version
+    min_major = 3
+    min_minor = 10
+    v_major = sys.version_info[0]
+    v_minor = sys.version_info[1]
+
+    if v_major < min_major or v_minor < min_minor:
+        debug_log.error(f"\n\nPython version is out of date! (Minimum required version for pokebot is {min_major}.{min_minor})\nPlease install the latest version at https://www.python.org/downloads/\n")
+        os._exit(1)
+
+    debug_log.info(f"Running pokebot on Python {v_major}.{v_minor}")
+
+    # Confirm that the Lua Console is open by doing a test screenshot
+    mmap_screenshot_size, mmap_screenshot_file = 24576, "bizhawk_screenshot"
+    can_start_bot = True
+
+    try:
+        shmem = mmap.mmap(0, mmap_screenshot_size, mmap_screenshot_file)
+        screenshot = Image.open(io.BytesIO(shmem))
+    except:
+        debug_log.error("\n\nUnable to initialize pokebot!\nPlease confirm that the Lua Console is open in BizHawk, and that it remains open while the bot is active.\nIt can be opened through 'Tools > Lua Console'.\n\nStarting in dashboard-only mode...\n")
+        can_start_bot = False
+
     yaml = YAML()
     yaml.default_flow_style = False
 
     config = yaml.load(read_file("config.yml")) # Load config
 
-    if args.s: config["game_save"].append("save_game_on_start")
-    if args.m: config["bot_mode"] = "Manual Mode"
-
-    debug_log.info("Starting bot!")
-    debug_log.info(f"Mode: {config['bot_mode']}")
-
-    item_list = json.loads(read_file("data/items.json"))
-    location_list = json.loads(read_file("data/locations.json"))
-    move_list = json.loads(read_file("data/moves.json"))
-    pokemon_list = json.loads(read_file("data/pokemon.json"))
-    type_list = json.loads(read_file("data/types.json"))
-    nature_list = json.loads(read_file("data/natures.json"))
-
-    pokemon_schema = json.loads(read_file("data/schemas/pokemon.json"))
-    validate_pokemon = fastjsonschema.compile(pokemon_schema)
-    trainer_info_schema = json.loads(read_file("data/schemas/trainer_info.json"))
-    validate_trainer_info = fastjsonschema.compile(trainer_info_schema)
-    emu_info_schema = json.loads(read_file("data/schemas/emu_info.json"))
-    validate_emu_info = fastjsonschema.compile(emu_info_schema)
-
-    os.makedirs("stats", exist_ok=True) # Sets up stats files if they don't exist
-    if read_file("stats/totals.json"): stats = json.loads(read_file("stats/totals.json")) # Open totals stats file
-    else: stats = {"pokemon": {}, "totals": {"longest_phase_encounters": 0, "shortest_phase_encounters": "-", "phase_lowest_sv": 99999, "phase_lowest_sv_pokemon": "", "encounters": 0, "phase_encounters": 0, "shiny_average": "-", "shiny_encounters": 0}}
-
-    if read_file("stats/encounter_log.json"): encounter_log = json.loads(read_file("stats/encounter_log.json")) # Open encounter log file
-    else: encounter_log = {"encounter_log": []}
-
-    if read_file("stats/shiny_log.json"): shiny_log = json.loads(read_file("stats/shiny_log.json")) # Open shiny log file
-    else: shiny_log = {"shiny_log": []}
-
-    default_input = {"A": False, "B": False, "L": False, "R": False, "Up": False, "Down": False, "Left": False, "Right": False, "Select": False, "Start": False, "Light Sensor": 0, "Power": False, "Tilt X": 0, "Tilt Y": 0, "Tilt Z": 0, "Screenshot": False}
-    press_input_mmap = mmap.mmap(-1, 256, tagname="bizhawk_press_input", access=mmap.ACCESS_WRITE)
-    press_input = default_input
-    hold_input_mmap = mmap.mmap(-1, 256, tagname="bizhawk_hold_input", access=mmap.ACCESS_WRITE)
-    hold_input = default_input
-
-    last_trainer_state, last_opponent_personality, trainer_info, opponent_info, emu_info, party_info, emu_speed = None, None, None, None, None, None, 1
-    mmap_screenshot_size, mmap_screenshot_file = 24576, "bizhawk_screenshot"
+    last_trainer_state, last_opponent_personality, trainer_info, opponent_info, emu_info, party_info, emu_speed, language = None, None, None, None, None, None, 1, None
     ImageFile.LOAD_TRUNCATED_IMAGES = True
 
-    def on_window_close(): os._exit(1)
-    window = webview.create_window("PokeBot", url="interface/dashboard.html", width=1280, height=720, resizable=True, hidden=False, frameless=False, easy_drag=True, fullscreen=False, text_select=True, zoomable=True)
-    window.events.closed += on_window_close
+    # Main bot functionality
+    if can_start_bot:        
+        if args.s: config["save_game_on_start"] = True
+        if args.m: config["bot_mode"] = "Manual"
 
-    # Set up and launch threads if screenshot is detected in memory (Lua script is running in Bizhawk)
-    if mmap.mmap(0, mmap_screenshot_size, mmap_screenshot_file):
+        config["bot_mode"] = config["bot_mode"].lower() # Decase all bot modes
+
+        debug_log.info(f"Mode: {config['bot_mode']}")
+
+        default_input = {"A": False, "B": False, "L": False, "R": False, "Up": False, "Down": False, "Left": False, "Right": False, "Select": False, "Start": False, "Light Sensor": 0, "Power": False, "Tilt X": 0, "Tilt Y": 0, "Tilt Z": 0, "Screenshot": False}
+        press_input_mmap = mmap.mmap(-1, 256, tagname="bizhawk_press_input", access=mmap.ACCESS_WRITE)
+        press_input = default_input
+        hold_input_mmap = mmap.mmap(-1, 256, tagname="bizhawk_hold_input", access=mmap.ACCESS_WRITE)
+        hold_input = default_input
 
         poll_screenshot = Thread(target=mem_pollScreenshot)
         poll_screenshot.start()
@@ -1141,14 +1365,53 @@ try:
         send_inputs = Thread(target=mem_sendInputs)
         send_inputs.start()
 
-        http_server = Thread(target=httpServer)
-        http_server.start()
-
         main_loop = Thread(target=mainLoop)
         main_loop.start()
 
-        webview.start()
+        item_list = json.loads(read_file("data/items.json"))
+        location_list = json.loads(read_file("data/locations.json"))
+        move_list = json.loads(read_file("data/moves.json"))
+        pokemon_list = json.loads(read_file("data/pokemon.json"))
+        type_list = json.loads(read_file("data/types.json"))
+        nature_list = json.loads(read_file("data/natures.json"))
+
+        pokemon_schema = json.loads(read_file("data/schemas/pokemon.json"))
+        validate_pokemon = fastjsonschema.compile(pokemon_schema)
+        trainer_info_schema = json.loads(read_file("data/schemas/trainer_info.json"))
+        validate_trainer_info = fastjsonschema.compile(trainer_info_schema)
+        emu_info_schema = json.loads(read_file("data/schemas/emu_info.json"))
+        validate_emu_info = fastjsonschema.compile(emu_info_schema)
+
+    # Dashboard
+    http_server = Thread(target=httpServer)
+    http_server.start()
+
+    os.makedirs("stats", exist_ok=True) # Sets up stats files if they don't exist
+
+    totals = read_file("stats/totals.json")
+    if totals: stats = json.loads(totals)
+    else: stats = {"pokemon": {}, "totals": {"longest_phase_encounters": 0, "shortest_phase_encounters": "-", "phase_lowest_sv": 99999, "phase_lowest_sv_pokemon": "", "encounters": 0, "phase_encounters": 0, "shiny_average": "-", "shiny_encounters": 0}}
+
+    encounters = read_file("stats/encounter_log.json")
+    if encounters: encounter_log = json.loads(encounters)
+    else: encounter_log = {"encounter_log": []}
+
+    shinies = read_file("stats/shiny_log.json")
+    if shinies: shiny_log = json.loads(shinies) # Open shiny log file
+    else: shiny_log = {"shiny_log": []}
+
+    def on_window_close():
+        if can_start_bot:
+            release_all_inputs()
+
+        debug_log.info("Dashboard closed on user input")
+        os._exit(1)
+
+    window = webview.create_window("PokeBot", url="interface/dashboard.html", width=1280, height=720, resizable=True, hidden=False, frameless=False, easy_drag=True, fullscreen=False, text_select=True, zoomable=True)
+    window.events.closed += on_window_close
+
+    webview.start()
+
 except Exception as e:
-    print(e)
-    debug_log.exception('')
+    debug_log.exception(str(e))
     os._exit(1)
