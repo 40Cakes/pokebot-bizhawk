@@ -1,5 +1,5 @@
 # Bot Setup
-bot_mode: starters
+bot_mode: faraway mew
 coords:
   pos1:
     - 38

@@ -740,7 +740,7 @@ def identify_pokemon(starter: bool = False): # Identify opponent pokemon and inc
 
             if not args.n: write_file("stats/totals.json", json.dumps(stats, indent=4, sort_keys=True)) # Save stats file
 
-            if not starter and config["bot_mode"] not in ["manual", "rayquaza", "kyogre", "groudon"] and "shinies" in config["catch"]: 
+            if not starter and config["bot_mode"] not in ["manual", "rayquaza", "kyogre", "groudon", "faraway mew"] and "shinies" in config["catch"]: 
                 catch_pokemon()
 
             if not args.n: write_file("stats/totals.json", json.dumps(stats, indent=4, sort_keys=True)) # Save stats file
@@ -1065,6 +1065,8 @@ def mainLoop(): # 🔁 Main loop
                         mode_kyogre()
                     case "southern island":
                         mode_southernIsland()
+                    case "faraway mew":
+                        mode_faraway_mew()
                     case "buy premier balls":
                         purchase_success = mode_buyPremierBalls()
 
@@ -1218,6 +1220,41 @@ def mode_kyogre():
 
     while True:
         follow_path([(trainer_info["posX"], 26), (9, 26), (9, 27), (18, 27), (18, 14), (14, 14), (14, 4), (20, 4), (20, 99, (24, 102)), (14, -99, (24, 103)), (14, 4), (14, 14), (18, 14), (18, 27), (14, 27)])
+
+def mode_faraway_mew():
+    if not player_on_map(MapBank.SPECIAL, MapID.MEW_ISLAND_ENTERANCE):
+        return False
+    
+    if not trainer_info["posX"] == 22 and trainer_info["posY"] == 8:
+        return
+
+        
+    while True:
+        emu_combo(["A"])        
+        if player_on_map(MapBank.SPECIAL, MapID.MEW_ISLAND_ENTERANCE):
+            follow_path([(22, 7)])
+
+        if player_on_map(MapBank.SPECIAL, MapID.MEW_ISLAND):
+            if trainer_info["posY"] == 13:
+                press_button("A")
+                time.sleep(frames_to_ms(200))
+                release_button("A")
+                press_button("A")
+                release_button("A")
+                follow_path([(16, 18), (12, 18),  (12, 20)])
+
+            if trainer_info["state"] != GameState.OVERWORLD:    
+                if opponent_changed():
+                    if identify_pokemon(): 
+                    break
+                
+            if player_on_map(MapBank.SPECIAL, MapID.MEW_ISLAND_ENTERANCE):
+                print("leaving")
+                follow_path([(22, 6)])
+
+
+            follow_path([(trainer_info["posX"], 17), (12, 17), (12, 16), (13, 15), (14, 15), (16, 16),  (16, 13)])
+
 
 def mode_southernIsland():
     if not player_on_map(MapBank.SPECIAL, MapID.LATI_ISLAND) :
