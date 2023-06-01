@@ -1313,18 +1313,20 @@ def mode_faraway_mew():
     if not player_on_map(MapBank.SPECIAL, MapID.MEW_ISLAND_ENTERANCE):
         return False
     
-    if not trainer_info["posX"] == 22 and trainer_info["posY"] == 8:
+    if not 22 <= trainer_info["posX"] <= 23 and 8 <= trainer_info["posY"] <= 10:
         return
 
     while True:
         release_all_inputs()
         if player_on_map(MapBank.SPECIAL, MapID.MEW_ISLAND_ENTERANCE):
-            follow_path([(22, 7)])
+            follow_path([(22, trainer_info["posY"])])
+            follow_path([(trainer_info["posX"], 7)])
+
 
         if player_on_map(MapBank.SPECIAL, MapID.MEW_ISLAND):
             if trainer_info["posY"] == 13:
                 press_button("A")
-                time.sleep(frames_to_ms(50))
+                time.sleep(frames_to_ms(30))
                 release_button("A")
                 press_button("A")
                 release_button("A")
@@ -1337,14 +1339,15 @@ def mode_faraway_mew():
                 print("leaving")
                 follow_path([(22, 6)])
             if trainer_info["posY"] == 13:
-                follow_path([(16, 18), (12, 18),  (12, 19)])
-                time.sleep(frames_to_ms(30))
+                follow_path([(16, 18), (13, 18),  (13, 19)])
+                time.sleep(frames_to_ms(5))
                 hold_button("Down")
                 time.sleep(frames_to_ms(30))
                 release_button("Down")
                  
             else:
-                follow_path([(trainer_info["posX"], 17), (12, 17), (12, 16), (13, 15), (14, 15), (16, 16),  (16, 13)])
+                if not player_on_map(MapBank.SPECIAL, MapID.MEW_ISLAND_ENTERANCE):
+                    follow_path([(trainer_info["posX"], 17), (12, 17), (12, 16), (13, 15), (14, 15), (16, 16),  (16, 13)])
 
 
 def mode_southernIsland():
