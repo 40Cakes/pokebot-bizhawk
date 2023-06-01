@@ -98,41 +98,48 @@ def emu_combo(sequence: list): # Function to send a sequence of inputs and delay
         if args.d: debug_log.exception(str(e))
 
 def press_button(button: str): # Function to update the press_input object
-        global g_current_index
-        match button:
-            case 'Left':
-                button = 'l'
-            case 'Right':
-                button = 'r'
-            case 'Up':
-                button = 'u'
-            case 'Down':
-                button = 'd'
-            case 'Select':
-                button = 's'
-            case 'Start':
-                button = 'S'
-        index = g_current_index
-        input_list_mmap.seek(index)
-        input_list_mmap.write(bytes(button,"utf-8"))
-        input_list_mmap.seek(100) #Position 0-99 are inputs, position 100 keeps the value of the current index
-        input_list_mmap.write(bytes([index+1]))
-        g_current_index +=1
-        if g_current_index > 99:
-            g_current_index = 0
+    global g_current_index
+
+    match button:
+        case 'Left':
+            button = 'l'
+        case 'Right':
+            button = 'r'
+        case 'Up':
+            button = 'u'
+        case 'Down':
+            button = 'd'
+        case 'Select':
+            button = 's'
+        case 'Start':
+            button = 'S'
+
+    index = g_current_index
+    input_list_mmap.seek(index)
+    input_list_mmap.write(bytes(button,"utf-8"))
+    input_list_mmap.seek(100) #Position 0-99 are inputs, position 100 keeps the value of the current index
+    input_list_mmap.write(bytes([index+1]))
+
+    g_current_index +=1
+    if g_current_index > 99:
+        g_current_index = 0
 
 def hold_button(button: str): # Function to update the hold_input object
     global hold_input
     debug_log.debug(f"Holding: {button}...")
+
     hold_input[button] = True
     hold_input_mmap.seek(0)
     hold_input_mmap.write(bytes(json.dumps(hold_input), encoding="utf-8"))
+
 def release_button(button: str): # Function to update the hold_input object
     global hold_input
     debug_log.debug(f"Releasing: {button}...")
+
     hold_input[button] = False
     hold_input_mmap.seek(0)
     hold_input_mmap.write(bytes(json.dumps(hold_input), encoding="utf-8"))
+
 def release_all_inputs(): # Function to release all keys in all input objects
     global press_input, hold_input
     debug_log.debug(f"Releasing all inputs...")
@@ -141,6 +148,7 @@ def release_all_inputs(): # Function to release all keys in all input objects
         hold_input[button] = False
         hold_input_mmap.seek(0)
         hold_input_mmap.write(bytes(json.dumps(hold_input), encoding="utf-8"))
+
 def opponent_changed(): # This function checks if there is a different opponent since last check, indicating the game state is probably now in a battle
     try:
         global last_opponent_personality
@@ -159,6 +167,7 @@ def opponent_changed(): # This function checks if there is a different opponent 
     except Exception as e:
         if args.d: debug_log.exception(str(e))
         return False
+
 def get_screenshot():
     g_bizhawk_screenshot = None
     hold_button("Screenshot")
@@ -476,90 +485,54 @@ def run_until_obstructed(direction: str, run: bool = True): # Function to run un
         if args.d: debug_log.exception(str(e))
 
 def follow_path(coords: list):
-    def run_to_pos(x: int, y: int, map_data: tuple, run: bool = True):
-        try:
-            while True:
-                if x != trainer_info["posX"]:
-                    axis = "posX"
-                    directions = ["Left", "Right"]
-                    end_pos = x
-                elif y != trainer_info["posY"]:
-                    axis = "posY"
-                    directions = ["Up", "Down"]
-                    end_pos = y
-                else: return True
+    for x, y, *map_data in coords:
+        debug_log.info(f"Moving to: {x}, {y}")
 
-                def target_pos():
-                    if run:
-                        hold_button("B")
-                    if end_pos < trainer_info[axis]:
-                        hold_button(directions[0])
-                        return False
-                    elif end_pos > trainer_info[axis]:
-                        hold_button(directions[1])
-                        return False
-                    else: return True
+        stuck_time = 0
+        last_pos = [0, 0]
 
-                stuck = 0
-                last_axis = 0
+        while True:
+            release_all_inputs()
+            
+            if opponent_changed():
+                return
 
-                if map_data != []:
-                    debug_log.info(f"Running to map: {map_data[0][0]}:{map_data[0][1]}")
-                    while (trainer_info["mapBank"] != map_data[0][0] or trainer_info["mapId"] != map_data[0][1]):
-                        if stuck > 25:
-                            #press_button("B")
-                            stuck = 0
-                        
-                        if trainer_info[axis] == last_axis: stuck += 1
-                        else: stuck = 0
-                        last_axis = trainer_info[axis]
-                        time.sleep(frames_to_ms(1))
+            last_pos = [trainer_info["posX"], trainer_info["posY"]]
 
-                        if not opponent_changed():
-                            try: target_pos()
-                            except Exception as e:
-                                if args.dm: debug_log.exception(str(e))
-                        else:
-                            identify_pokemon()
-                            return False
-                    else: return True
+            # On map change
+            if map_data != []:
+                if (trainer_info["mapBank"] == map_data[0][0] and trainer_info["mapId"] == map_data[0][1]):
+                    break
+            elif last_pos[0] == x and last_pos[1] == y:
+                break
+            
+            if trainer_info["posX"] > x:
+                hold_button("Left")
+            elif trainer_info["posX"] < x:
+                hold_button("Right")
+            elif trainer_info["posY"] < y:
+                hold_button("Down")
+            elif trainer_info["posY"] > y:
+                hold_button("Up")
 
+            if trainer_info["posX"] == last_pos[0] and trainer_info["posY"] == last_pos[1]:
+                stuck_time += 1
+
+                if stuck_time == 128:
+                    debug_log.info("Bot hasn't moved for a while. Is it stuck?")
+
+                # Press B occasionally in case there's a menu/dialogue open
+                if stuck_time % 12 == 0:
+                    press_button("B")
                 else:
-                    debug_log.info(f"Running to {axis}: {end_pos}")
-                    while trainer_info[axis] != end_pos:
-                        if stuck > 25:
-                            press_button("B")
-                            stuck = 0
-                        
-                        if trainer_info[axis] == last_axis: stuck += 1
-                        else: stuck = 0
-                        last_axis = trainer_info[axis]
-                        time.sleep(frames_to_ms(1))
+                    hold_button("B")
+            else:
+                hold_button("B")
+                stuck_time = 0
 
-                        if not opponent_changed():
-                            try: target_pos()
-                            except Exception as e:
-                                if args.dm: debug_log.exception(str(e))
-                                return False
-                        else:
-                            identify_pokemon()
-                            return False
-                    else:
-                        release_all_inputs()
-                        return True
-        except Exception as e:
-            if args.dm: debug_log.exception(str(e))
-            return False
+            time.sleep(frames_to_ms(1))
 
-    try:
-        for x, y, *map_data in coords:
-            #debug_log.info(f"Current: X: {trainer_info['posX']}, Y: {trainer_info['posY']}, Map: [({trainer_info['mapBank']},{trainer_info['mapId']})]")
-            #debug_log.info(f"Pathing: X: {x}, Y: {y}, Map: {map_data}")
-            while not run_to_pos(x, y, map_data): continue
-            else: release_all_inputs()
-    except Exception as e:
-        if args.dm: debug_log.exception(str(e))
-        return False
+    release_all_inputs()
 
 menus = ["bag", "bot", "exit", "option", "pokedex", "pokemon", "pokenav", "save"]
 
@@ -834,9 +807,9 @@ def identify_pokemon(starter: bool = False): # Identify opponent pokemon and inc
                 # --- Catch Lonely natured Ralts with >25 attackIV and spAttackIV ---
                 #elif pokemon["name"] == "Ralts" and pokemon["attackIV"] > 25 and pokemon["spAttackIV"] > 25 and pokemon["nature"] == "Lonely": catch_pokemon()
 
-                elif config["battle_others"]: 
+                elif config["battle_others"] and not config["bot_mode"] in ["groudon", "kyogre", "rayquaza"]: 
                     battle_won = battle()
-                    replace_battler = not battle_won
+                    replace_battler = not battle_won()
                 else:
                     flee_battle()
 
@@ -1086,60 +1059,58 @@ def httpServer(): # Run HTTP server to make data available via HTTP GET
     except Exception as e: debug_log.exception(str(e))
 
 def mainLoop(): # 🔁 Main loop
-    try:
-        global last_opponent_personality
-        
-        if config["save_game_on_start"]: save_game()
-        release_all_inputs()
+    global last_opponent_personality
+    
+    if config["save_game_on_start"]: save_game()
+    release_all_inputs()
 
-        while True:
-            # Don't start bot until language is set
-            if language == None:
-                continue
+    while True:
+        # Don't start bot until language is set
+        if language == None:
+            continue
 
-            if trainer_info and emu_info:
-                match config["bot_mode"]:
-                    case "manual":
-                        while not opponent_changed(): 
-                            time.sleep(frames_to_ms(20))
-                        identify_pokemon()
-                    case "sweet scent":
-                        mode_sweetScent()
-                    case "bunny hop":
-                        mode_bunnyHop()
-                    case "move between coords":
-                        mode_move_between_coords()
-                    case "move until obstructed":
-                        mode_move_until_obstructed()
-                    case "fishing":
-                        mode_fishing()
-                    case "starters":
-                        mode_starters()
-                    case "rayquaza":
-                        mode_rayquaza()
-                    case "groudon":
-                        mode_groudon()
-                    case "kyogre":
-                        mode_kyogre()
-                    case "southern island":
-                        mode_southernIsland()
-                    case "buy premier balls":
-                        purchase_success = mode_buyPremierBalls()
+        if trainer_info and emu_info:
+            match config["bot_mode"]:
+                case "manual":
+                    while not opponent_changed(): 
+                        time.sleep(frames_to_ms(20))
+                    identify_pokemon()
+                case "sweet scent":
+                    mode_sweetScent()
+                case "bunny hop":
+                    mode_bunnyHop()
+                case "move between coords":
+                    mode_move_between_coords()
+                case "move until obstructed":
+                    mode_move_until_obstructed()
+                case "fishing":
+                    mode_fishing()
+                case "starters":
+                    mode_starters()
+                case "rayquaza":
+                    mode_rayquaza()
+                case "groudon":
+                    mode_groudon()
+                case "kyogre":
+                    mode_kyogre()
+                case "southern island":
+                    mode_southernIsland()
+                case "buy premier balls":
+                    purchase_success = mode_buyPremierBalls()
 
-                        if not purchase_success:
-                            debug_log.info(f"Ran out of money to buy Premier Balls. Script ended.")
-                            return
-                    case other:
-                        debug_log.exception("Couldn't interpret bot mode: " + config["bot_mode"])
+                    if not purchase_success:
+                        debug_log.info(f"Ran out of money to buy Premier Balls. Script ended.")
                         return
-            else:
-                if opponent_info: last_opponent_personality = opponent_info["personality"]
-                release_all_inputs()
-                time.sleep(0.2)
-            time.sleep(max((1/max(emu_speed,1))*0.016,0.002))
-
-    except Exception as e:
-        if args.d: debug_log.exception(str(e))
+                case other:
+                    debug_log.exception("Couldn't interpret bot mode: " + config["bot_mode"])
+                    return
+        else:
+            if opponent_info:
+                last_opponent_personality = opponent_info["personality"]
+            
+            release_all_inputs()
+            time.sleep(0.2)
+        time.sleep(frames_to_ms(1))
 
 def mode_sweetScent():
     debug_log.info(f"Using Sweet Scent...")
@@ -1286,10 +1257,27 @@ def mode_groudon():
         return False
 
     if not 11 <= trainer_info["posX"] <= 20 and 26 <= trainer_info["posY"] <= 27:
-        return
+        return False
 
     while True:
-        follow_path([(trainer_info["posX"], 26), (17, 26), (7, 26), (7, 15), (9, 15), (9, 4), (5, 4), (5, 99, (24, 104)), (14, -99, (24, 105)), (9, 4), (9, 15), (7, 15), (7, 26), (11, 26)])
+        follow_path([(17, 26)])
+
+        identify_pokemon()
+
+        # Exit and re-enter the room
+        follow_path([
+            (7, 26), 
+            (7, 15), 
+            (9, 15), 
+            (9, 4), 
+            (5, 4), 
+            (5, 99, (24, 104)), 
+            (14, -99, (24, 105)), 
+            (9, 4), (9, 15), 
+            (7, 15), 
+            (7, 26), 
+            (11, 26)]
+        )
 
 def mode_kyogre():
     if not player_on_map(MapBank.DUNGEONS, MapID.KYOGRE_CAVE):
