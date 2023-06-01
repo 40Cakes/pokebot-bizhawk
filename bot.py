@@ -781,7 +781,6 @@ def identify_pokemon(starter: bool = False): # Identify opponent pokemon and inc
                     catch_pokemon()
                 elif "faraway mew" in config["bot_mode"]:
                     flee_battle()
-                    print("ran form battle")
                     time.sleep(frames_to_ms(60))
                     press_button("B")
                     release_button("B")
@@ -1290,7 +1289,6 @@ def mode_faraway_mew():
                     if identify_pokemon(): 
                         input("Pausing bot for manual catch. Press Enter to continue...") 
             if player_on_map(MapBank.SPECIAL, MapID.MEW_ISLAND_ENTERANCE):
-                print("leaving")
                 follow_path([(22, 6)])
             if trainer_info["posY"] == 13:
                 follow_path([(trainer_info["posX"], 18), (13, 18), (13, 19)])
