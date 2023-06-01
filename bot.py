@@ -1339,12 +1339,12 @@ def mode_faraway_mew():
                 print("leaving")
                 follow_path([(22, 6)])
             if trainer_info["posY"] == 13:
-                follow_path([(16, 18), (13, 18),  (13, 19)])
+                follow_path([(13, 19)])
                 time.sleep(frames_to_ms(5))
                 hold_button("Down")
                 time.sleep(frames_to_ms(30))
                 release_button("Down")
-                 
+                time.sleep(frames_to_ms(5))
             else:
                 if not player_on_map(MapBank.SPECIAL, MapID.MEW_ISLAND_ENTERANCE):
                     follow_path([(trainer_info["posX"], 17), (12, 17), (12, 16), (13, 15), (14, 15), (16, 16),  (16, 13)])
