@@ -1,4 +1,4 @@
-local utils = require("utils")
+local utils = require("./data/lua/utils")
 
 dofile (utils.translatePath("data\\lua\\Memory.lua"))
 dofile (utils.translatePath("data\\lua\\GameSettings.lua"))

@@ -820,6 +820,12 @@ def identify_pokemon(starter: bool = False): # Identify opponent pokemon and inc
                     catch_pokemon()
                 elif "all" in config["catch"]:
                     catch_pokemon()
+                elif "faraway mew" in config["bot_mode"]:
+                    flee_battle()
+                    print("ran form battle")
+                    time.sleep(frames_to_ms(60))
+                    press_button("B")
+                    release_button("B")
                 
                 ### Custom Filters ###
                 # Add custom filters here (make sure to uncomment the line), examples:
@@ -1310,32 +1316,35 @@ def mode_faraway_mew():
     if not trainer_info["posX"] == 22 and trainer_info["posY"] == 8:
         return
 
-        
     while True:
-        emu_combo(["A"])        
+        release_all_inputs()
         if player_on_map(MapBank.SPECIAL, MapID.MEW_ISLAND_ENTERANCE):
             follow_path([(22, 7)])
 
         if player_on_map(MapBank.SPECIAL, MapID.MEW_ISLAND):
             if trainer_info["posY"] == 13:
                 press_button("A")
-                time.sleep(frames_to_ms(200))
+                time.sleep(frames_to_ms(50))
                 release_button("A")
                 press_button("A")
                 release_button("A")
-                follow_path([(16, 18), (12, 18),  (12, 20)])
 
             if trainer_info["state"] != GameState.OVERWORLD:    
                 if opponent_changed():
                     if identify_pokemon(): 
-                    break
-                
+                        input("Pausing bot for manual catch. Press Enter to continue...") 
             if player_on_map(MapBank.SPECIAL, MapID.MEW_ISLAND_ENTERANCE):
                 print("leaving")
                 follow_path([(22, 6)])
-
-
-            follow_path([(trainer_info["posX"], 17), (12, 17), (12, 16), (13, 15), (14, 15), (16, 16),  (16, 13)])
+            if trainer_info["posY"] == 13:
+                follow_path([(16, 18), (12, 18),  (12, 19)])
+                time.sleep(frames_to_ms(30))
+                hold_button("Down")
+                time.sleep(frames_to_ms(30))
+                release_button("Down")
+                 
+            else:
+                follow_path([(trainer_info["posX"], 17), (12, 17), (12, 16), (13, 15), (14, 15), (16, 16),  (16, 13)])
 
 
 def mode_southernIsland():
