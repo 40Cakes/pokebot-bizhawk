@@ -1293,8 +1293,8 @@ def mode_faraway_mew():
                 print("leaving")
                 follow_path([(22, 6)])
             if trainer_info["posY"] == 13:
-                follow_path([(13, 19)])
-                time.sleep(frames_to_ms(5))
+                follow_path([(trainer_info["posX"], 18), (13, 18), (13, 19)])
+                time.sleep(frames_to_ms(10))
                 hold_button("Down")
                 time.sleep(frames_to_ms(30))
                 release_button("Down")
