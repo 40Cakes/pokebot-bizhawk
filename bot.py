@@ -493,7 +493,7 @@ def follow_path(coords: list):
 
         while True:
             release_all_inputs()
-            
+
             if opponent_changed():
                 return
 
@@ -522,7 +522,7 @@ def follow_path(coords: list):
                     debug_log.info("Bot hasn't moved for a while. Is it stuck?")
 
                 # Press B occasionally in case there's a menu/dialogue open
-                if stuck_time % 12 == 0:
+                if stuck_time % 13 == 0:
                     press_button("B")
                 else:
                     hold_button("B")
@@ -651,6 +651,8 @@ def save_game(): # Function to save the game via the save option in the start me
 
 def identify_pokemon(starter: bool = False): # Identify opponent pokemon and incremement statistics, returns True if shiny, else False
     try:
+        legendary_hunt = config["bot_mode"] in ["manual", "rayquaza", "kyogre", "groudon", "southern island"]
+
         def common_stats():
             global stats, encounter_log
     
@@ -759,8 +761,10 @@ def identify_pokemon(starter: bool = False): # Identify opponent pokemon and inc
 
             if not args.n: write_file("stats/totals.json", json.dumps(stats, indent=4, sort_keys=True)) # Save stats file
 
-            if not starter and config["bot_mode"] not in ["manual", "rayquaza", "kyogre", "groudon"] and "shinies" in config["catch"]: 
+            if not starter and not legendary_hunt and "shinies" in config["catch"]: 
                 catch_pokemon()
+            elif legendary_hunt:
+                input("Pausing bot for manual intervention. (Don't forget to pause the bizhawk.lua script so you can provide inputs). Press Enter to continue...")
 
             if not args.n: write_file("stats/totals.json", json.dumps(stats, indent=4, sort_keys=True)) # Save stats file
 
@@ -807,13 +811,13 @@ def identify_pokemon(starter: bool = False): # Identify opponent pokemon and inc
                 # --- Catch Lonely natured Ralts with >25 attackIV and spAttackIV ---
                 #elif pokemon["name"] == "Ralts" and pokemon["attackIV"] > 25 and pokemon["spAttackIV"] > 25 and pokemon["nature"] == "Lonely": catch_pokemon()
 
-                elif config["battle_others"] and not config["bot_mode"] in ["groudon", "kyogre", "rayquaza"]: 
+                elif config["battle_others"] and not legendary_hunt: 
                     battle_won = battle()
                     replace_battler = not battle_won()
                 else:
                     flee_battle()
 
-            if config["pickup"]: 
+            if config["pickup"] and not legendary_hunt: 
                 pickup_items()
 
             if replace_battler:
@@ -1220,7 +1224,6 @@ def mode_starters():
             try:
                 if party_info[0]:
                     if identify_pokemon(starter=True): 
-                        # Kill bot and wait for manual intervention
                         input("Pausing bot for manual intervention. (Don't forget to pause the bizhawk.lua script so you can provide inputs). Press Enter to continue...")
                     else:
                         hold_button("Power")
@@ -1229,42 +1232,18 @@ def mode_starters():
                         break
             except: continue
 
-def mode_rayquaza():
-    if not player_on_map(MapBank.DUNGEONS, MapID.RAYQUAZA_PILLAR):
-        return False
-
-    if not trainer_info["posX"] == 14 and trainer_info["posY"] <= 12:
-        return
-
-    while True:
-        emu_combo(["A", "Up"]) # Walk up toward Rayquaza while mashing A
-
-        if player_on_map(MapBank.DUNGEONS, MapID.RAYQUAZA_PILLAR) and trainer_info["posY"] < 7: # break if trainer passes the point where Rayquaza is meant to be (indicates Rayquaza has flown away)
-            break
-
-        if trainer_info["state"] != GameState.OVERWORLD:    
-            if opponent_changed():
-                if identify_pokemon(): input("Pausing bot for manual catch. Press Enter to continue...") # Kill bot and wait for manual intervention to manually catch Rayquaza
-                break
-
-    time.sleep(frames_to_ms(100))
-    press_button("B")
-
-    follow_path([(14, 11), (12, 11), (12, 15), (16, 15), (16, -99, (24, 84)), (10, -99, (24, 85)), (12, 15), (12, 11), (14, 11), (14, 7)])
-
 def mode_groudon():
-    if not player_on_map(MapBank.DUNGEONS, MapID.GROUDON_CAVE):
-        return False
-
-    if not 11 <= trainer_info["posX"] <= 20 and 26 <= trainer_info["posY"] <= 27:
-        return False
+    if (not player_on_map(MapBank.DUNGEONS, MapID.GROUDON_CAVE) or
+        not 11 <= trainer_info["posX"] <= 20 and 26 <= trainer_info["posY"] <= 27):
+        debug_log.info("Please place the player below Groudon in Terra Cave and restart the script.")
+        os._exit(1)
 
     while True:
         follow_path([(17, 26)])
 
         identify_pokemon()
 
-        # Exit and re-enter the room
+        # Exit and re-enter
         follow_path([
             (7, 26), 
             (7, 15), 
@@ -1276,58 +1255,108 @@ def mode_groudon():
             (9, 4), (9, 15), 
             (7, 15), 
             (7, 26), 
-            (11, 26)]
-        )
+            (11, 26)
+        ])
 
 def mode_kyogre():
-    if not player_on_map(MapBank.DUNGEONS, MapID.KYOGRE_CAVE):
-       return False
-
-    if not 5 <= trainer_info["posX"] <= 14 and 26 <= trainer_info["posY"] <= 27:
-        return
+    if (not player_on_map(MapBank.DUNGEONS, MapID.KYOGRE_CAVE) or
+        not 5 <= trainer_info["posX"] <= 14 and 26 <= trainer_info["posY"] <= 27):
+        debug_log.info("Please place the player below Kyogre in Marine Cave and restart the script.")
+        os._exit(1)
 
     while True:
-        follow_path([(trainer_info["posX"], 26), (9, 26), (9, 27), (18, 27), (18, 14), (14, 14), (14, 4), (20, 4), (20, 99, (24, 102)), (14, -99, (24, 103)), (14, 4), (14, 14), (18, 14), (18, 27), (14, 27)])
+        follow_path([(9, 26)])
+
+        identify_pokemon()
+
+        # Exit and re-enter
+        follow_path([
+            (9, 27), 
+            (18, 27), 
+            (18, 14), 
+            (14, 14), 
+            (14, 4), 
+            (20, 4), 
+            (20, 99, (24, 102)), 
+            (14, -99, (24, 103)), 
+            (14, 4), 
+            (14, 14), 
+            (18, 14), 
+            (18, 27), 
+            (14, 27)
+        ])
+
+def mode_rayquaza():
+    if (not player_on_map(MapBank.DUNGEONS, MapID.RAYQUAZA_PILLAR) or
+        not (trainer_info["posX"] == 14 and trainer_info["posY"] <= 12)):
+        debug_log.info("Please place the player below Rayquaza at the Sky Pillar and restart the script.")
+        os._exit(1)
+
+    while True:
+        while not opponent_changed():
+            emu_combo(["A", "Up"]) # Walk up toward Rayquaza while mashing A
+        
+        identify_pokemon()
+
+        # Wait until battle is over
+        while trainer_info["state"] != GameState.OVERWORLD:
+            continue
+
+        # Exit and re-enter
+        press_button("B")
+        follow_path([
+            (14, 11), 
+            (12, 11), 
+            (12, 15), 
+            (16, 15), 
+            (16, -99, (24, 84)), 
+            (10, -99, (24, 85)), 
+            (12, 15), 
+            (12, 11), 
+            (14, 11), 
+            (14, 7)
+        ])
 
 def mode_southernIsland():
-    if not player_on_map(MapBank.SPECIAL, MapID.LATI_ISLAND) :
-        return False
-
-    if not 5 <= trainer_info["posX"] == 13 and trainer_info["posY"] >= 12:
-        return True
+    if (not player_on_map(MapBank.SPECIAL, MapID.LATI_ISLAND) or
+        not 5 <= trainer_info["posX"] == 13 and trainer_info["posY"] >= 12):
+        debug_log.info("Please place the player below the sphere on Southern Island and restart the script.")
+        os._exit(1)
 
     while True:
-        follow_path([(13, 99, (26, 9)), (14, -99, (26, 10))])
-        i = 0
         while not opponent_changed():
-            if i < 500:
-                follow_path([(13, 12)])
-                emu_combo(["A", "1000ms"])
-                if find_image("dreams.png"):
-                    press_button("B")
-                    break
-                i += 1
-            else: break
-        else: identify_pokemon()
+            emu_combo(["A", "Up"])
+
+        identify_pokemon()
+
+        # Wait until battle is over
+        while trainer_info["state"] != GameState.OVERWORLD:
+            continue
+
+        # Exit and re-enter
+        press_button("B")
+        follow_path([
+            (13, 99, (26, 9)), 
+            (14, -99, (26, 10))
+        ])
 
 def mode_buyPremierBalls():
     while not find_image("mart/times_01.png"):
-        release_all_inputs()
-        emu_combo(["A", "400ms"])
-
-        if find_image("mart/you_dont.png"): # Not enough money to buy a single ball
+        press_button("A")
+        
+        if find_image("mart/you_dont.png"):
             return False
 
-    press_count = 0
-    while not find_image("mart/times_11.png") and not find_image("mart/times_10.png"):
-        emu_combo(["Right", "100ms"])
+        time.sleep(frames_to_ms(30))
 
-        if press_count > 3: # Not enough money to buy at least 10
-            return False
-        press_count += 1
+    press_button("Right")
+    time.sleep(frames_to_ms(15))
 
-    while not find_image("mart/times_10.png"):
-        emu_combo(["Down", "100ms"])
+    if not find_image("mart/times_10.png") and not find_image("mart/times_11.png"):
+        return False
+
+    if find_image("mart/times_11.png"):
+        press_button("Down")
 
     return True
 
