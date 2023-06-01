@@ -1272,11 +1272,10 @@ def mode_faraway_mew():
     while True:
         release_all_inputs()
         if player_on_map(MapBank.SPECIAL, MapID.MEW_ISLAND_ENTERANCE):
-            follow_path([(22, trainer_info["posY"])])
-            follow_path([(trainer_info["posX"], 7)])
-
-
-        if player_on_map(MapBank.SPECIAL, MapID.MEW_ISLAND):
+            if 22 <= trainer_info["posX"] <= 23 and 8 <= trainer_info["posY"] <= 10:
+                follow_path([(22, trainer_info["posY"])])
+                follow_path([(trainer_info["posX"], 7)])
+        elif player_on_map(MapBank.SPECIAL, MapID.MEW_ISLAND):
             if trainer_info["posY"] == 13:
                 press_button("A")
                 time.sleep(frames_to_ms(30))
@@ -1288,18 +1287,15 @@ def mode_faraway_mew():
                 if opponent_changed():
                     if identify_pokemon(): 
                         input("Pausing bot for manual catch. Press Enter to continue...") 
-            if player_on_map(MapBank.SPECIAL, MapID.MEW_ISLAND_ENTERANCE):
-                follow_path([(22, 6)])
-            if trainer_info["posY"] == 13:
+            if trainer_info["posY"] == 13 and player_on_map(MapBank.SPECIAL, MapID.MEW_ISLAND):
                 follow_path([(trainer_info["posX"], 18), (13, 18), (13, 19)])
                 time.sleep(frames_to_ms(10))
                 hold_button("Down")
                 time.sleep(frames_to_ms(30))
                 release_button("Down")
-                time.sleep(frames_to_ms(5))
+                time.sleep(frames_to_ms(60))
             else:
-                if not player_on_map(MapBank.SPECIAL, MapID.MEW_ISLAND_ENTERANCE):
-                    follow_path([(trainer_info["posX"], 17), (12, 17), (12, 16), (13, 15), (14, 15), (16, 16),  (16, 13)])
+                follow_path([(trainer_info["posX"], 17), (12, 17), (12, 16), (13, 15), (14, 15), (16, 16),  (16, 13)])
 
 
 def mode_southernIsland():
