@@ -9,6 +9,9 @@ These scripts are currently being used to complete and stream a Prof. Oak living
 |--| :--: | :--: | :--: | :--: | :--: |
 | English | ❌ | ❌ | ✅ | ❌ | ❌ |
 | Spanish | ❌ | ❌ | ✅ | ❌ | ❌ |
+| German  | ❌ | ❌ | ✅ | ❌ | ❌ |
+| French  | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Italian | ❌ | ❌ | ❌ | ❌ | ❌ |
 | Japanese| ❌ | ❌ | ✅ | ❌ | ❌ |
 
 Support for all other gen 3 games are coming soon (high priority)!

@@ -55,7 +55,7 @@ def language_id_to_iso_639(lang: int):
 def player_on_map(map_bank: int, map_id: int):
     on_map = trainer_info["mapBank"] == map_bank and trainer_info["mapId"] == map_id
 
-    if not on_map:
+    if not on_map and args.d:
         debug_log.info(f"Player was not on target map of {map_bank},{map_id}. Map was {trainer_info['mapBank']}, {trainer_info['mapId']}")
 
     return on_map
@@ -398,7 +398,7 @@ def battle(): # Function to battle wild pokemon
         while trainer_info["state"] != GameState.OVERWORLD and not find_image("battle/fight.png"):
             press_button("B")
             time.sleep(frames_to_ms(1))
-
+        
         ally_fainted = party_info[0]["hp"] == 0
         foe_fainted = opponent_info["hp"] == 0
     
@@ -665,7 +665,7 @@ def save_game(): # Function to save the game via the save option in the start me
         if args.dm: debug_log.exception(str(e))
 
 def identify_pokemon(starter: bool = False): # Identify opponent pokemon and incremement statistics, returns True if shiny, else False
-    legendary_hunt = config["bot_mode"] in ["manual", "rayquaza", "kyogre", "groudon", "southern island"]
+    legendary_hunt = config["bot_mode"] in ["manual", "rayquaza", "kyogre", "groudon", "southern island", "regi trio"]
 
     def common_stats():
         global stats, encounter_log
@@ -1110,6 +1110,8 @@ def mainLoop(): # 🔁 Main loop
                     mode_kyogre()
                 case "southern island":
                     mode_southernIsland()
+                case "regi trio":
+                    mode_regiTrio()
                 case "buy premier balls":
                     purchase_success = mode_buyPremierBalls()
 
@@ -1126,6 +1128,29 @@ def mainLoop(): # 🔁 Main loop
             release_all_inputs()
             time.sleep(0.2)
         time.sleep(frames_to_ms(1))
+
+def mode_regiTrio():
+    if (not player_on_map(MapBank.DUNGEONS, MapID.REGIROCK_CAVE) and
+        not player_on_map(MapBank.DUNGEONS, MapID.REGICE_CAVE) and
+        not player_on_map(MapBank.DUNGEONS, MapID.REGISTEEL_CAVE)):
+        debug_log.info("Please place the player below the target Regi in Desert Ruins, Island Cave or Ancient Tomb, then restart the script.")
+        os._exit(1)
+
+    while True:
+        while not opponent_changed():
+            emu_combo(["Up", "A"])
+
+        identify_pokemon()
+
+        while not trainer_info["state"] == GameState.OVERWORLD:
+            continue
+
+        # Exit and re-enter
+        press_button("B")
+        follow_path([
+            (8, 21), 
+            (8, 11)
+        ])
 
 def mode_sweetScent():
     debug_log.info(f"Using Sweet Scent...")
@@ -1214,7 +1239,7 @@ def mode_starters():
     choice = config["starter_pokemon"].lower()
 
     if choice not in ["treecko", "torchic", "mudkip"]:
-        debug_log.info(f"Unknown starter \"{config['starter_pokemon']}\". Please edit the value and restart the script.")
+        debug_log.info(f"Unknown starter \"{config['starter_pokemon']}\". Please edit the value in config.yml and restart the script.")
         os._exit(1)
 
     debug_log.info(f"Soft resetting starter Pokemon...")
