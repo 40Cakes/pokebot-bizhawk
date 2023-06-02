@@ -678,7 +678,7 @@ def save_game(): # Function to save the game via the save option in the start me
         if args.dm: debug_log.exception(str(e))
 
 def identify_pokemon(starter: bool = False): # Identify opponent pokemon and incremement statistics, returns True if shiny, else False
-    legendary_hunt = config["bot_mode"] in ["manual", "rayquaza", "kyogre", "groudon", "southern island", "regi trio", "deoxys"]
+    legendary_hunt = config["bot_mode"] in ["manual", "rayquaza", "kyogre", "groudon", "southern island", "regi trio", "deoxys resets", "deoxys runaways"]
 
     def common_stats():
         global stats, encounter_log
@@ -839,9 +839,20 @@ def identify_pokemon(starter: bool = False): # Identify opponent pokemon and inc
             # --- Catch Lonely natured Ralts with >25 attackIV and spAttackIV ---
             #elif pokemon["name"] == "Ralts" and pokemon["attackIV"] > 25 and pokemon["spAttackIV"] > 25 and pokemon["nature"] == "Lonely": catch_pokemon()
 
-            elif config["battle_others"] and not legendary_hunt: 
-                battle_won = battle()
-                replace_battler = not battle_won
+            if not legendary_hunt:
+                if config["battle_others"]:
+                    battle_won = battle()
+                    replace_battler = not battle_won
+                else:
+                    flee_battle()
+            elif config["bot_mode"] == "deoxys resets":
+                # Wait until sprite has appeared in battle before reset
+                time.sleep(frames_to_ms(240))
+                debug_log.info("Resetting...")
+                hold_button("Power")
+                time.sleep(frames_to_ms(60))
+                release_button("Power")
+                return False
             else:
                 flee_battle()
 
@@ -1125,8 +1136,13 @@ def mainLoop(): # 🔁 Main loop
                     mode_southernIsland()
                 case "regi trio":
                     mode_regiTrio()
-                case "deoxys":
-                    mode_deoxys()
+                case "deoxys runaways":
+                    mode_deoxysPuzzle()
+                case "deoxys resets":
+                    if config["deoxys_puzzle_solved"]:
+                        mode_deoxysResets()
+                    else:
+                        mode_deoxysPuzzle(False)
                 case "buy premier balls":
                     purchase_success = mode_buyPremierBalls()
 
@@ -1167,7 +1183,7 @@ def mode_regiTrio():
             (8, 11)
         ])
 
-def mode_deoxys():
+def mode_deoxysPuzzle(do_encounter: bool = True):
     def retry_puzzle_if_stuck(success: bool):
         if not success: 
             debug_log.info("Messed up the puzzle! Resetting...")
@@ -1232,6 +1248,14 @@ def mode_deoxys():
         # Center
         if retry_puzzle_if_stuck(follow_path([(15, 11)], True, True)): continue
 
+        if not do_encounter:
+            debug_log.info("Deoxys puzzle completed. Saving game and starting resets...")
+            config["bot_mode"] = "deoxys resets"
+            config["deoxys_puzzle_solved"] = True
+            save_game()
+            time.sleep(frames_to_ms(10))
+            return True
+
         while not opponent_changed():
             press_button("A")
             time.sleep(frames_to_ms(1))
@@ -1250,6 +1274,37 @@ def mode_deoxys():
             (15, 99, (26, 59)), 
             (8, -99, (MapBank.SPECIAL, MapID.DEOXYS_ISLAND))
         ])
+
+def mode_deoxysResets():
+    if not player_on_map(MapBank.SPECIAL, MapID.DEOXYS_ISLAND) or trainer_info["posX"] != 15:
+        debug_log.info("Please place the player below the triangle at its final position on Birth Island, then save before restarting the script.")
+        os._exit(1)
+
+    deoxys_frames = get_rngState(trainer_info["tid"])
+
+    while True:
+        # Mash A to reach overworld from intro/title
+        while trainer_info["state"] != GameState.OVERWORLD:
+            emu_combo(["A", 8])
+
+        # Wait for area to load properly
+        time.sleep(frames_to_ms(60))
+
+        if not player_on_map(MapBank.SPECIAL, MapID.DEOXYS_ISLAND) or trainer_info["posX"] != 15:
+            debug_log.info("Please place the player below the triangle at its final position on Birth Island, then save before restarting the script.")
+            os._exit(1)
+
+        while emu_info["rngState"] in deoxys_frames:
+            debug_log.debug(f"Already rolled on RNG state: {emu_info['rngState']}, waiting...")
+        else:
+            deoxys_frames["rngState"]["Deoxys"].append(emu_info["rngState"])
+            write_file(f"stats/{trainer_info['tid']}.json", json.dumps(deoxys_frames, indent=4, sort_keys=True))
+
+        while not opponent_changed():
+            emu_combo(["A", 8])
+
+        identify_pokemon()
+        
 
 def mode_sweetScent():
     debug_log.info(f"Using Sweet Scent...")
@@ -1334,8 +1389,15 @@ def mode_fishing():
         if not find_image("text_period.png"): emu_combo(["Select", 50]) # Re-cast rod if the fishing text prompt is not visible
     identify_pokemon()
 
+def get_rngState(tid: str):
+    if read_file(f"stats/{tid}.json"): 
+        return json.loads(read_file(f"stats/{trainer_info['tid']}.json")) # Open starter frames file
+    else: 
+        return {"rngState": {"Treecko": [], "Torchic": [], "Mudkip": [], "Deoxys": []}}
+
 def mode_starters():
     choice = config["starter_pokemon"].lower()
+    starter_frames = get_rngState(trainer_info['tid'])
 
     if choice not in ["treecko", "torchic", "mudkip"]:
         debug_log.info(f"Unknown starter \"{config['starter_pokemon']}\". Please edit the value in config.yml and restart the script.")
@@ -1348,9 +1410,6 @@ def mode_starters():
 
         while trainer_info["state"] != GameState.OVERWORLD: 
             press_button("A")
-
-        if read_file(f"stats/{trainer_info['tid']}.json"): starter_frames = json.loads(read_file(f"stats/{trainer_info['tid']}.json")) # Open starter frames file
-        else: starter_frames = {"rngState": {"Treecko": [], "Torchic": [], "Mudkip": []}}
 
         # 50ms delay between A inputs to prevent accidental selection confirmations
         while trainer_info["state"] == GameState.OVERWORLD: 
@@ -1368,7 +1427,6 @@ def mode_starters():
             debug_log.debug(f"Already rolled on RNG state: {emu_info['rngState']}, waiting...")
         else:
             starter_frames["rngState"][config["starter_pokemon"]].append(emu_info["rngState"])
-
             write_file(f"stats/{trainer_info['tid']}.json", json.dumps(starter_frames, indent=4, sort_keys=True))
             
             while trainer_info["state"] == GameState.MISC_MENU: 
