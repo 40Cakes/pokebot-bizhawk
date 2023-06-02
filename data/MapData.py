@@ -14,6 +14,8 @@ class MapBank(IntEnum):
     ROUTE_119 = 32
 
 class MapID(IntEnum):
+    # Littleroot Town
+    BIRCH_LAB = 4
     # Mossdeep City
     STEVENS_HOUSE = 7
     # Dungeons

@@ -1,5 +1,5 @@
 # Bot Setup
-bot_mode: starters
+bot_mode: Starters
 coords:
   pos1:
     - 38
@@ -8,9 +8,10 @@ coords:
     - 39
     - 6
 direction: Horizontal
-starter_pokemon: Mudkip
+starter: Mudkip
+johto_starter: Cyndaquil
+fossil: Anorith
 deoxys_puzzle_solved: false
-target_fossil: Anorith
 
 # Wild Battles
 manual_catch: false

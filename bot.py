@@ -1213,6 +1213,8 @@ def mainLoop(): # 🔁 Main loop
                     mode_castform()
                 case "beldum":
                     mode_beldum()
+                case "johto starters":
+                    mode_johtoStarters()
                 case "buy premier balls":
                     purchase_success = mode_buyPremierBalls()
 
@@ -1231,31 +1233,40 @@ def mainLoop(): # 🔁 Main loop
         wait_frames(1)
 
 def mode_beldum():
-    if (not player_on_map(MapBank.MOSSDEEP_CITY, MapID.STEVENS_HOUSE) or 
-        not ((trainer_info["posX"] == 3 and trainer_info["posY"] == 3) or 
-            (trainer_info["posX"] == 4 and trainer_info["posY"] == 2))):
+    x, y = trainer_info["posX"], trainer_info["posY"]
+
+    if (not player_on_map(MapBank.MOSSDEEP_CITY, MapID.STEVENS_HOUSE) or not ((x == 3 and y == 3) or (x == 4 and y == 2))):
         debug_log.info("Please face the player toward the Pokeball in Steven's house after saving the game, then restart the script.")
         os._exit(1)
 
     collect_gift_mon("Beldum")
 
 def mode_castform():
-    if (not player_on_map(MapBank.ROUTE_119, MapID.WEATHER_INSTITUTE_2F) or 
-        not ((trainer_info["posX"] == 2 and trainer_info["posY"] == 3) or
-            (trainer_info["posX"] == 3 and trainer_info["posY"] == 2) or
-            (trainer_info["posX"] == 1 and trainer_info["posY"] == 2))):
+    x, y = trainer_info["posX"], trainer_info["posY"]
 
+    if (not player_on_map(MapBank.ROUTE_119, MapID.WEATHER_INSTITUTE_2F) or not ((x == 2 and y == 3) or (x == 3 and y == 2) or (x == 1 and y == 2))):
         debug_log.info("Please face the player toward the scientist after saving the game, then restart the script.")
         os._exit(1)
 
     collect_gift_mon("Castform")
 
 def mode_fossil():
-    if not player_on_map(MapBank.RUSTBORO_CITY, MapID.DEVON_2F) or trainer_info["posY"] != 8 and not (trainer_info["posX"] == 13 or trainer_info["posX"] == 15):
+    x, y = trainer_info["posX"], trainer_info["posY"]
+
+    if not player_on_map(MapBank.RUSTBORO_CITY, MapID.DEVON_2F) or y != 8 and not (x == 13 or x == 15):
         debug_log.info("Please face the player toward the Fossil researcher after handing it over, re-entering the room, and saving the game. Then restart the script.")
         os._exit(1)
 
-    collect_gift_mon(config["target_fossil"])
+    collect_gift_mon(config["fossil"])
+
+def mode_johtoStarters():
+    x, y = trainer_info["posX"], trainer_info["posY"]
+
+    if (not player_on_map(MapBank.LITTLEROOT_TOWN, MapID.BIRCH_LAB) or not (y == 5 and x >= 8 and x <= 10)):
+        debug_log.info("Please face the player toward a Pokeball in Birch's Lab after saving the game, then restart the script.")
+        os._exit(1)
+
+    collect_gift_mon(config["johto_starter"])
 
 def collect_gift_mon(target: str):
     rng_frames = get_rngState(trainer_info["tid"])
@@ -1295,14 +1306,23 @@ def collect_gift_mon(target: str):
             hold_button("Power")
             wait_frames(60)
             release_button("Power")
-            return
+            continue
 
         while not find_image("start_menu/select.png"):
-            wait_frames(5)
+            press_button("B")
+
+            for i in range(0, 4):
+                if find_image("start_menu/select.png"):
+                    break
+                wait_frames(1)
 
         while find_image("start_menu/select.png"):
             press_button("B")
-            wait_frames(5)
+            
+            for i in range(0, 4):
+                if not find_image("start_menu/select.png"):
+                    break
+                wait_frames(1)
 
         start_menu("pokemon")
 
@@ -1551,7 +1571,7 @@ def mode_fishing():
     identify_pokemon()
 
 
-rng_mons = ["Treecko", "Torchic", "Mudkip", "Deoxys", "Fossil", "Castform", "Beldum"]
+rng_mons = ["Treecko", "Torchic", "Mudkip", "Deoxys", "Fossil", "Castform", "Beldum", "Cyndaquil", "Totodile", "Chikorita"]
 def get_rngState(tid: str):
     file = read_file(f"stats/{tid}.json")
     data = json.loads(file) if file else {"rngState": {}}
@@ -1564,11 +1584,11 @@ def get_rngState(tid: str):
     return data
 
 def mode_starters():
-    choice = config["starter_pokemon"].lower()
+    choice = config["starter"].lower()
     starter_frames = get_rngState(trainer_info['tid'])
 
     if choice not in ["treecko", "torchic", "mudkip"]:
-        debug_log.info(f"Unknown starter \"{config['starter_pokemon']}\". Please edit the value in config.yml and restart the script.")
+        debug_log.info(f"Unknown starter \"{config['starter']}\". Please edit the value in config.yml and restart the script.")
         os._exit(1)
 
     debug_log.info(f"Soft resetting starter Pokemon...")
@@ -1591,10 +1611,10 @@ def mode_starters():
             while not find_image("treecko.png"): 
                 emu_combo(["B", "Left"])
 
-        while emu_info["rngState"] in starter_frames["rngState"][config["starter_pokemon"]]:
+        while emu_info["rngState"] in starter_frames["rngState"][config["starter"]]:
             debug_log.debug(f"Already rolled on RNG state: {emu_info['rngState']}, waiting...")
         else:
-            starter_frames["rngState"][config["starter_pokemon"]].append(emu_info["rngState"])
+            starter_frames["rngState"][config["starter"]].append(emu_info["rngState"])
             write_file(f"stats/{trainer_info['tid']}.json", json.dumps(starter_frames, indent=4, sort_keys=True))
             
             while trainer_info["state"] == GameState.MISC_MENU: 
