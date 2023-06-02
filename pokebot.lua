@@ -152,12 +152,12 @@ function readMonData(address)
 	mon.speedEV = ss2[0] >> 24
 	mon.spAttackEV = ss2[1] & 0xFF
 	mon.spDefenseEV = (ss2[1] >> 8) & 0xFF
-	mon.cool = (ss2[1] >> 16) & 0xFF
-	mon.beauty = ss2[1] >> 24
-	mon.cute = ss2[2] & 0xFF
-	mon.smart = (ss2[2] >> 8) & 0xFF
-	mon.tough = (ss2[2] >> 16) & 0xFF
-	mon.sheen = ss2[2] >> 24
+	-- mon.cool = (ss2[1] >> 16) & 0xFF
+	-- mon.beauty = ss2[1] >> 24
+	-- mon.cute = ss2[2] & 0xFF
+	-- mon.smart = (ss2[2] >> 8) & 0xFF
+	-- mon.tough = (ss2[2] >> 16) & 0xFF
+	-- mon.sheen = ss2[2] >> 24
 	
 	mon.pokerus = ss3[0] & 0xFF
 	mon.metLocation = (ss3[0] >> 8) & 0xFF
@@ -175,24 +175,24 @@ function readMonData(address)
 	mon.spDefenseIV = (flags >> 25) & 0x1F
 	mon.altAbility = (flags >> 31) & 1
 	flags = ss3[2]
-	mon.coolRibbon = flags & 7
-	mon.beautyRibbon = (flags >> 3) & 7
-	mon.cuteRibbon = (flags >> 6) & 7
-	mon.smartRibbon = (flags >> 9) & 7
-	mon.toughRibbon = (flags >> 12) & 7
-	mon.championRibbon = (flags >> 15) & 1
-	mon.winningRibbon = (flags >> 16) & 1
-	mon.victoryRibbon = (flags >> 17) & 1
-	mon.artistRibbon = (flags >> 18) & 1
-	mon.effortRibbon = (flags >> 19) & 1
-	mon.marineRibbon = (flags >> 20) & 1
-	mon.landRibbon = (flags >> 21) & 1
-	mon.skyRibbon = (flags >> 22) & 1
-	mon.countryRibbon = (flags >> 23) & 1
-	mon.nationalRibbon = (flags >> 24) & 1
-	mon.earthRibbon = (flags >> 25) & 1
-	mon.worldRibbon = (flags >> 26) & 1
-	mon.eventLegal = (flags >> 27) & 0x1F
+	-- mon.coolRibbon = flags & 7
+	-- mon.beautyRibbon = (flags >> 3) & 7
+	-- mon.cuteRibbon = (flags >> 6) & 7
+	-- mon.smartRibbon = (flags >> 9) & 7
+	-- mon.toughRibbon = (flags >> 12) & 7
+	-- mon.championRibbon = (flags >> 15) & 1
+	-- mon.winningRibbon = (flags >> 16) & 1
+	-- mon.victoryRibbon = (flags >> 17) & 1
+	-- mon.artistRibbon = (flags >> 18) & 1
+	-- mon.effortRibbon = (flags >> 19) & 1
+	-- mon.marineRibbon = (flags >> 20) & 1
+	-- mon.landRibbon = (flags >> 21) & 1
+	-- mon.skyRibbon = (flags >> 22) & 1
+	-- mon.countryRibbon = (flags >> 23) & 1
+	-- mon.nationalRibbon = (flags >> 24) & 1
+	-- mon.earthRibbon = (flags >> 25) & 1
+	-- mon.worldRibbon = (flags >> 26) & 1
+	-- mon.eventLegal = (flags >> 27) & 0x1F
 	return mon
 end
 

@@ -7,6 +7,7 @@ class MapBank(IntEnum):
     LITTLEROOT_TOWN = 1
     OLDALE_TOWN = 2
     DEWFORD_TOWN = 3
+    RUSTBORO_CITY = 11
     DUNGEONS = 24
     SPECIAL = 26
 
@@ -18,6 +19,8 @@ class MapID(IntEnum):
     RAYQUAZA_PILLAR = 85
     KYOGRE_CAVE = 103
     GROUDON_CAVE = 105
+    # Rustboro City
+    DEVON_2F = 1
     # Special
     LATI_ISLAND = 10
     MEW_ISLAND = 57

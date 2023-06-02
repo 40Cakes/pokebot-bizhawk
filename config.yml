@@ -9,6 +9,7 @@ coords:
     - 6
 direction: Horizontal
 starter_pokemon: Mudkip
+deoxys_puzzle_solved: false
 
 # Wild Battles
 manual_catch: false
@@ -98,3 +99,6 @@ banned_moves:
 - Perish Song
 - Explosion
 - Memento
+
+# Cheats
+do_realistic_hunt: true
