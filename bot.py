@@ -1440,33 +1440,33 @@ try:
 
         debug_log.info(f"Mode: {config['bot_mode']}")
 
-    default_input = {"A": False, "B": False, "L": False, "R": False, "Up": False, "Down": False, "Left": False, "Right": False, "Select": False, "Start": False, "Light Sensor": 0, "Power": False, "Tilt X": 0, "Tilt Y": 0, "Tilt Z": 0, "Screenshot": False}
-    input_list_mmap = mmap.mmap(-1, 4096, tagname="bizhawk_input_list", access=mmap.ACCESS_WRITE)
-    g_current_index = 1 #Variable that keeps track of what input in the list we are on.
-    
-    hold_input_mmap = mmap.mmap(-1, 4096, tagname="bizhawk_hold_input", access=mmap.ACCESS_WRITE)
-    hold_input = default_input
+        default_input = {"A": False, "B": False, "L": False, "R": False, "Up": False, "Down": False, "Left": False, "Right": False, "Select": False, "Start": False, "Light Sensor": 0, "Power": False, "Tilt X": 0, "Tilt Y": 0, "Tilt Z": 0, "Screenshot": False}
+        input_list_mmap = mmap.mmap(-1, 4096, tagname="bizhawk_input_list", access=mmap.ACCESS_WRITE)
+        g_current_index = 1 #Variable that keeps track of what input in the list we are on.
+        
+        hold_input_mmap = mmap.mmap(-1, 4096, tagname="bizhawk_hold_input", access=mmap.ACCESS_WRITE)
+        hold_input = default_input
 
-    poll_screenshot = Thread(target=mem_pollScreenshot)
-    poll_screenshot.start()
+        poll_screenshot = Thread(target=mem_pollScreenshot)
+        poll_screenshot.start()
 
-    get_emu_info = Thread(target=mem_getEmuInfo)
-    get_emu_info.start()
+        get_emu_info = Thread(target=mem_getEmuInfo)
+        get_emu_info.start()
 
-    get_trainer_info = Thread(target=mem_getTrainerInfo)
-    get_trainer_info.start()
+        get_trainer_info = Thread(target=mem_getTrainerInfo)
+        get_trainer_info.start()
 
-    get_party_info = Thread(target=mem_getPartyInfo)
-    get_party_info.start()
+        get_party_info = Thread(target=mem_getPartyInfo)
+        get_party_info.start()
 
-    get_opponent_info = Thread(target=mem_getOpponentInfo)
-    get_opponent_info.start()
-    
-    #send_inputs = Thread(target=mem_sendInputs) TODO Use another buffer to throttle inputs and use this thread again
-    #send_inputs.start()
+        get_opponent_info = Thread(target=mem_getOpponentInfo)
+        get_opponent_info.start()
+        
+        #send_inputs = Thread(target=mem_sendInputs) TODO Use another buffer to throttle inputs and use this thread again
+        #send_inputs.start()
 
-    main_loop = Thread(target=mainLoop)
-    main_loop.start()
+        main_loop = Thread(target=mainLoop)
+        main_loop.start()
 
     item_list = json.loads(read_file("data/items.json"))
     location_list = json.loads(read_file("data/locations.json"))
