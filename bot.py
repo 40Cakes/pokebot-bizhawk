@@ -80,7 +80,7 @@ def write_file(file: str, value: str): # Simple function to write data to a file
         return False
 
 def load_json_mmap(size, file): # Function to load a JSON object from a memory mapped file
-    # BizHawk writes game information to memory mapped files every few frames (see bizhawk.lua)
+    # BizHawk writes game information to memory mapped files every few frames (see pokebot.lua)
     # See https://tasvideos.org/Bizhawk/LuaFunctions (comm.mmfWrite)
     try:
         shmem = mmap.mmap(0, size, file)
@@ -261,7 +261,7 @@ def catch_pokemon(): # Function to catch pokemon
             emu_combo(["B", "Up", "Left"]) # Press B + up + left until FIGHT menu is visible
         
         if config["manual_catch"]:
-            input("Pausing bot for manual catch (don't forget to pause bizhawk.lua script so you can provide inputs). Press Enter to continue...")
+            input("Pausing bot for manual catch (don't forget to pause pokebot.lua script so you can provide inputs). Press Enter to continue...")
             return True
         else:
             debug_log.info("Attempting to catch Pokemon...")
@@ -501,55 +501,68 @@ def run_until_obstructed(direction: str, run: bool = True): # Function to run un
 
     return [last_x, last_y]
 
-def follow_path(coords: list):
+def follow_path(coords: list, run: bool = True, exit_when_stuck: bool = False):
+    possibly_stuck = False
+    direction = None
+
     for x, y, *map_data in coords:
         debug_log.info(f"Moving to: {x}, {y}")
 
         stuck_time = 0
         last_pos = [0, 0]
 
+        if run:
+            hold_button("B")
+
         while True:
-            release_all_inputs()
+            if direction != None:
+                release_button(direction)
 
             if opponent_changed():
                 return
 
             last_pos = [trainer_info["posX"], trainer_info["posY"]]
 
-            # On map change
             if map_data != []:
+                # On map change
                 if (trainer_info["mapBank"] == map_data[0][0] and trainer_info["mapId"] == map_data[0][1]):
                     break
             elif last_pos[0] == x and last_pos[1] == y:
                 break
             
             if trainer_info["posX"] > x:
-                hold_button("Left")
+                direction = "Left"
             elif trainer_info["posX"] < x:
-                hold_button("Right")
+                direction = "Right"
             elif trainer_info["posY"] < y:
-                hold_button("Down")
+                direction = "Down"
             elif trainer_info["posY"] > y:
-                hold_button("Up")
+                direction = "Up"
 
             if trainer_info["posX"] == last_pos[0] and trainer_info["posY"] == last_pos[1]:
                 stuck_time += 1
 
-                if stuck_time == 128:
+                if stuck_time == 120:
                     debug_log.info("Bot hasn't moved for a while. Is it stuck?")
+                    
+                    if exit_when_stuck:
+                        release_all_inputs()
+                        return False
 
                 # Press B occasionally in case there's a menu/dialogue open
-                if stuck_time % 15 == 0:
+                if stuck_time % 64 == 0:
+                    release_button("B")
+                    time.sleep(frames_to_ms(1))
                     press_button("B")
-                else:
-                    hold_button("B")
             else:
-                hold_button("B")
                 stuck_time = 0
+
+            hold_button(direction)
 
             time.sleep(frames_to_ms(1))
 
     release_all_inputs()
+    return True
 
 def start_menu(entry: str): # Function to open any start menu item - presses START, finds the menu entry and opens it
     if not entry in ["bag", "bot", "exit", "option", "pokedex", "pokemon", "pokenav", "save"]:
@@ -665,7 +678,7 @@ def save_game(): # Function to save the game via the save option in the start me
         if args.dm: debug_log.exception(str(e))
 
 def identify_pokemon(starter: bool = False): # Identify opponent pokemon and incremement statistics, returns True if shiny, else False
-    legendary_hunt = config["bot_mode"] in ["manual", "rayquaza", "kyogre", "groudon", "southern island", "regi trio"]
+    legendary_hunt = config["bot_mode"] in ["manual", "rayquaza", "kyogre", "groudon", "southern island", "regi trio", "deoxys"]
 
     def common_stats():
         global stats, encounter_log
@@ -779,7 +792,7 @@ def identify_pokemon(starter: bool = False): # Identify opponent pokemon and inc
         if not starter and not legendary_hunt and "shinies" in config["catch"]: 
             catch_pokemon()
         elif legendary_hunt:
-            input("Pausing bot for manual intervention. (Don't forget to pause the bizhawk.lua script so you can provide inputs). Press Enter to continue...")
+            input("Pausing bot for manual intervention. (Don't forget to pause the pokebot.lua script so you can provide inputs). Press Enter to continue...")
 
         if not args.n: write_file("stats/totals.json", json.dumps(stats, indent=4, sort_keys=True)) # Save stats file
 
@@ -815,7 +828,7 @@ def identify_pokemon(starter: bool = False): # Identify opponent pokemon and inc
             
             ### Custom Filters ###
             # Add custom filters here (make sure to uncomment the line), examples:
-            # If you want to pause the bot instead of automatically catching, replace `catch_pokemon()` with `input("Pausing bot for manual catch (don't forget to pause bizhawk.lua script so you can provide inputs). Press Enter to continue...")`
+            # If you want to pause the bot instead of automatically catching, replace `catch_pokemon()` with `input("Pausing bot for manual catch (don't forget to pause pokebot.lua script so you can provide inputs). Press Enter to continue...")`
 
             # --- Catch any species that the trainer has not already caught ---
             #elif pokemon["hasSpecies"] == 0: catch_pokemon()
@@ -1112,6 +1125,8 @@ def mainLoop(): # 🔁 Main loop
                     mode_southernIsland()
                 case "regi trio":
                     mode_regiTrio()
+                case "deoxys":
+                    mode_deoxys()
                 case "buy premier balls":
                     purchase_success = mode_buyPremierBalls()
 
@@ -1150,6 +1165,90 @@ def mode_regiTrio():
         follow_path([
             (8, 21), 
             (8, 11)
+        ])
+
+def mode_deoxys():
+    def retry_puzzle_if_stuck(success: bool):
+        if not success: 
+            debug_log.info("Messed up the puzzle! Resetting...")
+            hold_button("Power")
+            time.sleep(frames_to_ms(60))
+            release_button("Power")
+            return True
+
+    if not player_on_map(MapBank.SPECIAL, MapID.DEOXYS_ISLAND) or trainer_info["posX"] != 15:
+        debug_log.info("Please place the player below the triangle at its starting position on Birth Island, then save before restarting the script.")
+        os._exit(1)
+
+    delay = 4
+
+    while True:
+        while not trainer_info["state"] == GameState.OVERWORLD:
+            emu_combo(["A", 8])
+
+        time.sleep(frames_to_ms(60))
+
+        # Center
+        if trainer_info["posY"] != 13:
+            run_until_obstructed("Up")
+        emu_combo([delay, "A"])
+
+        # Left
+        follow_path([(15, 14), (12, 14)])
+        emu_combo([delay, "Left", "A", delay])
+
+        # Top
+        if retry_puzzle_if_stuck(follow_path([(15, 14), (15, 9)], True, True)): continue
+        emu_combo([delay, "Up", "A", delay])
+
+        # Right
+        if retry_puzzle_if_stuck(follow_path([(15, 14), (18, 14)], True, True)): continue
+        emu_combo([delay, "Right", "A", delay])
+
+        # Middle Left
+        if retry_puzzle_if_stuck(follow_path([(15, 14), (15, 11), (13, 11)], True, True)): continue
+        emu_combo([delay, "Left", "A", delay])
+
+        # Middle Right
+        follow_path([(17, 11)])
+        emu_combo([delay, "Right", "A", delay])
+
+        # Bottom
+        if retry_puzzle_if_stuck(follow_path([(15, 11), (15, 13)], True, True)): continue
+        emu_combo([delay, "Down", "A", delay])
+
+        # Bottom Left
+        follow_path([(15, 14), (12, 14)])
+        emu_combo([delay, "Left", "A", delay])
+
+        # Bottom Right
+        follow_path([(18, 14)])
+        emu_combo([delay, "Right", "A", delay])
+
+        # Bottom
+        follow_path([(15, 14)])
+        emu_combo([delay, "Down", delay, "A", delay])
+
+        # Center
+        if retry_puzzle_if_stuck(follow_path([(15, 11)], True, True)): continue
+
+        while not opponent_changed():
+            press_button("A")
+            time.sleep(frames_to_ms(1))
+
+        identify_pokemon()
+
+        while not trainer_info["state"] == GameState.OVERWORLD:
+            continue
+
+        for i in range(0, 4):
+            press_button("B")
+            time.sleep(frames_to_ms(15))
+
+        # Exit and re-enter
+        follow_path([
+            (15, 99, (26, 59)), 
+            (8, -99, (MapBank.SPECIAL, MapID.DEOXYS_ISLAND))
         ])
 
 def mode_sweetScent():
@@ -1280,7 +1379,7 @@ def mode_starters():
                 try:
                     if party_info[0]:
                         if identify_pokemon(starter=True): 
-                            input("Pausing bot for manual intervention. (Don't forget to pause the bizhawk.lua script so you can provide inputs). Press Enter to continue...")
+                            input("Pausing bot for manual intervention. (Don't forget to pause the pokebot.lua script so you can provide inputs). Press Enter to continue...")
                         else:
                             hold_button("Power")
                             print("Resetting...")
@@ -1498,7 +1597,11 @@ try:
 
         default_input = {"A": False, "B": False, "L": False, "R": False, "Up": False, "Down": False, "Left": False, "Right": False, "Select": False, "Start": False, "Light Sensor": 0, "Power": False, "Tilt X": 0, "Tilt Y": 0, "Tilt Z": 0, "Screenshot": False}
         input_list_mmap = mmap.mmap(-1, 4096, tagname="bizhawk_input_list", access=mmap.ACCESS_WRITE)
-        g_current_index = 1 #Variable that keeps track of what input in the list we are on.
+        g_current_index = 1 # Variable that keeps track of what input in the list we are on.
+        input_list_mmap.seek(0)
+
+        for i in range(100): # Clear any prior inputs from last time script ran in case you haven't refreshed in Lua
+             input_list_mmap.write(bytes('a', encoding="utf-8"))
         
         hold_input_mmap = mmap.mmap(-1, 4096, tagname="bizhawk_hold_input", access=mmap.ACCESS_WRITE)
         hold_input = default_input

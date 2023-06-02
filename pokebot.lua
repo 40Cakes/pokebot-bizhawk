@@ -1,4 +1,4 @@
--- bizhawk.lua - this script runs in Bizhawk emulator
+-- pokebot.lua - this script runs in Bizhawk emulator
 -- it enables external applications to retrieve data
 -- from Pokemon games as well as press and hold buttons
 
@@ -363,22 +363,18 @@ while true do
 	-- Save screenshot and other data to memory mapped files, as FPS is higher, reduce the number of reads and writes to memory
 	comm.mmfWrite("bizhawk_emu_info", json.encode({["emu"] = emu_info}) .. "\x00")
 	fps = emu_info.emuFPS
-	if fps > 60 and fps <= 120  then -- Copy screenshot to memory every nth frame if running at higher than 1x to reduce memory writes
+	if fps > 120 and fps <= 240  then -- Copy screenshot to memory every nth frame if running at higher than 1x to reduce memory writes
 		if (emu_info.frameCount % 2 == 0) then
 			mainLoop()
 		end
-	elseif fps > 120 and fps <= 240 then 
+	elseif fps > 240 and fps <= 480 then 
 		if (emu_info.frameCount % 3 == 0) then
 			mainLoop()
 		end	
-	elseif fps > 240 and fps <= 480 then 
+	elseif fps > 480 then 
 		if (emu_info.frameCount % 4 == 0) then
 			mainLoop()
 		end	
-	elseif fps > 480 then 
-		if (emu_info.frameCount % 5 == 0) then
-			mainLoop()
-		end
 	else
 		mainLoop()
 	end
