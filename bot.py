@@ -745,7 +745,7 @@ def identify_pokemon(starter: bool = False): # Identify opponent pokemon and inc
 
             if not args.n: write_file("stats/totals.json", json.dumps(stats, indent=4, sort_keys=True)) # Save stats file
 
-            if not starter and config["bot_mode"] not in ["manual", "rayquaza", "kyogre", "groudon"] and "shinies" in config["catch"]: 
+            if not starter and config["bot_mode"] not in ["manual", "rayquaza", "kyogre", "groudon", "mew"] and "shinies" in config["catch"]: 
                 catch_pokemon()
 
             if not args.n: write_file("stats/totals.json", json.dumps(stats, indent=4, sort_keys=True)) # Save stats file
@@ -779,7 +779,12 @@ def identify_pokemon(starter: bool = False): # Identify opponent pokemon and inc
                     catch_pokemon()
                 elif "all" in config["catch"]:
                     catch_pokemon()
-
+                elif "mew" in config["bot_mode"]:
+                    flee_battle()
+                    time.sleep(frames_to_ms(60))
+                    press_button("B")
+                    release_button("B")
+                
                 ### Custom Filters ###
                 # Add custom filters here (make sure to uncomment the line), examples:
                 # If you want to pause the bot instead of automatically catching, replace `catch_pokemon()` with `input("Pausing bot for manual catch (don't forget to pause bizhawk.lua script so you can provide inputs). Press Enter to continue...")`
@@ -1081,6 +1086,8 @@ def mainLoop(): # 🔁 Main loop
                         mode_kyogre()
                     case "southern island":
                         mode_southernIsland()
+                    case "mew":
+                        mode_farawayMew()
                     case "buy premier balls":
                         purchase_success = mode_buyPremierBalls()
 
@@ -1254,6 +1261,42 @@ def mode_kyogre():
 
     while True:
         follow_path([(trainer_info["posX"], 26), (9, 26), (9, 27), (18, 27), (18, 14), (14, 14), (14, 4), (20, 4), (20, 99, (24, 102)), (14, -99, (24, 103)), (14, 4), (14, 14), (18, 14), (18, 27), (14, 27)])
+
+def mode_farawayMew():
+    if not player_on_map(MapBank.SPECIAL, MapID.MEW_ISLAND_ENTERANCE):
+        return False
+    
+    if not 22 <= trainer_info["posX"] <= 23 and 8 <= trainer_info["posY"] <= 10:
+        return
+
+    while True:
+        release_all_inputs()
+        if player_on_map(MapBank.SPECIAL, MapID.MEW_ISLAND_ENTERANCE):
+            if 22 <= trainer_info["posX"] <= 23 and 8 <= trainer_info["posY"] <= 10:
+                follow_path([(22, trainer_info["posY"])])
+                follow_path([(trainer_info["posX"], 7)])
+        elif player_on_map(MapBank.SPECIAL, MapID.MEW_ISLAND):
+            if trainer_info["posY"] == 13:
+                press_button("A")
+                time.sleep(frames_to_ms(30))
+                release_button("A")
+                press_button("A")
+                release_button("A")
+
+            if trainer_info["state"] != GameState.OVERWORLD:    
+                if opponent_changed():
+                    if identify_pokemon(): 
+                        input("Pausing bot for manual catch. Press Enter to continue...") 
+            if trainer_info["posY"] == 13 and player_on_map(MapBank.SPECIAL, MapID.MEW_ISLAND):
+                follow_path([(trainer_info["posX"], 18), (13, 18), (13, 19)])
+                time.sleep(frames_to_ms(10))
+                hold_button("Down")
+                time.sleep(frames_to_ms(30))
+                release_button("Down")
+                time.sleep(frames_to_ms(60))
+            else:
+                follow_path([(trainer_info["posX"], 17), (12, 17), (12, 16), (13, 15), (14, 15), (16, 16),  (16, 13)])
+
 
 def mode_southernIsland():
     if not player_on_map(MapBank.SPECIAL, MapID.LATI_ISLAND) :
