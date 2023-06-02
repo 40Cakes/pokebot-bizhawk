@@ -582,8 +582,12 @@ def start_menu(entry: str): # Function to open any start menu item - presses STA
     release_all_inputs()
 
     while not find_image("start_menu/select.png"):
-        press_button("Start")
-        wait_frames(15)
+        emu_combo(["B", "Start"])
+        
+        for i in range(0, 10):
+            if find_image("start_menu/select.png"):
+                break
+            wait_frames(1)
 
     wait_frames(5)
 
@@ -897,7 +901,7 @@ def identify_pokemon(starter: bool = False): # Identify opponent pokemon and inc
                 wait_frames(100)
         elif starter:
             return False
-    
+
         if mon_is_desirable():
             catch_pokemon()
 
@@ -1205,6 +1209,10 @@ def mainLoop(): # 🔁 Main loop
                         mode_deoxysPuzzle(False)
                 case "fossil":
                     mode_fossil()
+                case "castform":
+                    mode_castform()
+                case "beldum":
+                    mode_beldum()
                 case "buy premier balls":
                     purchase_success = mode_buyPremierBalls()
 
@@ -1221,6 +1229,100 @@ def mainLoop(): # 🔁 Main loop
             release_all_inputs()
             time.sleep(0.2)
         wait_frames(1)
+
+def mode_beldum():
+    if (not player_on_map(MapBank.MOSSDEEP_CITY, MapID.STEVENS_HOUSE) or 
+        not ((trainer_info["posX"] == 3 and trainer_info["posY"] == 3) or 
+            (trainer_info["posX"] == 4 and trainer_info["posY"] == 2))):
+        debug_log.info("Please face the player toward the Pokeball in Steven's house after saving the game, then restart the script.")
+        os._exit(1)
+
+    collect_gift_mon("Beldum")
+
+def mode_castform():
+    if (not player_on_map(MapBank.ROUTE_119, MapID.WEATHER_INSTITUTE_2F) or 
+        not ((trainer_info["posX"] == 2 and trainer_info["posY"] == 3) or
+            (trainer_info["posX"] == 3 and trainer_info["posY"] == 2) or
+            (trainer_info["posX"] == 1 and trainer_info["posY"] == 2))):
+
+        debug_log.info("Please face the player toward the scientist after saving the game, then restart the script.")
+        os._exit(1)
+
+    collect_gift_mon("Castform")
+
+def mode_fossil():
+    if not player_on_map(MapBank.RUSTBORO_CITY, MapID.DEVON_2F) or trainer_info["posY"] != 8 and not (trainer_info["posX"] == 13 or trainer_info["posX"] == 15):
+        debug_log.info("Please face the player toward the Fossil researcher after handing it over, re-entering the room, and saving the game. Then restart the script.")
+        os._exit(1)
+
+    collect_gift_mon(config["target_fossil"])
+
+def collect_gift_mon(target: str):
+    rng_frames = get_rngState(trainer_info["tid"])
+    party_size = len(party_info)
+
+    if party_size == 6:
+        debug_log.info("Please leave at least one party slot open, then restart the script.")
+        os._exit(1)
+
+    while True:
+        # Button mash through intro/title
+        while trainer_info["state"] != GameState.OVERWORLD:
+            press_button("A")
+            wait_frames(8)
+        
+        # Text goes faster with B held
+        hold_button("B")
+
+        while len(party_info) == party_size:
+            if emu_info["rngState"] in rng_frames:
+                debug_log.debug(f"Already rolled on RNG state: {emu_info['rngState']}, waiting...")
+                continue
+            
+            rng_frames["rngState"][target].append(emu_info["rngState"])
+            write_file(f"stats/{trainer_info['tid']}.json", json.dumps(rng_frames, indent=4, sort_keys=True))
+
+            press_button("A")
+            wait_frames(5)
+
+        mon = party_info[party_size]
+        
+        # Open the menu and find Gift mon in party
+        release_button("B")
+
+        if not config["do_realistic_hunt"] and not mon["shiny"]:
+            log_encounter(mon)
+            hold_button("Power")
+            wait_frames(60)
+            release_button("Power")
+            return
+
+        while not find_image("start_menu/select.png"):
+            wait_frames(5)
+
+        while find_image("start_menu/select.png"):
+            press_button("B")
+            wait_frames(5)
+
+        start_menu("pokemon")
+
+        wait_frames(60)
+
+        i = 0
+        while i < party_size:
+            emu_combo(["Down", 15])
+            i += 1
+
+        emu_combo(["A", 15, "A", 60])
+
+        log_encounter(mon)
+
+        if not mon["shiny"]:
+            hold_button("Power")
+            wait_frames(60)
+            release_button("Power")
+        else:
+            input("Pausing bot for manual intervention. (Don't forget to pause the pokebot.lua script so you can provide inputs). Press Enter to continue...")
 
 def mode_regiTrio():
     if (not player_on_map(MapBank.DUNGEONS, MapID.REGIROCK_CAVE) and
@@ -1244,77 +1346,6 @@ def mode_regiTrio():
             (8, 21), 
             (8, 11)
         ])
-
-def mode_fossil():
-    if not player_on_map(MapBank.RUSTBORO_CITY, MapID.DEVON_2F) or trainer_info["posY"] != 8 and not (trainer_info["posX"] == 13 or trainer_info["posX"] == 15):
-        debug_log.info("Please face the player toward the Fossil researcher after handing it over, re-entering the room, and saving the game. Then restart the script.")
-        os._exit(1)
-
-    party_size = len(party_info)
-
-    if party_size == 6:
-        debug_log.info("Please leave at least one party slot free, then restart the script.")
-        os._exit(1)
-
-    fossil_frames = get_rngState(trainer_info["tid"])
-
-    while True:
-        while trainer_info["state"] != GameState.OVERWORLD:
-            press_button("A")
-            wait_frames(8)
-
-        # Text goes faster with B held
-        hold_button("B")
-
-        while len(party_info) == party_size:
-            if emu_info["rngState"] in fossil_frames:
-                debug_log.debug(f"Already rolled on RNG state: {emu_info['rngState']}, waiting...")
-                continue
-            
-            fossil_frames["rngState"]["Fossil"].append(emu_info["rngState"])
-            write_file(f"stats/{trainer_info['tid']}.json", json.dumps(fossil_frames, indent=4, sort_keys=True))
-
-            press_button("A")
-            wait_frames(5)
-
-        fossil_mon = party_info[party_size]
-        
-        # Open the menu and find fossil in party
-        release_button("B")
-
-        if not config["do_realistic_hunt"] and not fossil_mon["shiny"]:
-            log_encounter(fossil_mon)
-            hold_button("Power")
-            wait_frames(60)
-            release_button("Power")
-            continue
-
-        while not find_image("start_menu/select.png"):
-            wait_frames(5)
-
-        while find_image("start_menu/select.png"):
-            press_button("B")
-            wait_frames(5)
-
-        start_menu("pokemon")
-
-        wait_frames(60)
-
-        i = 0
-        while i < party_size:
-            emu_combo(["Down", 15])
-            i += 1
-
-        emu_combo(["A", 15, "A", 60])
-
-        log_encounter(fossil_mon)
-
-        if not fossil_mon["shiny"]:
-            hold_button("Power")
-            wait_frames(60)
-            release_button("Power")
-        else:
-            input("Pausing bot for manual intervention. (Don't forget to pause the pokebot.lua script so you can provide inputs). Press Enter to continue...")
 
 def mode_deoxysPuzzle(do_encounter: bool = True):
     def retry_puzzle_if_stuck(success: bool):
@@ -1519,11 +1550,18 @@ def mode_fishing():
         if not find_image("text_period.png"): emu_combo(["Select", 50]) # Re-cast rod if the fishing text prompt is not visible
     identify_pokemon()
 
+
+rng_mons = ["Treecko", "Torchic", "Mudkip", "Deoxys", "Fossil", "Castform", "Beldum"]
 def get_rngState(tid: str):
-    if read_file(f"stats/{tid}.json"): 
-        return json.loads(read_file(f"stats/{trainer_info['tid']}.json")) # Open starter frames file
-    else: 
-        return {"rngState": {"Treecko": [], "Torchic": [], "Mudkip": [], "Deoxys": []}, "Fossil": []}
+    file = read_file(f"stats/{tid}.json")
+    data = json.loads(file) if file else {"rngState": {}}
+
+    # Fill unused data
+    for mon in rng_mons:
+        if not data["rngState"].get(mon):
+            data["rngState"][mon] = []
+
+    return data
 
 def mode_starters():
     choice = config["starter_pokemon"].lower()
@@ -1541,9 +1579,9 @@ def mode_starters():
         while trainer_info["state"] != GameState.OVERWORLD: 
             press_button("A")
 
-        # 50ms delay between A inputs to prevent accidental selection confirmations
+        # Short delay between A inputs to prevent accidental selection confirmations
         while trainer_info["state"] == GameState.OVERWORLD: 
-            emu_combo(["A", 5])
+            emu_combo(["A", 10])
 
         # Press B to back out of an accidental selection when scrolling to chosen starter
         if choice == "mudkip":

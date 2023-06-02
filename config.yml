@@ -10,6 +10,7 @@ coords:
 direction: Horizontal
 starter_pokemon: Mudkip
 deoxys_puzzle_solved: false
+target_fossil: Anorith
 
 # Wild Battles
 manual_catch: false

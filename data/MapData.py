@@ -8,10 +8,14 @@ class MapBank(IntEnum):
     OLDALE_TOWN = 2
     DEWFORD_TOWN = 3
     RUSTBORO_CITY = 11
+    MOSSDEEP_CITY = 14
     DUNGEONS = 24
     SPECIAL = 26
+    ROUTE_119 = 32
 
 class MapID(IntEnum):
+    # Mossdeep City
+    STEVENS_HOUSE = 7
     # Dungeons
     REGIROCK_CAVE = 6
     REGICE_CAVE = 67
@@ -27,3 +31,5 @@ class MapID(IntEnum):
     DEOXYS_ISLAND = 58
     HO_OH_ROCK = 75
     LUGIA_ROCK = 87
+    # Route 119
+    WEATHER_INSTITUTE_2F = 1
