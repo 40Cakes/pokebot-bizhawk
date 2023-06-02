@@ -745,7 +745,7 @@ def identify_pokemon(starter: bool = False): # Identify opponent pokemon and inc
 
             if not args.n: write_file("stats/totals.json", json.dumps(stats, indent=4, sort_keys=True)) # Save stats file
 
-            if not starter and config["bot_mode"] not in ["manual", "rayquaza", "kyogre", "groudon", "faraway mew"] and "shinies" in config["catch"]: 
+            if not starter and config["bot_mode"] not in ["manual", "rayquaza", "kyogre", "groudon", "mew"] and "shinies" in config["catch"]: 
                 catch_pokemon()
 
             if not args.n: write_file("stats/totals.json", json.dumps(stats, indent=4, sort_keys=True)) # Save stats file
@@ -779,7 +779,7 @@ def identify_pokemon(starter: bool = False): # Identify opponent pokemon and inc
                     catch_pokemon()
                 elif "all" in config["catch"]:
                     catch_pokemon()
-                elif "faraway mew" in config["bot_mode"]:
+                elif "mew" in config["bot_mode"]:
                     flee_battle()
                     time.sleep(frames_to_ms(60))
                     press_button("B")
@@ -1086,8 +1086,8 @@ def mainLoop(): # 🔁 Main loop
                         mode_kyogre()
                     case "southern island":
                         mode_southernIsland()
-                    case "faraway mew":
-                        mode_faraway_mew()
+                    case "mew":
+                        mode_farawayMew()
                     case "buy premier balls":
                         purchase_success = mode_buyPremierBalls()
 
@@ -1262,7 +1262,7 @@ def mode_kyogre():
     while True:
         follow_path([(trainer_info["posX"], 26), (9, 26), (9, 27), (18, 27), (18, 14), (14, 14), (14, 4), (20, 4), (20, 99, (24, 102)), (14, -99, (24, 103)), (14, 4), (14, 14), (18, 14), (18, 27), (14, 27)])
 
-def mode_faraway_mew():
+def mode_farawayMew():
     if not player_on_map(MapBank.SPECIAL, MapID.MEW_ISLAND_ENTERANCE):
         return False
     
