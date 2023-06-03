@@ -42,6 +42,7 @@ encounter_log_limit: 100
 log:
 - all_encounters
 - shiny_encounters
+csvlog: false
   
 # Preferences
 control_map:
