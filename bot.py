@@ -176,7 +176,7 @@ def release_all_inputs(): # Function to release all keys in all input objects
 
 def opponent_changed(): # This function checks if there is a different opponent since last check, indicating the game state is probably now in a battle
     global last_opponent_personality
-    
+
     # Fixes a bug where the bot checks the opponent for up to 20 seconds if it was last closed in a battle
     if trainer_info["state"] == GameState.OVERWORLD:
         return False
@@ -211,20 +211,6 @@ def get_screenshot():
         cv2.waitKey(1)
     
     return g_bizhawk_screenshot
-
-def opponent_changed(): # This function checks if there is a different opponent since last check, indicating the game state is probably now in a battle
-    global last_opponent_personality
-
-    # Fixes a bug where the bot checks the opponent for up to 20 seconds if it was last closed in a battle
-    if trainer_info["state"] == GameState.OVERWORLD:
-        return False
-
-    if opponent_info and last_opponent_personality != opponent_info["personality"]:
-        debug_log.info(f"Opponent has changed! Previous PID: {last_opponent_personality}, New PID: {opponent_info['personality']}")
-        last_opponent_personality = opponent_info["personality"]
-        return True
-    
-    return False
 
 def mem_pollScreenshot():
     global g_bizhawk_screenshot
@@ -711,9 +697,16 @@ def reset_game():
     release_button("Power")
 
 def log_encounter(pokemon: dict):
+    global opponent_info, last_opponent_personality
+
     mon_sv = pokemon["shinyValue"]
     mon_name = pokemon["name"]
     
+    # Show Gift Pokemon as the current encounter
+    if last_opponent_personality != pokemon["personality"]:
+        opponent_info = pokemon
+        last_opponent_personality = pokemon["personality"]
+
     def common_stats():
         global stats, encounter_log
 
@@ -1963,8 +1956,9 @@ try:
         get_party_info = Thread(target=mem_getPartyInfo)
         get_party_info.start()
 
-        get_opponent_info = Thread(target=mem_getOpponentInfo)
-        get_opponent_info.start()
+        if not config["bot_mode"] in ["starters", "johto starters", "fossil", "castform", "beldum"]:
+            get_opponent_info = Thread(target=mem_getOpponentInfo)
+            get_opponent_info.start()
         
         #send_inputs = Thread(target=mem_sendInputs) TODO Use another buffer to throttle inputs and use this thread again
         #send_inputs.start()
