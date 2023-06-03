@@ -635,8 +635,10 @@ def pickup_items(): # If using a team of Pokemon with the ability "pickup", this
 
     item_count = 0
     pickup_mon_count = 0
+    party_size = len(party_info)
 
-    for i in range(0, 6):
+    i = 0
+    while i < party_size:
         pokemon = party_info[i]
         held_item = pokemon['heldItem']
 
@@ -647,6 +649,8 @@ def pickup_items(): # If using a team of Pokemon with the ability "pickup", this
             pickup_mon_count += 1
             debug_log.info(f"Pokemon {i}: {pokemon['speciesName']} has item: {item_list[held_item]}")
 
+        i += 1
+
     if item_count < config["pickup_threshold"]:
         debug_log.info(f"Party has {item_count} items, won't collect until at threshold {config['pickup_threshold']}")
         return
@@ -656,7 +660,7 @@ def pickup_items(): # If using a team of Pokemon with the ability "pickup", this
     wait_frames(60)
 
     i = 0
-    while i < 6:
+    while i < party_size:
         pokemon = party_info[i]
         if pokemon["speciesName"] in pickup_pokemon and pokemon["heldItem"] != 0:
             # Take the item from the pokemon
@@ -1526,7 +1530,9 @@ def mode_move_between_coords():
     pos1, pos2 = coords["pos1"], coords["pos2"]
 
     while True:
-        while not opponent_changed():
+        foe_personality = last_opponent_personality
+
+        while foe_personality == last_opponent_personality:
             follow_path([(pos1[0], pos1[1]), (pos2[0], pos2[1])])
 
         identify_pokemon()
@@ -1977,7 +1983,7 @@ try:
 
     encounters = read_file("stats/encounter_log.json")
     encounter_log = json.loads(encounters) if encounters else {"encounter_log": []}
-   
+    
     shinies = read_file("stats/shiny_log.json")
     shiny_log = json.loads(shinies) if shinies else {"shiny_log": []} 
 
