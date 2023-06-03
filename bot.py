@@ -175,18 +175,20 @@ def release_all_inputs(): # Function to release all keys in all input objects
         hold_input_mmap.write(bytes(json.dumps(hold_input), encoding="utf-8"))
 
 def opponent_changed(): # This function checks if there is a different opponent since last check, indicating the game state is probably now in a battle
-    global last_opponent_personality
+    try:
+        global last_opponent_personality
 
-    # Fixes a bug where the bot checks the opponent for up to 20 seconds if it was last closed in a battle
-    if trainer_info["state"] == GameState.OVERWORLD:
+        # Fixes a bug where the bot checks the opponent for up to 20 seconds if it was last closed in a battle
+        if trainer_info["state"] == GameState.OVERWORLD:
+            return False
+
+        if opponent_info and last_opponent_personality != opponent_info["personality"]:
+            debug_log.info(f"Opponent has changed! Previous PID: {last_opponent_personality}, New PID: {opponent_info['personality']}")
+            last_opponent_personality = opponent_info["personality"]
+            return True    
+    except Exception as e:
+        if args.d: debug_log.exception(str(e))
         return False
-
-    if opponent_info and last_opponent_personality != opponent_info["personality"]:
-        debug_log.info(f"Opponent has changed! Previous PID: {last_opponent_personality}, New PID: {opponent_info['personality']}")
-        last_opponent_personality = opponent_info["personality"]
-        return True
-    
-    return False
 
 def get_screenshot():
     g_bizhawk_screenshot = None
@@ -652,7 +654,7 @@ def pickup_items(): # If using a team of Pokemon with the ability "pickup", this
         i += 1
 
     if item_count < config["pickup_threshold"]:
-        debug_log.info(f"Party has {item_count} items, won't collect until at threshold {config['pickup_threshold']}")
+        debug_log.info(f"Party has {item_count} item(s), won't collect until at threshold {config['pickup_threshold']}")
         return
 
     wait_frames(60) # Wait for animations
@@ -705,7 +707,7 @@ def log_encounter(pokemon: dict):
 
     mon_sv = pokemon["shinyValue"]
     mon_name = pokemon["name"]
-    
+
     # Show Gift Pokemon as the current encounter
     if last_opponent_personality != pokemon["personality"]:
         opponent_info = pokemon
@@ -887,6 +889,7 @@ def identify_pokemon(starter: bool = False): # Identify opponent pokemon and inc
         i = 0
         while trainer_info["state"] not in [3, 255] and i < 250:
             i += 1
+
     if trainer_info["state"] == GameState.OVERWORLD: 
         return False
 
@@ -1069,16 +1072,22 @@ def mem_getPartyInfo(): # Loop repeatedly to read party info from memory
     global party_info
 
     while True:
-        party_info_mmap = load_json_mmap(8192, "bizhawk_party_info")
+        try:
+            party_info_mmap = load_json_mmap(8192, "bizhawk_party_info")
 
-        if party_info_mmap:
-            party_info = []
+            if party_info_mmap:
+                enriched_party_obj = []
 
-            for pokemon in party_info_mmap["party"]:
-                if validate_pokemon(pokemon):
-                    party_info.append(enrich_mon_data(pokemon))
-                else:
-                    continue
+                for pokemon in party_info_mmap["party"]:
+                    if validate_pokemon(pokemon):
+                        pokemon = enrich_mon_data(pokemon)
+                        enriched_party_obj.append(pokemon)
+                    else: continue
+
+                party_info = enriched_party_obj
+        except Exception as e:
+            if args.dm: debug_log.exception(str(e))
+            continue
 
         wait_frames(1)
 
@@ -1086,15 +1095,21 @@ def mem_getOpponentInfo(): # Loop repeatedly to read opponent info from memory
     global opponent_info, last_opponent_personality
 
     while True:
-        opponent_info_mmap = load_json_mmap(4096, "bizhawk_opponent_info")
+        try:
+            opponent_info_mmap = load_json_mmap(4096, "bizhawk_opponent_info")
 
-        if opponent_info_mmap:
-            if validate_pokemon(opponent_info_mmap):
-                opponent_info = enrich_mon_data(opponent_info_mmap["opponent"])
-        elif not opponent_info: 
-            placeholder = json.loads(read_file("data/placeholder_pokemon.json"))
-            opponent_info = placeholder
-        
+            if opponent_info_mmap:
+                if validate_pokemon(opponent_info_mmap):
+                    enriched_opponent_obj = enrich_mon_data(opponent_info_mmap["opponent"])
+
+                    if enriched_opponent_obj:
+                        opponent_info = enriched_opponent_obj
+            elif not opponent_info: 
+                opponent_info = json.loads(read_file("data/placeholder_pokemon.json"))
+        except Exception as e:
+            if args.d: debug_log.exception(str(e))
+            continue
+
         wait_frames(1)
 
 def mem_can_write_inputs():
