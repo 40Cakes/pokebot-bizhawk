@@ -65,7 +65,7 @@ class mapRSE(Enum):
     LITTLEROOT_TOWN_A = (1,1)
     LITTLEROOT_TOWN_B = (1,2)
     LITTLEROOT_TOWN_C = (1,3)
-    LITTLEROOT_TOWN_D = (1,4)
+    LITTLEROOT_TOWN_D = (1,4) # Prof. Birch's Lab
 
     OLDALE_TOWN_A = (2,0)
     OLDALE_TOWN_B = (2,1)
@@ -147,7 +147,7 @@ class mapRSE(Enum):
     MAUVILLE_CITY_H = (10,7)
 
     RUSTBORO_CITY_A = (11,0)
-    RUSTBORO_CITY_B = (11,1)
+    RUSTBORO_CITY_B = (11,1) # Devon Corp. 2F
     RUSTBORO_CITY_C = (11,2)
     RUSTBORO_CITY_D = (11,3)
     RUSTBORO_CITY_E = (11,4)
@@ -269,7 +269,7 @@ class mapRSE(Enum):
     METEOR_FALLS_C = (24,3)
     RUSTURF_TUNNEL = (24,4)
     UNDERWATER_H = (24,5)
-    DESERT_RUINS = (24,6)
+    DESERT_RUINS = (24,6) # Regirock Cave
     GRANITE_CAVE = (24,7)
     GRANITE_CAVE_A = (24,8)
     GRANITE_CAVE_B = (24,9)
@@ -330,8 +330,8 @@ class mapRSE(Enum):
     ABANDONED_SHIP_J = (24,64)
     ABANDONED_SHIP_K = (24,65)
     ABANDONED_SHIP_L = (24,66)
-    ISLAND_CAVE = (24,67)
-    ANCIENT_TOMB = (24,68)
+    ISLAND_CAVE = (24,67) # Regice Cave
+    ANCIENT_TOMB = (24,68) # Registeel Cave
     UNDERWATER_J = (24,69)
     UNDERWATER_K = (24,70)
     SEALED_CHAMBER = (24,71)
@@ -347,8 +347,8 @@ class mapRSE(Enum):
     SKY_PILLAR_D = (24,81)
     SKY_PILLAR_E = (24,82)
     SHOAL_CAVE_F = (24,83)
-    SKY_PILLAR_F = (24,84)
-    SKY_PILLAR_G = (24,85)
+    SKY_PILLAR_F = (24,84) # Sky Pillar 5F
+    SKY_PILLAR_G = (24,85) # Top of Sky Pillar (Rayquaza)
     MAGMA_HIDEOUT = (24,86)
     MAGMA_HIDEOUT_A = (24,87)
     MAGMA_HIDEOUT_B = (24,88)
@@ -365,10 +365,10 @@ class mapRSE(Enum):
     ARTISAN_CAVE = (24,99)
     ARTISAN_CAVE_A = (24,100)
     UNDERWATER_L = (24,101)
-    MARINE_CAVE = (24,102)
-    MARINE_CAVE_A = (24,103)
-    TERRA_CAVE = (24,104)
-    TERRA_CAVE_A = (24,105)
+    MARINE_CAVE = (24,102) # Outside Kyogre Cave 
+    MARINE_CAVE_A = (24,103) # Kyogre Cave 
+    TERRA_CAVE = (24,104) # Outside Groudon Cave 
+    TERRA_CAVE_A = (24,105) # Groudon Cave 
     ALTERING_CAVE = (24,106)
     METEOR_FALLS_D = (24,107)
 
@@ -443,8 +443,8 @@ class mapRSE(Enum):
     BATTLE_FRONTIER_B = (26,6)
     BATTLE_FRONTIER_C = (26,7)
     BATTLE_FRONTIER_D = (26,8)
-    SOUTHERN_ISLAND = (26,9)
-    SOUTHERN_ISLAND_A = (26,10)
+    SOUTHERN_ISLAND = (26,9) # Roamer island (Latios/Latias)
+    SOUTHERN_ISLAND_A = (26,10) # Roamer island (Latios/Latias)
     SAFARI_ZONE_D = (26,11)
     SAFARI_ZONE_E = (26,12)
     SAFARI_ZONE_F = (26,13)
@@ -490,10 +490,10 @@ class mapRSE(Enum):
     BATTLE_FRONTIER_AR = (26,53)
     BATTLE_FRONTIER_AS = (26,54)
     BATTLE_FRONTIER_AT = (26,55)
-    FARAWAY_ISLAND = (26,56)
-    FARAWAY_ISLAND_A = (26,57)
-    BIRTH_ISLAND = (26,58)
-    BIRTH_ISLAND_A = (26,59)
+    FARAWAY_ISLAND = (26,56) # Mew
+    FARAWAY_ISLAND_A = (26,57) # Mew
+    BIRTH_ISLAND = (26,58) # Deoxys
+    BIRTH_ISLAND_A = (26,59) # Deoxys
     TRAINER_HILL = (26,60)
     TRAINER_HILL_A = (26,61)
     TRAINER_HILL_B = (26,62)
@@ -547,7 +547,7 @@ class mapRSE(Enum):
     ROUTE_123_A = (31,0)
 
     ROUTE_119_A = (32,0)
-    ROUTE_119_B = (32,1)
+    ROUTE_119_B = (32,1) # Weather Institute 2F
     ROUTE_119_C = (32,2)
 
     ROUTE_124_A = (33,0)
