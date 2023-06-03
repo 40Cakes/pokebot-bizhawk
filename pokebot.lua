@@ -23,8 +23,43 @@ package.path = utils.translatePath(";.\\data\\lua\\?.lua;")
 
 json = require "json"
 PokemonNames = require "PokemonNames"
+-- Release all keys after starting script
+if enable_input then
+	input = joypad.get()
+	input["A"], input["B"], input["L"], input["R"], input["Up"], input["Down"], input["Left"], input["Right"], input["Select"], input["Start"], input["Screenshot"] = false, false, false, false, false, false, false, false, false, false, false
+	joypad.set(input)
+end
 
 console.log("Detected game: " .. GameSettings.gamename)
+-- Allocate memory mapped file sizes
+comm.mmfWrite("bizhawk_screenshot", string.rep("\x00", 24576))
+comm.mmfSetFilename("bizhawk_screenshot")
+comm.mmfScreenshot()
+
+comm.mmfWrite("bizhawk_press_input", string.rep("\x00", 4096))
+comm.mmfWrite("bizhawk_hold_input", string.rep("\x00", 4096))
+comm.mmfWrite("bizhawk_trainer_info", string.rep("\x00", 4096))
+comm.mmfWrite("bizhawk_party_info", string.rep("\x00", 8192))
+comm.mmfWrite("bizhawk_opponent_info", string.rep("\x00", 4096))
+comm.mmfWrite("bizhawk_emu_info", string.rep("\x00", 4096))
+
+input_list = {}
+for i = 0, 100 do --101 entries, the final entry is for the index.
+	input_list[i] = string.byte('a')
+end
+
+-- Create memory mapped input files for Python script to write to
+comm.mmfWrite("bizhawk_hold_input", json.encode(input) .. "\x00")
+comm.mmfWrite("bizhawk_input_list", string.rep("\x00", 4096))
+
+comm.mmfWriteBytes("bizhawk_input_list", input_list)
+
+
+last_posY = 0
+last_posX = 0
+last_state = 0
+last_mapBank = 0
+last_mapId = 0
 
 -- Function to read Pokemon data from an address
 -- Pokemon data structure: https://bulbapedia.bulbagarden.net/wiki/Pok%C3%A9mon_data_structure_(Generation_III)
@@ -49,7 +84,7 @@ function readMonData(address)
 	mon.speed = Memory.readword(address + 94)
 	mon.spAttack = Memory.readword(address + 96)
 	mon.spDefense = Memory.readword(address + 98)
-
+	
 	local key = mon.otId ~ mon.personality
 	local substructSelector = {
 		[ 0] = {0, 1, 2, 3},
@@ -77,27 +112,27 @@ function readMonData(address)
 		[22] = {2, 3, 1, 0},
 		[23] = {3, 2, 1, 0},
 	}
-
+	
 	local pSel = substructSelector[mon.personality % 24]
 	local ss0 = {}
 	local ss1 = {}
 	local ss2 = {}
 	local ss3 = {}
-
+	
 	for i = 0, 2 do
 		ss0[i] = Memory.readdword(address + 32 + pSel[1] * 12 + i * 4) ~ key
 		ss1[i] = Memory.readdword(address + 32 + pSel[2] * 12 + i * 4) ~ key
 		ss2[i] = Memory.readdword(address + 32 + pSel[3] * 12 + i * 4) ~ key
 		ss3[i] = Memory.readdword(address + 32 + pSel[4] * 12 + i * 4) ~ key
 	end
-
+	
 	mon.species = (ss0[0] & 0xFFFF) + 1
 	mon.speciesName = PokemonNames[mon.species]
 	mon.heldItem = ss0[0] >> 16
 	mon.experience = ss0[1]
 	mon.ppBonuses = ss0[2] & 0xFF
 	mon.friendship = (ss0[2] >> 8) & 0xFF
-
+	
 	mon.moves = {
 		ss1[0] & 0xFFFF,
 		ss1[0] >> 16,
@@ -110,7 +145,7 @@ function readMonData(address)
 		(ss1[2] >> 16) & 0xFF,
 		ss1[2] >> 24
 	}
-
+	
 	mon.hpEV = ss2[0] & 0xFF
 	mon.attackEV = (ss2[0] >> 8) & 0xFF
 	mon.defenseEV = (ss2[0] >> 16) & 0xFF
@@ -123,6 +158,7 @@ function readMonData(address)
 	-- mon.smart = (ss2[2] >> 8) & 0xFF
 	-- mon.tough = (ss2[2] >> 16) & 0xFF
 	-- mon.sheen = ss2[2] >> 24
+	
 	mon.pokerus = ss3[0] & 0xFF
 	mon.metLocation = (ss3[0] >> 8) & 0xFF
 	flags = ss3[0] >> 16
@@ -164,7 +200,7 @@ end
 -- Trainer data structure: https://bulbapedia.bulbagarden.net/wiki/Save_data_structure_(Generation_III)
 function getTrainer()
 	local trainer = Memory.readdword(GameSettings.trainerpointer)
-
+	
 	trainer = { -- # TODO add items in bag
 		--gender = Memory.readbyte(trainer + 8),
 		tid = Memory.readword(trainer + 10),
@@ -176,7 +212,7 @@ function getTrainer()
 		posY = Memory.readbyte(GameSettings.coords + 2) - 7,
 		roamerMapId = Memory.readbyte(GameSettings.mapbank + 7)
 	}
-
+	
 	return trainer
 end
 
@@ -185,12 +221,12 @@ function getParty()
 	local party = {}
 	local start = GameSettings.pstats
 	local partyCount = GameSettings.pcount
-
+	
 	for i = 1, Memory.readbyte(partyCount) do
 		party[i] = readMonData(start)
 		start = start + 100 -- Pokemon data structure is 100 bytes
 	end
-
+	
 	return party
 end
 
@@ -203,7 +239,7 @@ function getEmu()
 		rngState = Memory.readdword(GameSettings.rng),
 		language = GameSettings.language
 	}
-
+	
 	return emu_info
 end
 
@@ -212,11 +248,11 @@ function mainLoop()
 	trainer = getTrainer()
 	party = getParty()
 	opponent = readMonData(GameSettings.estats)
-
+	
 	comm.mmfWrite("bizhawk_trainer_info", json.encode({["trainer"] = trainer}) .. "\x00")
 	comm.mmfWrite("bizhawk_party_info", json.encode({["party"] = party}) .. "\x00")
 	comm.mmfWrite("bizhawk_opponent_info", json.encode({["opponent"] = opponent}) .. "\x00")
-
+	
 	if write_files then
 		check_input = joypad.get()
 		if check_input["L"] and check_input["R"] then
@@ -239,74 +275,93 @@ function mainLoop()
 			opponent_info_file:close()
 		end
 	end
+	comm.mmfScreenshot()
+	
 end
 
--- Release all keys after starting script
-if enable_input then
-	input = joypad.get()
-	input["A"], input["B"], input["L"], input["R"], input["Up"], input["Down"], input["Left"], input["Right"], input["Select"], input["Start"], input["Screenshot"] = false, false, false, false, false, false, false, false, false, false, false
+g_current_index = 1 --Keep track of where Lua is in it's traversal of the input list
+function traverseNewInputs()
+	local pcall_result, list_of_inputs = pcall(comm.mmfRead,"bizhawk_input_list", 4096)
+	if pcall_result == false then
+		gui.addmessage("pcall fail list")
+		return false	
+	end
+	local current_index = g_current_index
+	python_current_index = list_of_inputs:byte(101)
+	if current_index ~= python_current_index then
+		while (current_index) ~= python_current_index do
+			current_index = current_index + 1
+			if current_index > 100 then
+				current_index = 1
+			end
+			button = utf8.char(list_of_inputs:byte(current_index))
+			if button == 'l' then
+				button = "Left"
+			end
+			if button == 'r' then
+				button = "Right"
+			end
+			if button == 'u' then
+				button = "Up"
+			end
+			if button == 'd' then	
+				button = "Down"
+			end
+			if button == 's' then
+				button = "Select"
+			end
+			if button == 'S' then
+				button = "Start"
+			end
+			input[button] = true
+			if button == "A" then
+				input["B"] = false --If there are any new "A" presses after "B" in the list, discard the "B" presses before it
+			end
+		end
+		
+	end
+	g_current_index = current_index
 	joypad.set(input)
 end
 
--- Allocate memory mapped file sizes
-comm.mmfWrite("bizhawk_screenshot", string.rep("\x00", 24576))
-comm.mmfSetFilename("bizhawk_screenshot")
-comm.mmfScreenshot()
-
-comm.mmfWrite("bizhawk_press_input", string.rep("\x00", 256))
-comm.mmfWrite("bizhawk_hold_input", string.rep("\x00", 256))
-comm.mmfWrite("bizhawk_trainer_info", string.rep("\x00", 4096))
-comm.mmfWrite("bizhawk_party_info", string.rep("\x00", 8192))
-comm.mmfWrite("bizhawk_opponent_info", string.rep("\x00", 4096))
-comm.mmfWrite("bizhawk_emu_info", string.rep("\x00", 4096))
-
--- Create memory mapped input files for Python script to write to
-comm.mmfWrite("bizhawk_press_input", json.encode(input) .. "\x00")
-comm.mmfWrite("bizhawk_hold_input", json.encode(input) .. "\x00")
-
-last_posY = 0
-last_posX = 0
-last_state = 0
-last_mapBank = 0
-last_mapId = 0
-
-while true do
+function handleHeldButtons()
 	if enable_input then
-		for button, _ in pairs (input) do
-			input[button] = false
+		local pcall_result, hold_result = pcall(json.decode, comm.mmfRead("bizhawk_hold_input", 4096))
+		if pcall_result then
+			held_buttons = hold_result
 		end
-
-		local press_success, press_result = pcall(json.decode, comm.mmfRead("bizhawk_press_input", 256))
-		if press_success then
-			input_press = press_result
-		end
-		local hold_success, hold_result = pcall(json.decode, comm.mmfRead("bizhawk_hold_input", 256))
-		if hold_success then
-			input_hold = hold_result
-		end
-
-		if input_press then
-			for button, press in pairs (input_press) do
-				if press and (press ~= 0) then
-					input[button] = true
-				elseif input_hold[button] then
-					input[button] = true
-				else
-					input[button] = false
-				end
+		for button, button_is_held in pairs (held_buttons) do
+			if button_is_held then
+				input[button] = true
+			else
+				; --Don't assign them false, this function is called after the presses and would overwrite them to false
 			end
 		end
-
+		if (last_state ~= trainer.state) then
+			last_state = trainer.state
+		end
 		joypad.set(input)
-	end
-	
-	if input["Screenshot"] then
-		comm.mmfScreenshot()
+		
+
 	end
 
+end
+mainLoop()
+NUM_OF_FRAMES_PER_PRESS = 5
+while true do
 	emu_info = getEmu()
-	comm.mmfWrite("bizhawk_emu_info", json.encode({["emu"] = emu_info}) .. "\x00")
+	if emu_info.frameCount % NUM_OF_FRAMES_PER_PRESS == 0 then --Every n frame will skip the presses, so you can spam inputs in Python and them not get held, they won't be eaten, just deferred a frame. 
+		for button, buttons in pairs (input) do
+			input[button] = false 
+			joypad.set(input)
+		end
+	else
+		traverseNewInputs()
+
+	end
+	handleHeldButtons()
 	-- Save screenshot and other data to memory mapped files, as FPS is higher, reduce the number of reads and writes to memory
+	comm.mmfWrite("bizhawk_emu_info", json.encode({["emu"] = emu_info}) .. "\x00")
 	fps = emu_info.emuFPS
 	if fps > 120 and fps <= 240  then -- Copy screenshot to memory every nth frame if running at higher than 1x to reduce memory writes
 		if (emu_info.frameCount % 2 == 0) then

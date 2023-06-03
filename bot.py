@@ -2,6 +2,7 @@
 import io                                        # https://docs.python.org/3/library/io.html
 import os                                        # https://docs.python.org/3/library/os.html
 import re                                        # https://docs.python.org/3/library/re.html
+import array                                     # https://docs.python.org/3/library/array.html
 import sys                                       # https://docs.python.org/3/library/sys.html
 import glob                                      # https://docs.python.org/3/library/glob.html
 import json                                      # https://docs.python.org/3/library/json.html
@@ -64,7 +65,7 @@ def emu_combo(sequence: list): # Function to send a sequence of inputs and delay
     for k in sequence:
         if type(k) is int:
             wait_frames(k)
-        else: 
+        else:
             press_button(k)
             wait_frames(1)
 
@@ -196,31 +197,26 @@ def get_screenshot():
         release_button("Screenshot")
         return None
     release_button("Screenshot")
+
     if args.di:
         cv2.imshow("get_screenshot",g_bizhawk_screenshot)
         cv2.waitKey(1)
+    
     return g_bizhawk_screenshot
-        press_input[button] = False
-        hold_input[button] = False
 
 def opponent_changed(): # This function checks if there is a different opponent since last check, indicating the game state is probably now in a battle
-    try:
-        global last_opponent_personality
-        #debug_log.info(f"Checking if opponent has changed... Previous PID: {last_opponent_personality}, New PID: {opponent_info['personality']}")
+    global last_opponent_personality
 
-        # Fixes a bug where the bot checks the opponent for up to 20 seconds if it was last closed in a battle
-        if trainer_info["state"] == GameState.OVERWORLD:
-            return False
+    # Fixes a bug where the bot checks the opponent for up to 20 seconds if it was last closed in a battle
+    if trainer_info["state"] == GameState.OVERWORLD:
+        return False
 
-        if opponent_info and last_opponent_personality != opponent_info["personality"]:
-            last_opponent_personality = opponent_info["personality"]
-            debug_log.info("Opponent has changed!")
-            return True
-        
-        return False
-    except Exception as e:
-        if args.d: debug_log.exception(str(e))
-        return False
+    if opponent_info and last_opponent_personality != opponent_info["personality"]:
+        debug_log.info(f"Opponent has changed! Previous PID: {last_opponent_personality}, New PID: {opponent_info['personality']}")
+        last_opponent_personality = opponent_info["personality"]
+        return True
+    
+    return False
 
 def mem_pollScreenshot():
     global g_bizhawk_screenshot
@@ -575,7 +571,7 @@ def follow_path(coords: list, run: bool = True, exit_when_stuck: bool = False):
                         return False
 
                 # Press B occasionally in case there's a menu/dialogue open
-                if stuck_time % 64 == 0:
+                if stuck_time % 120 == 0:
                     release_button("B")
                     wait_frames(1)
                     press_button("B")
@@ -855,7 +851,7 @@ def log_encounter(pokemon: dict):
 
     debug_log.info(f"----------------------------------------")
 
-def mon_is_desirable():
+def mon_is_desirable(pokemon: dict):
     ### Custom Filters ###
     # Add custom filters here (make sure to uncomment the line), examples:
     # If you want to pause the bot instead of automatically catching, replace `catch_pokemon()` with `input("Pausing bot for manual catch (don't forget to pause pokebot.lua script so you can provide inputs). Press Enter to continue...")`
@@ -880,7 +876,7 @@ def mon_is_desirable():
     return False
 
 def identify_pokemon(starter: bool = False): # Identify opponent pokemon and incremement statistics, returns True if shiny, else False
-    legendary_hunt = config["bot_mode"] in ["manual", "rayquaza", "kyogre", "groudon", "southern island", "regi trio", "deoxys resets", "deoxys runaways"]
+    legendary_hunt = config["bot_mode"] in ["manual", "rayquaza", "kyogre", "groudon", "southern island", "regi trio", "deoxys resets", "deoxys runaways", "mew"]
 
     debug_log.info("Identifying Pokemon...")
     release_all_inputs()
@@ -917,7 +913,7 @@ def identify_pokemon(starter: bool = False): # Identify opponent pokemon and inc
         elif starter:
             return False
 
-        if mon_is_desirable():
+        if mon_is_desirable(pokemon):
             catch_pokemon()
 
         if not legendary_hunt:
@@ -1177,10 +1173,12 @@ def httpServer(): # Run HTTP server to make data available via HTTP GET
         server.run(debug=False, threaded=True, host="127.0.0.1", port=6969)
     except Exception as e: debug_log.exception(str(e))
 
-def mainLoop(): # 🔁 Main loop
+def mainLoop():
     global last_opponent_personality
     
-    if config["save_game_on_start"]: save_game()
+    if config["save_game_on_start"]: 
+        save_game()
+    
     release_all_inputs()
 
     while True:
@@ -1214,6 +1212,8 @@ def mainLoop(): # 🔁 Main loop
                     mode_kyogre()
                 case "southern island":
                     mode_southernIsland()
+                case "mew":
+                    mode_farawayMew()
                 case "regi trio":
                     mode_regiTrio()
                 case "deoxys runaways":
@@ -1602,57 +1602,7 @@ def mode_starters():
         os._exit(1)
 
     debug_log.info(f"Soft resetting starter Pokemon...")
-
-    release_all_inputs()
-
-    while trainer_info["state"] != GameState.OVERWORLD: 
-        press_button("A")
-
-    if read_file(f"stats/{trainer_info['tid']}.json"): starter_frames = json.loads(read_file(f"stats/{trainer_info['tid']}.json")) # Open starter frames file
-    else: starter_frames = {"rngState": {"Treecko": [], "Torchic": [], "Mudkip": []}}
-
-    # 50ms delay between A inputs to prevent accidental selection confirmations
-    while trainer_info["state"] == GameState.OVERWORLD: 
-        emu_combo(["A", "50ms"])
-
-    # Press B to back out of an accidental selection when scrolling to chosen starter
-    if config["starter_pokemon"] == "Mudkip":
-        while not find_image("mudkip.png"): 
-            emu_combo(["B", "Right"])
-    elif config["starter_pokemon"] == "Treecko":
-        while not find_image("treecko.png"): 
-            emu_combo(["B", "Left"])
-
-    while emu_info["rngState"] in starter_frames["rngState"][config["starter_pokemon"]]:
-        debug_log.debug(f"Already rolled on RNG state: {emu_info['rngState']}, waiting...")
-    else:
-        starter_frames["rngState"][config["starter_pokemon"]].append(emu_info["rngState"])
-
-        write_file(f"stats/{trainer_info['tid']}.json", json.dumps(starter_frames, indent=4, sort_keys=True))
-        
-        while trainer_info["state"] == GameState.MISC_MENU: 
-            press_button("A")
-        while not find_image("battle/fight.png"):
-            press_button("B")
-        while True:
-            try:
-                if party_info[0]:
-                    if identify_pokemon(starter=True): 
-                        # Kill bot and wait for manual intervention
-                        input("Pausing bot for manual intervention. (Don't forget to pause the bizhawk.lua script so you can provide inputs). Press Enter to continue...")
-                    else:
-                        hold_button("Power")
-                        time.sleep(frames_to_ms(50))
-                        break
-            except: continue
-
-def mode_rayquaza():
-    if not player_on_map(MapBank.DUNGEONS, MapID.RAYQUAZA_PILLAR):
-        return False
-
-    if not trainer_info["posX"] == 14 and trainer_info["posY"] <= 12:
-        return
-
+    
     while True:
         release_all_inputs()
 
@@ -1696,6 +1646,37 @@ def mode_rayquaza():
                         else:
                             reset_game()
                             break
+
+def mode_rayquaza():
+    if (not player_on_map(MapBank.DUNGEONS, MapID.RAYQUAZA_PILLAR) or
+        not (trainer_info["posX"] == 14 and trainer_info["posY"] <= 12)):
+        debug_log.info("Please place the player below Rayquaza at the Sky Pillar and restart the script.")
+        os._exit(1)
+
+    while True:
+        while not opponent_changed():
+            emu_combo(["A", "Up"]) # Walk up toward Rayquaza while mashing A
+        
+        identify_pokemon()
+
+        # Wait until battle is over
+        while trainer_info["state"] != GameState.OVERWORLD:
+            continue
+
+        # Exit and re-enter
+        press_button("B")
+        follow_path([
+            (14, 11), 
+            (12, 11), 
+            (12, 15), 
+            (16, 15), 
+            (16, -99, (24, 84)), 
+            (10, -99, (24, 85)), 
+            (12, 15), 
+            (12, 11), 
+            (14, 11), 
+            (14, 7)
+        ])
 
 def mode_groudon():
     if (not player_on_map(MapBank.DUNGEONS, MapID.GROUDON_CAVE) or
@@ -1783,40 +1764,45 @@ def mode_rayquaza():
         ])
 
 def mode_farawayMew():
-    if not player_on_map(MapBank.SPECIAL, MapID.MEW_ISLAND_ENTERANCE):
-        return False
-    
-    if not 22 <= trainer_info["posX"] <= 23 and 8 <= trainer_info["posY"] <= 10:
+    if (not player_on_map(MapBank.SPECIAL, MapID.MEW_ISLAND_ENTRANCE) or not (22 <= trainer_info["posX"] <= 23 and 8 <= trainer_info["posY"] <= 10)):
+        debug_log.info("Please place the player below the entrance to Mew's area, then restart the script.")
+        os._exit(1)
         return
 
     while True:
-        release_all_inputs()
-        if player_on_map(MapBank.SPECIAL, MapID.MEW_ISLAND_ENTERANCE):
-            if 22 <= trainer_info["posX"] <= 23 and 8 <= trainer_info["posY"] <= 10:
-                follow_path([(22, trainer_info["posY"])])
-                follow_path([(trainer_info["posX"], 7)])
-        elif player_on_map(MapBank.SPECIAL, MapID.MEW_ISLAND):
-            if trainer_info["posY"] == 13:
-                press_button("A")
-                time.sleep(frames_to_ms(30))
-                release_button("A")
-                press_button("A")
-                release_button("A")
+        # Enter main area
+        while player_on_map(MapBank.SPECIAL, MapID.MEW_ISLAND_ENTRANCE):
+            follow_path([
+                (22, 8),
+                (22, -99, (MapBank.SPECIAL, MapID.MEW_ISLAND))
+            ])
+        
+        wait_frames(30)
+        hold_button("B")
+        
+        follow_path([
+            (trainer_info["posX"], 16),
+            (16, 16)
+        ])
+        # 
+        # Follow Mew up while mashing A
+        hold_button("Up")
 
-            if trainer_info["state"] != GameState.OVERWORLD:    
-                if opponent_changed():
-                    if identify_pokemon(): 
-                        input("Pausing bot for manual catch. Press Enter to continue...") 
-            if trainer_info["posY"] == 13 and player_on_map(MapBank.SPECIAL, MapID.MEW_ISLAND):
-                follow_path([(trainer_info["posX"], 18), (13, 18), (13, 19)])
-                time.sleep(frames_to_ms(10))
-                hold_button("Down")
-                time.sleep(frames_to_ms(30))
-                release_button("Down")
-                time.sleep(frames_to_ms(60))
-            else:
-                follow_path([(trainer_info["posX"], 17), (12, 17), (12, 16), (13, 15), (14, 15), (16, 16),  (16, 13)])
+        while not opponent_changed():
+            emu_combo(["A", 8])
 
+        identify_pokemon()
+
+        for i in range(0, 6):
+            press_button("B")
+            wait_frames(10)
+
+        # Exit to entrance area
+        follow_path([
+            (16, 16),
+            (12, 16),
+            (12, 99, (MapBank.SPECIAL, MapID.MEW_ISLAND_ENTRANCE))
+        ])
 
 def mode_southernIsland():
     if (not player_on_map(MapBank.SPECIAL, MapID.LATI_ISLAND) or
