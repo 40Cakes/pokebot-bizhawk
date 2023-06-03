@@ -275,6 +275,7 @@ function mainLoop()
 			opponent_info_file:close()
 		end
 	end
+	
 	comm.mmfScreenshot()
 	
 end

@@ -33,6 +33,9 @@ from data.HiddenPower import calculate_hidden_power
 from data.GameState import GameState
 from data.MapData import MapBank, MapID
 
+no_sleep_abilities = ["Shed Skin", "Insomnia", "Vital Spirit"]
+pickup_pokemon = ["Meowth", "Aipom", "Phanpy", "Teddiursa", "Zigzagoon", "Linoone"]
+
 @staticmethod
 def average_iv_meets_threshold(pokemon: dict, threshold: int):
     iv_sum = (pokemon["hpIV"] + 
@@ -69,14 +72,7 @@ def emu_combo(sequence: list): # Function to send a sequence of inputs and delay
             press_button(k)
             wait_frames(1)
 
-def player_on_map(map_bank: int, map_id: int):
-    on_map = trainer_info["mapBank"] == map_bank and trainer_info["mapId"] == map_id
-
-    if not on_map and args.d:
-        debug_log.info(f"Player was not on target map of {map_bank},{map_id}. Map was {trainer_info['mapBank']}, {trainer_info['mapId']}")
-
-    return on_map
-
+@staticmethod
 def read_file(file: str): # Simple function to read data from a file, return False if file doesn't exist
     if os.path.exists(file):
         with open(file, mode="r", encoding="utf-8") as open_file:
@@ -84,6 +80,7 @@ def read_file(file: str): # Simple function to read data from a file, return Fal
     else:
         return False
 
+@staticmethod
 def write_file(file: str, value: str): # Simple function to write data to a file, will create the file if doesn't exist
     dirname = os.path.dirname(file)
     if not os.path.exists(dirname):
@@ -93,18 +90,29 @@ def write_file(file: str, value: str): # Simple function to write data to a file
         save_file.write(value)
         return True
 
-def load_json_mmap(size, file): # Function to load a JSON object from a memory mapped file
+def player_on_map(map_bank: int, map_id: int):
+    on_map = trainer_info["mapBank"] == map_bank and trainer_info["mapId"] == map_id
+
+    if not on_map and args.d:
+        debug_log.info(f"Player was not on target map of {map_bank},{map_id}. Map was {trainer_info['mapBank']}, {trainer_info['mapId']}")
+
+    return on_map
+
+def load_json_mmap(size, file): 
+    # Loads a JSON object from a memory mapped file
     # BizHawk writes game information to memory mapped files every few frames (see pokebot.lua)
     # See https://tasvideos.org/Bizhawk/LuaFunctions (comm.mmfWrite)
     try:
         shmem = mmap.mmap(0, size, file)
         if shmem:
-            if args.dm: debug_log.debug(f"Attempting to read {file} ({size} bytes) from memory...")
             bytes_io = io.BytesIO(shmem)
             byte_str = bytes_io.read()
-            if args.dm: debug_log.debug(f"Byte string: {byte_str}")
             json_obj = json.loads(byte_str.decode("utf-8").split("\x00")[0]) # Only grab the data before \x00 null chars
-            if args.dm: debug_log.debug(f"JSON result: {json_obj}")
+
+            if args.dm: 
+                debug_log.debug(f"Attempting to read {file} ({size} bytes) from memory...")
+                debug_log.debug(f"Byte string: {byte_str}")
+                debug_log.debug(f"JSON result: {json_obj}")
             return json_obj
         else: return False
     except Exception as e:
@@ -168,7 +176,7 @@ def release_all_inputs(): # Function to release all keys in all input objects
 
 def opponent_changed(): # This function checks if there is a different opponent since last check, indicating the game state is probably now in a battle
     global last_opponent_personality
-    
+
     # Fixes a bug where the bot checks the opponent for up to 20 seconds if it was last closed in a battle
     if trainer_info["state"] == GameState.OVERWORLD:
         return False
@@ -203,20 +211,6 @@ def get_screenshot():
         cv2.waitKey(1)
     
     return g_bizhawk_screenshot
-
-def opponent_changed(): # This function checks if there is a different opponent since last check, indicating the game state is probably now in a battle
-    global last_opponent_personality
-
-    # Fixes a bug where the bot checks the opponent for up to 20 seconds if it was last closed in a battle
-    if trainer_info["state"] == GameState.OVERWORLD:
-        return False
-
-    if opponent_info and last_opponent_personality != opponent_info["personality"]:
-        debug_log.info(f"Opponent has changed! Previous PID: {last_opponent_personality}, New PID: {opponent_info['personality']}")
-        last_opponent_personality = opponent_info["personality"]
-        return True
-    
-    return False
 
 def mem_pollScreenshot():
     global g_bizhawk_screenshot
@@ -271,8 +265,6 @@ def find_image(file: str): # Function to find an image in a BizHawk screenshot
     except Exception as e:
         if args.di: debug_log.exception(str(e))
         return False
-
-no_sleep_abilities = ["Shed Skin", "Insomnia", "Vital Spirit"]
 
 def catch_pokemon(): # Function to catch pokemon
     try:
@@ -637,13 +629,10 @@ def bag_menu(category: str, item: str): # Function to find an item in the bag an
     else:
         return False
 
-pickup_pokemon = ["Meowth", "Aipom", "Phanpy", "Teddiursa", "Zigzagoon", "Linoone"]
-
 def pickup_items(): # If using a team of Pokemon with the ability "pickup", this function will take the items from the pokemon in your party if 3 or more Pokemon have an item
     if trainer_info["state"] != GameState.OVERWORLD:
         return
 
-    debug_log.info("Checking for pickup items...")
     item_count = 0
     pickup_mon_count = 0
 
@@ -659,6 +648,7 @@ def pickup_items(): # If using a team of Pokemon with the ability "pickup", this
             debug_log.info(f"Pokemon {i}: {pokemon['speciesName']} has item: {item_list[held_item]}")
 
     if item_count < config["pickup_threshold"]:
+        debug_log.info(f"Party has {item_count} items, won't collect until at threshold {config['pickup_threshold']}")
         return
 
     wait_frames(60) # Wait for animations
@@ -670,14 +660,13 @@ def pickup_items(): # If using a team of Pokemon with the ability "pickup", this
         pokemon = party_info[i]
         if pokemon["speciesName"] in pickup_pokemon and pokemon["heldItem"] != 0:
             # Take the item from the pokemon
-            emu_combo(["A", 10, "Up", 10, "Up", 10, "A", 10, "Down", 10, "A", 30, "B", 60, "B", 10])
+            emu_combo(["A", 10, "Up", 10, "Up", 10, "A", 10, "Down", 10, "A", 65, "B"])
             item_count -= 1
         
         if item_count == 0:
             break
 
-        press_button("Down")
-        wait_frames(15)
+        emu_combo([10, "Down", 10])
         i += 1
 
     # Close out of menus
@@ -708,9 +697,16 @@ def reset_game():
     release_button("Power")
 
 def log_encounter(pokemon: dict):
+    global opponent_info, last_opponent_personality
+
     mon_sv = pokemon["shinyValue"]
     mon_name = pokemon["name"]
     
+    # Show Gift Pokemon as the current encounter
+    if last_opponent_personality != pokemon["personality"]:
+        opponent_info = pokemon
+        last_opponent_personality = pokemon["personality"]
+
     def common_stats():
         global stats, encounter_log
 
@@ -890,13 +886,10 @@ def identify_pokemon(starter: bool = False): # Identify opponent pokemon and inc
     if trainer_info["state"] == GameState.OVERWORLD: 
         return False
 
-    if starter: 
-        pokemon = party_info[0]
-    else: 
-        pokemon = opponent_info
+    pokemon = party_info[0] if starter else opponent_info
+    log_encounter(pokemon)
 
     replace_battler = False
-    log_encounter(pokemon)
 
     if pokemon["shiny"]:
         if not starter and not legendary_hunt and "shinies" in config["catch"]: 
@@ -904,7 +897,8 @@ def identify_pokemon(starter: bool = False): # Identify opponent pokemon and inc
         elif legendary_hunt:
             input("Pausing bot for manual intervention. (Don't forget to pause the pokebot.lua script so you can provide inputs). Press Enter to continue...")
 
-        if not args.n: write_file("stats/totals.json", json.dumps(stats, indent=4, sort_keys=True)) # Save stats file
+        if not args.n: 
+            write_file("stats/totals.json", json.dumps(stats, indent=4, sort_keys=True)) # Save stats file
         return True
     else:
         if config["bot_mode"] == "manual":
@@ -1007,18 +1001,20 @@ def enrich_mon_data(pokemon: dict): # Function to add information to the pokemon
         pokemon["personalityF"] = int(pokemon["personalityBin"][:16], 2) # Get first 16 bits of binary PID
         pokemon["personalityL"] = int(pokemon["personalityBin"][16:], 2) # Get last 16 bits of binary PID
         pokemon["shinyValue"] = int(bin(pokemon["personalityF"] ^ pokemon["personalityL"] ^ trainer_info["tid"] ^ trainer_info["sid"])[2:], 2) # https://bulbapedia.bulbagarden.net/wiki/Personality_value#Shininess
-
-        if pokemon["shinyValue"] < 8: pokemon["shiny"] = True
-        else: pokemon["shiny"] = False
-
+        pokemon["shiny"] = True if pokemon["shinyValue"] < 8 else False
+        
         pokemon["enrichedMoves"] = []
         for move in pokemon["moves"]:
             pokemon["enrichedMoves"].append(move_list[move])
 
         if pokemon["pokerus"] != 0: # TODO get number of days infectious, see - https://bulbapedia.bulbagarden.net/wiki/Pok%C3%A9rus#Technical_information
-            if pokemon["pokerus"] % 10: pokemon["pokerusStatus"] = "infected"
-            else: pokemon["pokerusStatus"] = "cured"
-        else: pokemon["pokerusStatus"] = "none"
+            if pokemon["pokerus"] % 10: 
+                pokemon["pokerusStatus"] = "infected"
+            else: 
+                pokemon["pokerusStatus"] = "cured"
+        else: 
+            pokemon["pokerusStatus"] = "none"
+        
         return pokemon
     except Exception as e:
         if args.dm:
@@ -1053,8 +1049,10 @@ def mem_getTrainerInfo(): # Loop repeatedly to read trainer info from memory
             trainer_info_mmap = load_json_mmap(4096, "bizhawk_trainer_info")
             if trainer_info_mmap:
                 if validate_trainer_info(trainer_info_mmap["trainer"]):
-                    if trainer_info_mmap["trainer"]["posX"] < 0: trainer_info_mmap["trainer"]["posX"] = 0
-                    if trainer_info_mmap["trainer"]["posY"] < 0: trainer_info_mmap["trainer"]["posY"] = 0
+                    if trainer_info_mmap["trainer"]["posX"] < 0: 
+                        trainer_info_mmap["trainer"]["posX"] = 0
+                    if trainer_info_mmap["trainer"]["posY"] < 0: 
+                        trainer_info_mmap["trainer"]["posY"] = 0
                     trainer_info = trainer_info_mmap["trainer"]
             time.sleep(max((1/max(emu_speed,1))*0.016,0.002))
         except Exception as e:
@@ -1065,39 +1063,33 @@ def mem_getPartyInfo(): # Loop repeatedly to read party info from memory
     global party_info
 
     while True:
-        try:
-            party_info_mmap = load_json_mmap(8192, "bizhawk_party_info")
-            if party_info_mmap:
-                enriched_party_obj = []
-                for pokemon in party_info_mmap["party"]:
-                    if validate_pokemon(pokemon):
-                        pokemon = enrich_mon_data(pokemon)
-                        enriched_party_obj.append(pokemon)
-                    else: continue
-                party_info = enriched_party_obj
-            time.sleep(max((1/max(emu_speed,1))*0.016,0.002))
-        except Exception as e:
-            if args.dm: debug_log.exception(str(e))
-            continue
+        party_info_mmap = load_json_mmap(8192, "bizhawk_party_info")
+
+        if party_info_mmap:
+            party_info = []
+
+            for pokemon in party_info_mmap["party"]:
+                if validate_pokemon(pokemon):
+                    party_info.append(enrich_mon_data(pokemon))
+                else:
+                    continue
+
+        wait_frames(1)
 
 def mem_getOpponentInfo(): # Loop repeatedly to read opponent info from memory
     global opponent_info, last_opponent_personality
 
     while True:
-        try:
-            opponent_info_mmap = load_json_mmap(4096, "bizhawk_opponent_info")
-            if config["bot_mode"] == "starters":
-                if party_info: opponent_info = party_info[0]
-            elif opponent_info_mmap:
-                if validate_pokemon(opponent_info_mmap):
-                    enriched_opponent_obj = enrich_mon_data(opponent_info_mmap["opponent"])
-                    if enriched_opponent_obj:
-                        opponent_info = enriched_opponent_obj
-            elif not opponent_info: opponent_info = json.loads(read_file("data/placeholder_pokemon.json"))
-            time.sleep(max((1/max(emu_speed,1))*0.016,0.002))
-        except Exception as e:
-            if args.d: debug_log.exception(str(e))
-            continue
+        opponent_info_mmap = load_json_mmap(4096, "bizhawk_opponent_info")
+
+        if opponent_info_mmap:
+            if validate_pokemon(opponent_info_mmap):
+                opponent_info = enrich_mon_data(opponent_info_mmap["opponent"])
+        elif not opponent_info: 
+            placeholder = json.loads(read_file("data/placeholder_pokemon.json"))
+            opponent_info = placeholder
+        
+        wait_frames(1)
 
 def mem_can_write_inputs():
     pass
@@ -1112,7 +1104,6 @@ def mem_can_write_inputs():
 #            if args.d: debug_log.exception(str(e))
 #            continue
 #        time.sleep(0.08) #The less sleep the better but without sleep it will hit CPU hard
-
 
 def httpServer(): # Run HTTP server to make data available via HTTP GET
     try:
@@ -1936,6 +1927,20 @@ try:
         for i in range(100): # Clear any prior inputs from last time script ran in case you haven't refreshed in Lua
              input_list_mmap.write(bytes('a', encoding="utf-8"))
         
+        item_list = json.loads(read_file("data/items.json"))
+        location_list = json.loads(read_file("data/locations.json"))
+        move_list = json.loads(read_file("data/moves.json"))
+        pokemon_list = json.loads(read_file("data/pokemon.json"))
+        type_list = json.loads(read_file("data/types.json"))
+        nature_list = json.loads(read_file("data/natures.json"))
+
+        pokemon_schema = json.loads(read_file("data/schemas/pokemon.json"))
+        validate_pokemon = fastjsonschema.compile(pokemon_schema)
+        trainer_info_schema = json.loads(read_file("data/schemas/trainer_info.json"))
+        validate_trainer_info = fastjsonschema.compile(trainer_info_schema)
+        emu_info_schema = json.loads(read_file("data/schemas/emu_info.json"))
+        validate_emu_info = fastjsonschema.compile(emu_info_schema)
+
         hold_input_mmap = mmap.mmap(-1, 4096, tagname="bizhawk_hold_input", access=mmap.ACCESS_WRITE)
         hold_input = default_input
 
@@ -1951,28 +1956,15 @@ try:
         get_party_info = Thread(target=mem_getPartyInfo)
         get_party_info.start()
 
-        get_opponent_info = Thread(target=mem_getOpponentInfo)
-        get_opponent_info.start()
+        if not config["bot_mode"] in ["starters", "johto starters", "fossil", "castform", "beldum"]:
+            get_opponent_info = Thread(target=mem_getOpponentInfo)
+            get_opponent_info.start()
         
         #send_inputs = Thread(target=mem_sendInputs) TODO Use another buffer to throttle inputs and use this thread again
         #send_inputs.start()
 
         main_loop = Thread(target=mainLoop)
         main_loop.start()
-
-        item_list = json.loads(read_file("data/items.json"))
-        location_list = json.loads(read_file("data/locations.json"))
-        move_list = json.loads(read_file("data/moves.json"))
-        pokemon_list = json.loads(read_file("data/pokemon.json"))
-        type_list = json.loads(read_file("data/types.json"))
-        nature_list = json.loads(read_file("data/natures.json"))
-
-        pokemon_schema = json.loads(read_file("data/schemas/pokemon.json"))
-        validate_pokemon = fastjsonschema.compile(pokemon_schema)
-        trainer_info_schema = json.loads(read_file("data/schemas/trainer_info.json"))
-        validate_trainer_info = fastjsonschema.compile(trainer_info_schema)
-        emu_info_schema = json.loads(read_file("data/schemas/emu_info.json"))
-        validate_emu_info = fastjsonschema.compile(emu_info_schema)
 
     # Dashboard
     http_server = Thread(target=httpServer)
@@ -1981,16 +1973,13 @@ try:
     os.makedirs("stats", exist_ok=True) # Sets up stats files if they don't exist
 
     totals = read_file("stats/totals.json")
-    if totals: stats = json.loads(totals)
-    else: stats = {"pokemon": {}, "totals": {"longest_phase_encounters": 0, "shortest_phase_encounters": "-", "phase_lowest_sv": 99999, "phase_lowest_sv_pokemon": "", "encounters": 0, "phase_encounters": 0, "shiny_average": "-", "shiny_encounters": 0}}
+    stats = json.loads(totals) if totals else {"pokemon": {}, "totals": {"longest_phase_encounters": 0, "shortest_phase_encounters": "-", "phase_lowest_sv": 99999, "phase_lowest_sv_pokemon": "", "encounters": 0, "phase_encounters": 0, "shiny_average": "-", "shiny_encounters": 0}}
 
     encounters = read_file("stats/encounter_log.json")
-    if encounters: encounter_log = json.loads(encounters)
-    else: encounter_log = {"encounter_log": []}
-
+    encounter_log = json.loads(encounters) if encounters else {"encounter_log": []}
+   
     shinies = read_file("stats/shiny_log.json")
-    if shinies: shiny_log = json.loads(shinies) # Open shiny log file
-    else: shiny_log = {"shiny_log": []}
+    shiny_log = json.loads(shinies) if shinies else {"shiny_log": []} 
 
     def on_window_close():
         if can_start_bot:
