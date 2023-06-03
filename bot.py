@@ -786,14 +786,16 @@ def log_encounter(pokemon: dict):
                 # Log all encounters to a file
                 path = f"stats/encounters/Phase {total_shiny_encounters}/{pokemon['metLocationName']}/{year}-{month}-{day}/{pokemon['name']}/"
                 os.makedirs(path, exist_ok=True)
-                write_file(f"{path}SV_{pokemon['shinyValue']} ({hour}-{minute}-{second}).json", json.dumps(pokemon, indent=4, sort_keys=True))
+                if config["jsonlog"]:
+                    write_file(f"{path}SV_{pokemon['shinyValue']} ({hour}-{minute}-{second}).json", json.dumps(pokemon, indent=4, sort_keys=True))
                 if config["csvlog"]:
                     pokemondata = pd.DataFrame.from_dict(pokemon, orient = 'index').drop(['enrichedMoves', 'moves', 'pp', 'type']).sort_index()
                     pokemondata.to_csv(f"{path}SV_{pokemon['shinyValue']} ({hour}-{minute}-{second}).csv", encoding='utf-8')
             if pokemon["shiny"] and "shiny_encounters" in config["log"]: # Log shiny Pokemon to a file
                 path = f"stats/encounters/Shinies/"
                 os.makedirs(path, exist_ok=True)
-                write_file(f"{path}SV_{pokemon['shinyValue']} {pokemon['name']} ({hour}-{minute}-{second}).json", json.dumps(pokemon, indent=4, sort_keys=True))
+                if config["jsonlog"]:
+                    write_file(f"{path}SV_{pokemon['shinyValue']} {pokemon['name']} ({hour}-{minute}-{second}).json", json.dumps(pokemon, indent=4, sort_keys=True))
                 if config["csvlog"]:
                     pokemondata = pd.DataFrame.from_dict(pokemon, orient = 'index').drop(['enrichedMoves', 'moves', 'pp', 'type']).sort_index()
                     pokemondata.to_csv(f"{path}SV_{pokemon['shinyValue']} {pokemon['name']} ({hour}-{minute}-{second}).csv", encoding='utf-8')
@@ -1014,10 +1016,11 @@ def enrich_mon_data(pokemon: dict): # Function to add information to the pokemon
         pokemon["nature"] = nature_list[pokemon["personality"] % 25] # Get pokemon nature
         pokemon["zeroPadNumber"] = f"{pokemon_list[pokemon['name']]['number']:03}" # Get zero pad number - e.g.: #5 becomes #005
         pokemon["itemName"] = item_list[pokemon['heldItem']] # Get held item's name
-        pokemon["personalityBin"] = format(pokemon["personality"], "032b") # Convert personality ID to binary
-        pokemon["personalityF"] = int(pokemon["personalityBin"][:16], 2) # Get first 16 bits of binary PID
-        pokemon["personalityL"] = int(pokemon["personalityBin"][16:], 2) # Get last 16 bits of binary PID
-        pokemon["shinyValue"] = int(bin(pokemon["personalityF"] ^ pokemon["personalityL"] ^ trainer_info["tid"] ^ trainer_info["sid"])[2:], 2) # https://bulbapedia.bulbagarden.net/wiki/Personality_value#Shininess
+
+        personalityBin = format(pokemon["personality"], "032b") # Convert personality ID to binary
+        personalityF = int(personalityBin[:16], 2) # Get first 16 bits of binary PID
+        personalityL = int(personalityBin[16:], 2) # Get last 16 bits of binary PID
+        pokemon["shinyValue"] = int(bin(personalityF ^ personalityL ^ trainer_info["tid"] ^ trainer_info["sid"])[2:], 2) # https://bulbapedia.bulbagarden.net/wiki/Personality_value#Shininess
         pokemon["shiny"] = True if pokemon["shinyValue"] < 8 else False
 
         pokemon["move_1"] = pokemon["moves"][0]
