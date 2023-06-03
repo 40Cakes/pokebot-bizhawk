@@ -31,7 +31,7 @@ import fastjsonschema                            # https://pypi.org/project/fast
 # Helper functions
 from data.HiddenPower import calculate_hidden_power
 from data.GameState import GameState
-from data.MapData import MapBank, MapID
+from data.MapData import mapRSE #mapFRLG
 
 no_sleep_abilities = ["Shed Skin", "Insomnia", "Vital Spirit"]
 pickup_pokemon = ["Meowth", "Aipom", "Phanpy", "Teddiursa", "Zigzagoon", "Linoone"]
@@ -90,11 +90,11 @@ def write_file(file: str, value: str): # Simple function to write data to a file
         save_file.write(value)
         return True
 
-def player_on_map(map_bank: int, map_id: int):
-    on_map = trainer_info["mapBank"] == map_bank and trainer_info["mapId"] == map_id
+def player_on_map(map_data: tuple):
+    on_map = trainer_info["mapBank"] == map_data[0] and trainer_info["mapId"] == map_data[1]
 
     if not on_map and args.d:
-        debug_log.info(f"Player was not on target map of {map_bank},{map_id}. Map was {trainer_info['mapBank']}, {trainer_info['mapId']}")
+        debug_log.info(f"Player was not on target map of {map_data[0]},{map_data[1]}. Map was {trainer_info['mapBank']}, {trainer_info['mapId']}")
 
     return on_map
 
@@ -1032,7 +1032,7 @@ def enrich_mon_data(pokemon: dict): # Function to add information to the pokemon
             debug_log.info(f"Moves: {moves}") 
 
 def mem_getEmuInfo(): # Loop repeatedly to read emulator info from memory
-    global emu_info, emu_speed, language
+    global emu_info, emu_speed, language, MapDataEnum
 
     while True:
         try:
@@ -1044,7 +1044,15 @@ def mem_getEmuInfo(): # Loop repeatedly to read emulator info from memory
 
                     if language == None:
                         language = language_id_to_iso_639(emu_info["language"])
-                        debug_log.info(f"Language was set to {language}")                        
+                        debug_log.info(f"Language was set to {language}")           
+
+                    if not MapDataEnum and emu_info["detectedGame"]:
+                        debug_log.info("Detected game: " + emu_info["detectedGame"])
+                        if any([x in emu_info["detectedGame"] for x in ["Emerald", "Ruby", "Sapphire"]]):
+                            MapDataEnum = mapRSE
+                        #if any([x in emu_info["detectedGame"] for x in ["FireRed", "LeafGreen"]]):
+                        #    MapDataEnum = mapFRLG
+             
         except Exception as e:
             if args.dm: debug_log.exception(str(e))
             continue
@@ -1198,7 +1206,7 @@ def mainLoop():
         if language == None:
             continue
 
-        if trainer_info and emu_info:
+        if trainer_info and emu_info and MapDataEnum:
             match config["bot_mode"]:
                 case "manual":
                     while not opponent_changed(): 
@@ -1263,7 +1271,7 @@ def mainLoop():
 def mode_beldum():
     x, y = trainer_info["posX"], trainer_info["posY"]
 
-    if (not player_on_map(MapBank.MOSSDEEP_CITY, MapID.STEVENS_HOUSE) or not ((x == 3 and y == 3) or (x == 4 and y == 2))):
+    if (not player_on_map(MapDataEnum.MOSSDEEP_CITY_H.value) or not ((x == 3 and y == 3) or (x == 4 and y == 2))):
         debug_log.info("Please face the player toward the Pokeball in Steven's house after saving the game, then restart the script.")
         os._exit(1)
 
@@ -1272,7 +1280,7 @@ def mode_beldum():
 def mode_castform():
     x, y = trainer_info["posX"], trainer_info["posY"]
 
-    if (not player_on_map(MapBank.ROUTE_119, MapID.WEATHER_INSTITUTE_2F) or not ((x == 2 and y == 3) or (x == 3 and y == 2) or (x == 1 and y == 2))):
+    if (not player_on_map(MapDataEnum.ROUTE_119_B.value) or not ((x == 2 and y == 3) or (x == 3 and y == 2) or (x == 1 and y == 2))):
         debug_log.info("Please face the player toward the scientist after saving the game, then restart the script.")
         os._exit(1)
 
@@ -1281,7 +1289,7 @@ def mode_castform():
 def mode_fossil():
     x, y = trainer_info["posX"], trainer_info["posY"]
 
-    if not player_on_map(MapBank.RUSTBORO_CITY, MapID.DEVON_2F) or y != 8 and not (x == 13 or x == 15):
+    if not player_on_map(MapDataEnum.RUSTBORO_CITY_B.value) or y != 8 and not (x == 13 or x == 15):
         debug_log.info("Please face the player toward the Fossil researcher after handing it over, re-entering the room, and saving the game. Then restart the script.")
         os._exit(1)
 
@@ -1290,7 +1298,7 @@ def mode_fossil():
 def mode_johtoStarters():
     x, y = trainer_info["posX"], trainer_info["posY"]
 
-    if (not player_on_map(MapBank.LITTLEROOT_TOWN, MapID.BIRCH_LAB) or not (y == 5 and x >= 8 and x <= 10)):
+    if (not player_on_map(MapDataEnum.LITTLEROOT_TOWN_D.value) or not (y == 5 and x >= 8 and x <= 10)):
         debug_log.info("Please face the player toward a Pokeball in Birch's Lab after saving the game, then restart the script.")
         os._exit(1)
 
@@ -1373,9 +1381,9 @@ def collect_gift_mon(target: str):
             input("Pausing bot for manual intervention. (Don't forget to pause the pokebot.lua script so you can provide inputs). Press Enter to continue...")
 
 def mode_regiTrio():
-    if (not player_on_map(MapBank.DUNGEONS, MapID.REGIROCK_CAVE) and
-        not player_on_map(MapBank.DUNGEONS, MapID.REGICE_CAVE) and
-        not player_on_map(MapBank.DUNGEONS, MapID.REGISTEEL_CAVE)):
+    if (not player_on_map(MapDataEnum.DESERT_RUINS.value) and
+        not player_on_map(MapDataEnum.ISLAND_CAVE.value) and
+        not player_on_map(MapDataEnum.ANCIENT_TOMB.value)):
         debug_log.info("Please place the player below the target Regi in Desert Ruins, Island Cave or Ancient Tomb, then restart the script.")
         os._exit(1)
 
@@ -1401,7 +1409,7 @@ def mode_deoxysPuzzle(do_encounter: bool = True):
             reset_game()
             return True
 
-    if not player_on_map(MapBank.SPECIAL, MapID.DEOXYS_ISLAND) or trainer_info["posX"] != 15:
+    if not player_on_map(MapDataEnum.BIRTH_ISLAND.value) or trainer_info["posX"] != 15:
         debug_log.info("Please place the player below the triangle at its starting position on Birth Island, then save before restarting the script.")
         os._exit(1)
 
@@ -1481,11 +1489,11 @@ def mode_deoxysPuzzle(do_encounter: bool = True):
         # Exit and re-enter
         follow_path([
             (15, 99, (26, 59)), 
-            (8, -99, (MapBank.SPECIAL, MapID.DEOXYS_ISLAND))
+            (8, -99, MapDataEnum.BIRTH_ISLAND.value)
         ])
 
 def mode_deoxysResets():
-    if not player_on_map(MapBank.SPECIAL, MapID.DEOXYS_ISLAND) or trainer_info["posX"] != 15:
+    if not player_on_map(MapDataEnum.BIRTH_ISLAND.value) or trainer_info["posX"] != 15:
         debug_log.info("Please place the player below the triangle at its final position on Birth Island, then save before restarting the script.")
         os._exit(1)
 
@@ -1499,7 +1507,7 @@ def mode_deoxysResets():
         # Wait for area to load properly
         wait_frames(60)
 
-        if not player_on_map(MapBank.SPECIAL, MapID.DEOXYS_ISLAND) or trainer_info["posX"] != 15:
+        if not player_on_map(MapDataEnum.BIRTH_ISLAND.value) or trainer_info["posX"] != 15:
             debug_log.info("Please place the player below the triangle at its final position on Birth Island, then save before restarting the script.")
             os._exit(1)
 
@@ -1662,7 +1670,7 @@ def mode_starters():
                             break
 
 def mode_rayquaza():
-    if (not player_on_map(MapBank.DUNGEONS, MapID.RAYQUAZA_PILLAR) or
+    if (not player_on_map(MapDataEnum.SKY_PILLAR_G.value) or
         not (trainer_info["posX"] == 14 and trainer_info["posY"] <= 12)):
         debug_log.info("Please place the player below Rayquaza at the Sky Pillar and restart the script.")
         os._exit(1)
@@ -1684,8 +1692,8 @@ def mode_rayquaza():
             (12, 11), 
             (12, 15), 
             (16, 15), 
-            (16, -99, (24, 84)), 
-            (10, -99, (24, 85)), 
+            (16, -99, MapDataEnum.SKY_PILLAR_F.value),
+            (10, -99, MapDataEnum.SKY_PILLAR_G.value),
             (12, 15), 
             (12, 11), 
             (14, 11), 
@@ -1693,7 +1701,7 @@ def mode_rayquaza():
         ])
 
 def mode_groudon():
-    if (not player_on_map(MapBank.DUNGEONS, MapID.GROUDON_CAVE) or
+    if (not player_on_map(MapDataEnum.TERRA_CAVE_A.value) or
         not 11 <= trainer_info["posX"] <= 20 and 26 <= trainer_info["posY"] <= 27):
         debug_log.info("Please place the player below Groudon in Terra Cave and restart the script.")
         os._exit(1)
@@ -1710,8 +1718,8 @@ def mode_groudon():
             (9, 15), 
             (9, 4), 
             (5, 4), 
-            (5, 99, (24, 104)), 
-            (14, -99, (24, 105)), 
+            (5, 99, MapDataEnum.TERRA_CAVE.value), 
+            (14, -99, MapDataEnum.TERRA_CAVE_A.value), 
             (9, 4), (9, 15), 
             (7, 15), 
             (7, 26), 
@@ -1719,7 +1727,7 @@ def mode_groudon():
         ])
 
 def mode_kyogre():
-    if (not player_on_map(MapBank.DUNGEONS, MapID.KYOGRE_CAVE) or
+    if (not player_on_map(MapDataEnum.MARINE_CAVE_A.value) or
         not 5 <= trainer_info["posX"] <= 14 and 26 <= trainer_info["posY"] <= 27):
         debug_log.info("Please place the player below Kyogre in Marine Cave and restart the script.")
         os._exit(1)
@@ -1737,8 +1745,8 @@ def mode_kyogre():
             (14, 14), 
             (14, 4), 
             (20, 4), 
-            (20, 99, (24, 102)), 
-            (14, -99, (24, 103)), 
+            (20, 99, MapDataEnum.MARINE_CAVE.value), 
+            (14, -99, MapDataEnum.MARINE_CAVE_A.value), 
             (14, 4), 
             (14, 14), 
             (18, 14), 
@@ -1747,7 +1755,7 @@ def mode_kyogre():
         ])
 
 def mode_rayquaza():
-    if (not player_on_map(MapBank.DUNGEONS, MapID.RAYQUAZA_PILLAR) or
+    if (not player_on_map(MapDataEnum.SKY_PILLAR_G.value) or
         not (trainer_info["posX"] == 14 and trainer_info["posY"] <= 12)):
         debug_log.info("Please place the player below Rayquaza at the Sky Pillar and restart the script.")
         os._exit(1)
@@ -1769,8 +1777,8 @@ def mode_rayquaza():
             (12, 11), 
             (12, 15), 
             (16, 15), 
-            (16, -99, (24, 84)), 
-            (10, -99, (24, 85)), 
+            (16, -99, MapDataEnum.SKY_PILLAR_F.value), 
+            (10, -99, MapDataEnum.SKY_PILLAR_G.value), 
             (12, 15), 
             (12, 11), 
             (14, 11), 
@@ -1778,17 +1786,17 @@ def mode_rayquaza():
         ])
 
 def mode_farawayMew():
-    if (not player_on_map(MapBank.SPECIAL, MapID.MEW_ISLAND_ENTRANCE) or not (22 <= trainer_info["posX"] <= 23 and 8 <= trainer_info["posY"] <= 10)):
+    if (not player_on_map(MapDataEnum.FARAWAY_ISLAND.value) or not (22 <= trainer_info["posX"] <= 23 and 8 <= trainer_info["posY"] <= 10)):
         debug_log.info("Please place the player below the entrance to Mew's area, then restart the script.")
         os._exit(1)
         return
 
     while True:
         # Enter main area
-        while player_on_map(MapBank.SPECIAL, MapID.MEW_ISLAND_ENTRANCE):
+        while player_on_map(MapDataEnum.FARAWAY_ISLAND.value):
             follow_path([
                 (22, 8),
-                (22, -99, (MapBank.SPECIAL, MapID.MEW_ISLAND))
+                (22, -99, MapDataEnum.FARAWAY_ISLAND_A.value)
             ])
         
         wait_frames(30)
@@ -1815,11 +1823,11 @@ def mode_farawayMew():
         follow_path([
             (16, 16),
             (12, 16),
-            (12, 99, (MapBank.SPECIAL, MapID.MEW_ISLAND_ENTRANCE))
+            (12, 99, MapDataEnum.FARAWAY_ISLAND.value)
         ])
 
 def mode_southernIsland():
-    if (not player_on_map(MapBank.SPECIAL, MapID.LATI_ISLAND) or
+    if (not player_on_map(MapDataEnum.SOUTHERN_ISLAND_A.value) or
         not 5 <= trainer_info["posX"] == 13 and trainer_info["posY"] >= 12):
         debug_log.info("Please place the player below the sphere on Southern Island and restart the script.")
         os._exit(1)
@@ -1837,8 +1845,8 @@ def mode_southernIsland():
         # Exit and re-enter
         press_button("B")
         follow_path([
-            (13, 99, (26, 9)), 
-            (14, -99, (26, 10))
+            (13, 99, MapDataEnum.SOUTHERN_ISLAND.value), 
+            (14, -99, MapDataEnum.SOUTHERN_ISLAND_A.value)
         ])
 
 def mode_buyPremierBalls():
@@ -1929,7 +1937,7 @@ try:
 
     config = yaml.load(read_file("config.yml")) # Load config
 
-    last_trainer_state, last_opponent_personality, trainer_info, opponent_info, emu_info, party_info, emu_speed, language = None, None, None, None, None, None, 1, None
+    last_trainer_state, last_opponent_personality, trainer_info, opponent_info, emu_info, party_info, emu_speed, language, MapDataEnum = None, None, None, None, None, None, 1, None, None
     ImageFile.LOAD_TRUNCATED_IMAGES = True
 
     # Main bot functionality
