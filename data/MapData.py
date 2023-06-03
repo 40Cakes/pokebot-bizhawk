@@ -30,6 +30,7 @@ class MapID(IntEnum):
     # Special
     LATI_ISLAND = 10
     MEW_ISLAND = 57
+    MEW_ISLAND_ENTERANCE = 56
     DEOXYS_ISLAND = 58
     HO_OH_ROCK = 75
     LUGIA_ROCK = 87

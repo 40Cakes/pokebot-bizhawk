@@ -2,7 +2,6 @@
 import io                                        # https://docs.python.org/3/library/io.html
 import os                                        # https://docs.python.org/3/library/os.html
 import re                                        # https://docs.python.org/3/library/re.html
-import array                                     # https://docs.python.org/3/library/array.html
 import sys                                       # https://docs.python.org/3/library/sys.html
 import glob                                      # https://docs.python.org/3/library/glob.html
 import json                                      # https://docs.python.org/3/library/json.html
@@ -201,6 +200,27 @@ def get_screenshot():
         cv2.imshow("get_screenshot",g_bizhawk_screenshot)
         cv2.waitKey(1)
     return g_bizhawk_screenshot
+        press_input[button] = False
+        hold_input[button] = False
+
+def opponent_changed(): # This function checks if there is a different opponent since last check, indicating the game state is probably now in a battle
+    try:
+        global last_opponent_personality
+        #debug_log.info(f"Checking if opponent has changed... Previous PID: {last_opponent_personality}, New PID: {opponent_info['personality']}")
+
+        # Fixes a bug where the bot checks the opponent for up to 20 seconds if it was last closed in a battle
+        if trainer_info["state"] == GameState.OVERWORLD:
+            return False
+
+        if opponent_info and last_opponent_personality != opponent_info["personality"]:
+            last_opponent_personality = opponent_info["personality"]
+            debug_log.info("Opponent has changed!")
+            return True
+        
+        return False
+    except Exception as e:
+        if args.d: debug_log.exception(str(e))
+        return False
 
 def mem_pollScreenshot():
     global g_bizhawk_screenshot
@@ -226,7 +246,6 @@ def mem_pollScreenshot():
 def find_image(file: str): # Function to find an image in a BizHawk screenshot
     try:
         profile_start = time.time() # Performance profiling
-        #g_bizhawk_screenshot = get_screenshot()
         threshold = 0.999
         if args.di: debug_log.debug(f"Searching for image {file} (threshold: {threshold})")
         template = cv2.imread(f"data/templates/{language}/" + file, cv2.IMREAD_UNCHANGED)
@@ -492,7 +511,7 @@ def run_until_obstructed(direction: str, run: bool = True): # Function to run un
         if last_x == trainer_info["posX"] and last_y == trainer_info["posY"]: 
             dir_unchanged += 1
             continue
-        
+
         last_x = trainer_info["posX"]
         last_y = trainer_info["posY"]
         dir_unchanged = 0
@@ -890,7 +909,6 @@ def identify_pokemon(starter: bool = False): # Identify opponent pokemon and inc
             input("Pausing bot for manual intervention. (Don't forget to pause the pokebot.lua script so you can provide inputs). Press Enter to continue...")
 
         if not args.n: write_file("stats/totals.json", json.dumps(stats, indent=4, sort_keys=True)) # Save stats file
-
         return True
     else:
         if config["bot_mode"] == "manual":
@@ -1098,6 +1116,7 @@ def mem_can_write_inputs():
 #            if args.d: debug_log.exception(str(e))
 #            continue
 #        time.sleep(0.08) #The less sleep the better but without sleep it will hit CPU hard
+
 
 def httpServer(): # Run HTTP server to make data available via HTTP GET
     try:
@@ -1565,6 +1584,7 @@ def mode_fishing():
                 pass #This keeps you from getting multiple A presses and failing the catch
         if find_image("not_even_a_nibble.png") or find_image("it_got_away.png"): emu_combo(["B", 10, "Select"])
         if not find_image("text_period.png"): emu_combo(["Select", 50]) # Re-cast rod if the fishing text prompt is not visible
+
     identify_pokemon()
 
 def get_rngState(tid: str, mon: str):
@@ -1582,7 +1602,57 @@ def mode_starters():
         os._exit(1)
 
     debug_log.info(f"Soft resetting starter Pokemon...")
-    
+
+    release_all_inputs()
+
+    while trainer_info["state"] != GameState.OVERWORLD: 
+        press_button("A")
+
+    if read_file(f"stats/{trainer_info['tid']}.json"): starter_frames = json.loads(read_file(f"stats/{trainer_info['tid']}.json")) # Open starter frames file
+    else: starter_frames = {"rngState": {"Treecko": [], "Torchic": [], "Mudkip": []}}
+
+    # 50ms delay between A inputs to prevent accidental selection confirmations
+    while trainer_info["state"] == GameState.OVERWORLD: 
+        emu_combo(["A", "50ms"])
+
+    # Press B to back out of an accidental selection when scrolling to chosen starter
+    if config["starter_pokemon"] == "Mudkip":
+        while not find_image("mudkip.png"): 
+            emu_combo(["B", "Right"])
+    elif config["starter_pokemon"] == "Treecko":
+        while not find_image("treecko.png"): 
+            emu_combo(["B", "Left"])
+
+    while emu_info["rngState"] in starter_frames["rngState"][config["starter_pokemon"]]:
+        debug_log.debug(f"Already rolled on RNG state: {emu_info['rngState']}, waiting...")
+    else:
+        starter_frames["rngState"][config["starter_pokemon"]].append(emu_info["rngState"])
+
+        write_file(f"stats/{trainer_info['tid']}.json", json.dumps(starter_frames, indent=4, sort_keys=True))
+        
+        while trainer_info["state"] == GameState.MISC_MENU: 
+            press_button("A")
+        while not find_image("battle/fight.png"):
+            press_button("B")
+        while True:
+            try:
+                if party_info[0]:
+                    if identify_pokemon(starter=True): 
+                        # Kill bot and wait for manual intervention
+                        input("Pausing bot for manual intervention. (Don't forget to pause the bizhawk.lua script so you can provide inputs). Press Enter to continue...")
+                    else:
+                        hold_button("Power")
+                        time.sleep(frames_to_ms(50))
+                        break
+            except: continue
+
+def mode_rayquaza():
+    if not player_on_map(MapBank.DUNGEONS, MapID.RAYQUAZA_PILLAR):
+        return False
+
+    if not trainer_info["posX"] == 14 and trainer_info["posY"] <= 12:
+        return
+
     while True:
         release_all_inputs()
 
@@ -1712,6 +1782,42 @@ def mode_rayquaza():
             (14, 7)
         ])
 
+def mode_farawayMew():
+    if not player_on_map(MapBank.SPECIAL, MapID.MEW_ISLAND_ENTERANCE):
+        return False
+    
+    if not 22 <= trainer_info["posX"] <= 23 and 8 <= trainer_info["posY"] <= 10:
+        return
+
+    while True:
+        release_all_inputs()
+        if player_on_map(MapBank.SPECIAL, MapID.MEW_ISLAND_ENTERANCE):
+            if 22 <= trainer_info["posX"] <= 23 and 8 <= trainer_info["posY"] <= 10:
+                follow_path([(22, trainer_info["posY"])])
+                follow_path([(trainer_info["posX"], 7)])
+        elif player_on_map(MapBank.SPECIAL, MapID.MEW_ISLAND):
+            if trainer_info["posY"] == 13:
+                press_button("A")
+                time.sleep(frames_to_ms(30))
+                release_button("A")
+                press_button("A")
+                release_button("A")
+
+            if trainer_info["state"] != GameState.OVERWORLD:    
+                if opponent_changed():
+                    if identify_pokemon(): 
+                        input("Pausing bot for manual catch. Press Enter to continue...") 
+            if trainer_info["posY"] == 13 and player_on_map(MapBank.SPECIAL, MapID.MEW_ISLAND):
+                follow_path([(trainer_info["posX"], 18), (13, 18), (13, 19)])
+                time.sleep(frames_to_ms(10))
+                hold_button("Down")
+                time.sleep(frames_to_ms(30))
+                release_button("Down")
+                time.sleep(frames_to_ms(60))
+            else:
+                follow_path([(trainer_info["posX"], 17), (12, 17), (12, 16), (13, 15), (14, 15), (16, 16),  (16, 13)])
+
+
 def mode_southernIsland():
     if (not player_on_map(MapBank.SPECIAL, MapID.LATI_ISLAND) or
         not 5 <= trainer_info["posX"] == 13 and trainer_info["posY"] >= 12):
@@ -1836,6 +1942,7 @@ try:
         debug_log.info(f"Mode: {config['bot_mode']}")
 
         default_input = {"A": False, "B": False, "L": False, "R": False, "Up": False, "Down": False, "Left": False, "Right": False, "Select": False, "Start": False, "Light Sensor": 0, "Power": False, "Tilt X": 0, "Tilt Y": 0, "Tilt Z": 0, "Screenshot": False}
+        
         input_list_mmap = mmap.mmap(-1, 4096, tagname="bizhawk_input_list", access=mmap.ACCESS_WRITE)
         g_current_index = 1 # Variable that keeps track of what input in the list we are on.
         input_list_mmap.seek(0)
@@ -1867,19 +1974,19 @@ try:
         main_loop = Thread(target=mainLoop)
         main_loop.start()
 
-    item_list = json.loads(read_file("data/items.json"))
-    location_list = json.loads(read_file("data/locations.json"))
-    move_list = json.loads(read_file("data/moves.json"))
-    pokemon_list = json.loads(read_file("data/pokemon.json"))
-    type_list = json.loads(read_file("data/types.json"))
-    nature_list = json.loads(read_file("data/natures.json"))
+        item_list = json.loads(read_file("data/items.json"))
+        location_list = json.loads(read_file("data/locations.json"))
+        move_list = json.loads(read_file("data/moves.json"))
+        pokemon_list = json.loads(read_file("data/pokemon.json"))
+        type_list = json.loads(read_file("data/types.json"))
+        nature_list = json.loads(read_file("data/natures.json"))
 
-    pokemon_schema = json.loads(read_file("data/schemas/pokemon.json"))
-    validate_pokemon = fastjsonschema.compile(pokemon_schema)
-    trainer_info_schema = json.loads(read_file("data/schemas/trainer_info.json"))
-    validate_trainer_info = fastjsonschema.compile(trainer_info_schema)
-    emu_info_schema = json.loads(read_file("data/schemas/emu_info.json"))
-    validate_emu_info = fastjsonschema.compile(emu_info_schema)
+        pokemon_schema = json.loads(read_file("data/schemas/pokemon.json"))
+        validate_pokemon = fastjsonschema.compile(pokemon_schema)
+        trainer_info_schema = json.loads(read_file("data/schemas/trainer_info.json"))
+        validate_trainer_info = fastjsonschema.compile(trainer_info_schema)
+        emu_info_schema = json.loads(read_file("data/schemas/emu_info.json"))
+        validate_emu_info = fastjsonschema.compile(emu_info_schema)
 
     # Dashboard
     http_server = Thread(target=httpServer)
