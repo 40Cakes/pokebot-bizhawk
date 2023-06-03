@@ -78,23 +78,20 @@ def player_on_map(map_bank: int, map_id: int):
     return on_map
 
 def read_file(file: str): # Simple function to read data from a file, return False if file doesn't exist
-    try:
-        debug_log.debug(f"Reading file: {file}...")
+    if os.path.exists(file):
         with open(file, mode="r", encoding="utf-8") as open_file:
             return open_file.read()
-    except Exception as e:
-        if args.d: debug_log.exception(str(e))
+    else:
         return False
 
 def write_file(file: str, value: str): # Simple function to write data to a file, will create the file if doesn't exist
-    try:
-        debug_log.debug(f"Writing file: {file}...")
-        with open(file, mode="w", encoding="utf-8") as save_file:
-            save_file.write(value)
-            return True
-    except Exception as e:
-        if args.d: debug_log.exception(str(e))
-        return False
+    dirname = os.path.dirname(file)
+    if not os.path.exists(dirname):
+        os.makedirs(dirname)
+
+    with open(file, mode="w", encoding="utf-8") as save_file:
+        save_file.write(value)
+        return True
 
 def load_json_mmap(size, file): # Function to load a JSON object from a memory mapped file
     # BizHawk writes game information to memory mapped files every few frames (see pokebot.lua)
@@ -1269,7 +1266,7 @@ def mode_johtoStarters():
     collect_gift_mon(config["johto_starter"])
 
 def collect_gift_mon(target: str):
-    rng_frames = get_rngState(trainer_info["tid"])
+    rng_frames = get_rngState(trainer_info["tid"], target)
     party_size = len(party_info)
 
     if party_size == 6:
@@ -1289,12 +1286,12 @@ def collect_gift_mon(target: str):
             if emu_info["rngState"] in rng_frames:
                 debug_log.debug(f"Already rolled on RNG state: {emu_info['rngState']}, waiting...")
                 continue
-            
-            rng_frames["rngState"][target].append(emu_info["rngState"])
-            write_file(f"stats/{trainer_info['tid']}.json", json.dumps(rng_frames, indent=4, sort_keys=True))
 
             press_button("A")
             wait_frames(5)
+        
+        rng_frames["rngState"].append(emu_info["rngState"])
+        write_file(f"stats/{trainer_info['tid']}/{target.lower()}.json", json.dumps(rng_frames, indent=4, sort_keys=True))
 
         mon = party_info[party_size]
         
@@ -1461,7 +1458,7 @@ def mode_deoxysResets():
         debug_log.info("Please place the player below the triangle at its final position on Birth Island, then save before restarting the script.")
         os._exit(1)
 
-    deoxys_frames = get_rngState(trainer_info["tid"])
+    deoxys_frames = get_rngState(trainer_info["tid"], "deoxys")
 
     while True:
         # Mash A to reach overworld from intro/title
@@ -1478,8 +1475,8 @@ def mode_deoxysResets():
         while emu_info["rngState"] in deoxys_frames:
             debug_log.debug(f"Already rolled on RNG state: {emu_info['rngState']}, waiting...")
         else:
-            deoxys_frames["rngState"]["Deoxys"].append(emu_info["rngState"])
-            write_file(f"stats/{trainer_info['tid']}.json", json.dumps(deoxys_frames, indent=4, sort_keys=True))
+            deoxys_frames["rngState"].append(emu_info["rngState"])
+            write_file(f"stats/{trainer_info['tid']}/deoxys.json", json.dumps(deoxys_frames, indent=4, sort_keys=True))
 
         while not opponent_changed():
             emu_combo(["A", 8])
@@ -1570,22 +1567,15 @@ def mode_fishing():
         if not find_image("text_period.png"): emu_combo(["Select", 50]) # Re-cast rod if the fishing text prompt is not visible
     identify_pokemon()
 
-
-rng_mons = ["Treecko", "Torchic", "Mudkip", "Deoxys", "Fossil", "Castform", "Beldum", "Cyndaquil", "Totodile", "Chikorita"]
-def get_rngState(tid: str):
-    file = read_file(f"stats/{tid}.json")
-    data = json.loads(file) if file else {"rngState": {}}
-
-    # Fill unused data
-    for mon in rng_mons:
-        if not data["rngState"].get(mon):
-            data["rngState"][mon] = []
+def get_rngState(tid: str, mon: str):
+    file = read_file(f"stats/{tid}/{mon.lower()}.json")
+    data = json.loads(file) if file else {"rngState": []}
 
     return data
 
 def mode_starters():
     choice = config["starter"].lower()
-    starter_frames = get_rngState(trainer_info['tid'])
+    starter_frames = get_rngState(trainer_info['tid'], choice)
 
     if choice not in ["treecko", "torchic", "mudkip"]:
         debug_log.info(f"Unknown starter \"{config['starter']}\". Please edit the value in config.yml and restart the script.")
@@ -1611,11 +1601,11 @@ def mode_starters():
             while not find_image("treecko.png"): 
                 emu_combo(["B", "Left"])
 
-        while emu_info["rngState"] in starter_frames["rngState"][config["starter"]]:
+        while emu_info["rngState"] in starter_frames["rngState"]:
             debug_log.debug(f"Already rolled on RNG state: {emu_info['rngState']}, waiting...")
         else:
-            starter_frames["rngState"][config["starter"]].append(emu_info["rngState"])
-            write_file(f"stats/{trainer_info['tid']}.json", json.dumps(starter_frames, indent=4, sort_keys=True))
+            starter_frames["rngState"].append(emu_info["rngState"])
+            write_file(f"stats/{trainer_info['tid']}/{choice}.json", json.dumps(starter_frames, indent=4, sort_keys=True))
             
             while trainer_info["state"] == GameState.MISC_MENU: 
                 press_button("A")
