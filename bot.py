@@ -947,9 +947,11 @@ def identify_pokemon(starter: bool = False): # Identify opponent pokemon and inc
                         continue
 
                     if mon["hp"] > 0 and i != 0:
+                        j = 0
                         for move in mon["enrichedMoves"]:
-                            if is_valid_move(move):
+                            if is_valid_move(move) and mon["pp"][j] > 0:
                                 party_pp[i] += move["pp"]
+                            j += 1
 
                     i += 1
 
