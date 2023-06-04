@@ -32,6 +32,8 @@ import fastjsonschema                            # https://pypi.org/project/fast
 from data.HiddenPower import calculate_hidden_power
 from data.GameState import GameState
 from data.MapData import mapRSE #mapFRLG
+# Data processing
+import pandas as pd
 
 no_sleep_abilities = ["Shed Skin", "Insomnia", "Vital Spirit"]
 pickup_pokemon = ["Meowth", "Aipom", "Phanpy", "Teddiursa", "Zigzagoon", "Linoone"]
@@ -782,13 +784,29 @@ def log_encounter(pokemon: dict):
             
             if not args.n and not pokemon["shiny"] and "all_encounters" in config["log"]: 
                 # Log all encounters to a file
-                path = f"stats/encounters/Phase {total_shiny_encounters}/{pokemon['metLocationName']}/{year}-{month}-{day}/{pokemon['name']}/"
-                os.makedirs(path, exist_ok=True)
-                write_file(f"{path}SV_{pokemon['shinyValue']} ({hour}-{minute}-{second}).json", json.dumps(pokemon, indent=4, sort_keys=True))
+                jsonpath = f"stats/encounters/Phase {total_shiny_encounters}/{pokemon['metLocationName']}/{year}-{month}-{day}/{pokemon['name']}/"
+                csvpath = f"stats/encounters/Phase {total_shiny_encounters}/"
+                os.makedirs(jsonpath, exist_ok=True)
+                os.makedirs(csvpath, exist_ok=True)
+                if config["jsonlog"]:
+                    write_file(f"{jsonpath}SV_{pokemon['shinyValue']} ({hour}-{minute}-{second}).json", json.dumps(pokemon, indent=4, sort_keys=True))
+                if config["csvlog"]:
+                    pokemondata = pd.DataFrame.from_dict(pokemon, orient = 'index').drop(['enrichedMoves', 'moves', 'pp', 'type']).sort_index().transpose()
+                    if os.path.exists(f"{csvpath}Encounters.csv"):
+                        pokemondata.to_csv(f"{csvpath}Encounters.csv", mode='a', encoding='utf-8',index=False, header=False)
+                    else:
+                        pokemondata.to_csv(f"{csvpath}Encounters.csv", mode='a', encoding='utf-8',index=False)
             if pokemon["shiny"] and "shiny_encounters" in config["log"]: # Log shiny Pokemon to a file
                 path = f"stats/encounters/Shinies/"
                 os.makedirs(path, exist_ok=True)
-                write_file(f"{path}SV_{pokemon['shinyValue']} {pokemon['name']} ({hour}-{minute}-{second}).json", json.dumps(pokemon, indent=4, sort_keys=True))
+                if config["jsonlog"]:
+                    write_file(f"{path}SV_{pokemon['shinyValue']} {pokemon['name']} ({hour}-{minute}-{second}).json", json.dumps(pokemon, indent=4, sort_keys=True))
+                if config["csvlog"]:
+                    pokemondata = pd.DataFrame.from_dict(pokemon, orient = 'index').drop(['enrichedMoves', 'moves', 'pp', 'type']).sort_index().transpose()
+                    if os.path.exists(f"{path}Encounters.csv"):
+                        pokemondata.to_csv(f"{path}Encounters.csv", mode='a', encoding='utf-8',index=False, header=False)
+                    else:
+                        pokemondata.to_csv(f"{path}Encounters.csv", mode='a', encoding='utf-8',index=False)
 
         debug_log.info(f"Phase encounters: {phase_encounters} | {pokemon['name']} Phase Encounters: {mon_stats['phase_encounters']}")
         debug_log.info(f"{pokemon['name']} Encounters: {mon_stats['encounters']:,} | Lowest {pokemon['name']} SV seen this phase: {mon_stats['phase_lowest_sv']}")
@@ -1001,16 +1019,31 @@ def enrich_mon_data(pokemon: dict): # Function to add information to the pokemon
         pokemon["name"] = pokemon["speciesName"].capitalize() # Capitalise name
         pokemon["metLocationName"] = location_list[pokemon["metLocation"]] # Add a human readable location
         pokemon["type"] = pokemon_list[pokemon["name"]]["type"] # Get pokemon types
-        pokemon["ability"] = pokemon_list[pokemon["name"]]["ability"] # Get pokemon abilities
+        pokemon["ability"] = pokemon_list[pokemon["name"]]["ability"][0] # Get pokemon abilities
         pokemon["hiddenPowerType"] = calculate_hidden_power(pokemon)
         pokemon["nature"] = nature_list[pokemon["personality"] % 25] # Get pokemon nature
         pokemon["zeroPadNumber"] = f"{pokemon_list[pokemon['name']]['number']:03}" # Get zero pad number - e.g.: #5 becomes #005
         pokemon["itemName"] = item_list[pokemon['heldItem']] # Get held item's name
-        pokemon["personalityBin"] = format(pokemon["personality"], "032b") # Convert personality ID to binary
-        pokemon["personalityF"] = int(pokemon["personalityBin"][:16], 2) # Get first 16 bits of binary PID
-        pokemon["personalityL"] = int(pokemon["personalityBin"][16:], 2) # Get last 16 bits of binary PID
-        pokemon["shinyValue"] = int(bin(pokemon["personalityF"] ^ pokemon["personalityL"] ^ trainer_info["tid"] ^ trainer_info["sid"])[2:], 2) # https://bulbapedia.bulbagarden.net/wiki/Personality_value#Shininess
+
+        personalityBin = format(pokemon["personality"], "032b") # Convert personality ID to binary
+        personalityF = int(personalityBin[:16], 2) # Get first 16 bits of binary PID
+        personalityL = int(personalityBin[16:], 2) # Get last 16 bits of binary PID
+        pokemon["shinyValue"] = int(bin(personalityF ^ personalityL ^ trainer_info["tid"] ^ trainer_info["sid"])[2:], 2) # https://bulbapedia.bulbagarden.net/wiki/Personality_value#Shininess
         pokemon["shiny"] = True if pokemon["shinyValue"] < 8 else False
+
+        pokemon["move_1"] = pokemon["moves"][0]
+        pokemon["move_2"] = pokemon["moves"][1]
+        pokemon["move_3"] = pokemon["moves"][2]
+        pokemon["move_4"] = pokemon["moves"][3]
+        pokemon["move_1_pp"] = pokemon["pp"][0]
+        pokemon["move_2_pp"] = pokemon["pp"][1]
+        pokemon["move_3_pp"] = pokemon["pp"][2]
+        pokemon["move_4_pp"] = pokemon["pp"][3]
+        pokemon["type_1"] = pokemon["type"][0]
+
+        pokemon["type_2"] = "None"
+        if len(pokemon["type"]) == 2:
+            pokemon["type_2"] = pokemon["type"][1]
         
         pokemon["enrichedMoves"] = []
         for move in pokemon["moves"]:
@@ -1024,6 +1057,12 @@ def enrich_mon_data(pokemon: dict): # Function to add information to the pokemon
         else: 
             pokemon["pokerusStatus"] = "none"
         
+        now = datetime.now()
+        year, month, day, hour, minute, second = f"{now.year}", f"{(now.month):02}", f"{(now.day):02}", f"{(now.hour):02}", f"{(now.minute):02}", f"{(now.second):02}"
+
+        pokemon["date"] = (f"{year}-{month}-{day}")
+        pokemon["time"] = (f"{hour}:{minute}:{second}")
+
         return pokemon
     except Exception as e:
         if args.dm:
