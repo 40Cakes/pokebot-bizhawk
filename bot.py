@@ -784,21 +784,29 @@ def log_encounter(pokemon: dict):
             
             if not args.n and not pokemon["shiny"] and "all_encounters" in config["log"]: 
                 # Log all encounters to a file
-                path = f"stats/encounters/Phase {total_shiny_encounters}/{pokemon['metLocationName']}/{year}-{month}-{day}/{pokemon['name']}/"
-                os.makedirs(path, exist_ok=True)
+                jsonpath = f"stats/encounters/Phase {total_shiny_encounters}/{pokemon['metLocationName']}/{year}-{month}-{day}/{pokemon['name']}/"
+                csvpath = f"stats/encounters/Phase {total_shiny_encounters}/"
+                os.makedirs(jsonpath, exist_ok=True)
+                os.makedirs(csvpath, exist_ok=True)
                 if config["jsonlog"]:
-                    write_file(f"{path}SV_{pokemon['shinyValue']} ({hour}-{minute}-{second}).json", json.dumps(pokemon, indent=4, sort_keys=True))
+                    write_file(f"{jsonpath}SV_{pokemon['shinyValue']} ({hour}-{minute}-{second}).json", json.dumps(pokemon, indent=4, sort_keys=True))
                 if config["csvlog"]:
-                    pokemondata = pd.DataFrame.from_dict(pokemon, orient = 'index').drop(['enrichedMoves', 'moves', 'pp', 'type']).sort_index()
-                    pokemondata.to_csv(f"{path}SV_{pokemon['shinyValue']} ({hour}-{minute}-{second}).csv", encoding='utf-8')
+                    pokemondata = pd.DataFrame.from_dict(pokemon, orient = 'index').drop(['enrichedMoves', 'moves', 'pp', 'type']).sort_index().transpose()
+                    if os.path.exists(f"{csvpath}Encounters.csv"):
+                        pokemondata.to_csv(f"{csvpath}Encounters.csv", mode='a', encoding='utf-8',index=False, header=False)
+                    else:
+                        pokemondata.to_csv(f"{csvpath}Encounters.csv", mode='a', encoding='utf-8',index=False)
             if pokemon["shiny"] and "shiny_encounters" in config["log"]: # Log shiny Pokemon to a file
                 path = f"stats/encounters/Shinies/"
                 os.makedirs(path, exist_ok=True)
                 if config["jsonlog"]:
                     write_file(f"{path}SV_{pokemon['shinyValue']} {pokemon['name']} ({hour}-{minute}-{second}).json", json.dumps(pokemon, indent=4, sort_keys=True))
                 if config["csvlog"]:
-                    pokemondata = pd.DataFrame.from_dict(pokemon, orient = 'index').drop(['enrichedMoves', 'moves', 'pp', 'type']).sort_index()
-                    pokemondata.to_csv(f"{path}SV_{pokemon['shinyValue']} {pokemon['name']} ({hour}-{minute}-{second}).csv", encoding='utf-8')
+                    pokemondata = pd.DataFrame.from_dict(pokemon, orient = 'index').drop(['enrichedMoves', 'moves', 'pp', 'type']).sort_index().transpose()
+                    if os.path.exists(f"{path}Encounters.csv"):
+                        pokemondata.to_csv(f"{path}Encounters.csv", mode='a', encoding='utf-8',index=False, header=False)
+                    else:
+                        pokemondata.to_csv(f"{path}Encounters.csv", mode='a', encoding='utf-8',index=False)
 
         debug_log.info(f"Phase encounters: {phase_encounters} | {pokemon['name']} Phase Encounters: {mon_stats['phase_encounters']}")
         debug_log.info(f"{pokemon['name']} Encounters: {mon_stats['encounters']:,} | Lowest {pokemon['name']} SV seen this phase: {mon_stats['phase_lowest_sv']}")
@@ -1049,6 +1057,12 @@ def enrich_mon_data(pokemon: dict): # Function to add information to the pokemon
         else: 
             pokemon["pokerusStatus"] = "none"
         
+        now = datetime.now()
+        year, month, day, hour, minute, second = f"{now.year}", f"{(now.month):02}", f"{(now.day):02}", f"{(now.hour):02}", f"{(now.minute):02}", f"{(now.second):02}"
+
+        pokemon["date"] = (f"{year}-{month}-{day}")
+        pokemon["time"] = (f"{hour}:{minute}:{second}")
+
         return pokemon
     except Exception as e:
         if args.dm:
