@@ -661,26 +661,26 @@ def pickup_items(): # If using a team of Pokemon with the ability "pickup", this
 
     wait_frames(60) # Wait for animations
     start_menu("pokemon") # Open Pokemon menu
-    wait_frames(60)
+    wait_frames(65)
 
     i = 0
     while i < party_size:
         pokemon = party_info[i]
         if pokemon["speciesName"] in pickup_pokemon and pokemon["heldItem"] != 0:
             # Take the item from the pokemon
-            emu_combo(["A", 10, "Up", 10, "Up", 10, "A", 10, "Down", 10, "A", 65, "B"])
+            emu_combo(["A", 15, "Up", 15, "Up", 15, "A", 15, "Down", 15, "A", 75, "B"])
             item_count -= 1
         
         if item_count == 0:
             break
 
-        emu_combo([10, "Down", 10])
+        emu_combo([15, "Down", 15])
         i += 1
 
     # Close out of menus
     for i in range(0, 5):
         press_button("B")
-        wait_frames(15)
+        wait_frames(20)
 
 def save_game(): # Function to save the game via the save option in the start menu
     try:
@@ -956,7 +956,8 @@ def identify_pokemon(starter: bool = False): # Identify opponent pokemon and inc
         if replace_battler:
             if not config["cycle_lead_pokemon"]:
                 debug_log.info("Lead Pokemon can no longer battle. Ending the script!")
-                os._exit(1)
+                flee_battle()
+                return
             else:
                 start_menu("pokemon")
 
@@ -1222,6 +1223,12 @@ def httpServer(): # Run HTTP server to make data available via HTTP GET
             if encounter_log:
                 response = jsonify(encounter_log)
                 return response
+            else: abort(503)
+        @server.route('/shiny_log', methods=['GET'])		
+        def req_shiny_log():		
+            if shiny_log:		
+                response = jsonify(shiny_log)		
+                return response		
             else: abort(503)
         #@server.route('/config', methods=['POST'])
         #def submit_config():
