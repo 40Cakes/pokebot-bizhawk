@@ -40,6 +40,14 @@ johto_starter: Cyndaquil
 fossil: Anorith
 deoxys_puzzle_solved: false
 
+# Discord Webhook settings (optional)
+discord_webhook_url:
+# Your raw webhook URL here, if unspecified, the function's disabled.
+discord_ping_mode: role
+# "user" or "role", if left empty/invalid: pings are disabled.
+discord_shiny_ping: 
+# Discord User/Role ID to ping. Does nothing if "discord_ping_mode" isn't set. Currently supports only one at a time.
+
 # Wild Battles
 manual_catch: false
 use_spore: true
