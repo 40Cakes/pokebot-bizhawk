@@ -32,6 +32,8 @@ import fastjsonschema                            # https://pypi.org/project/fast
 from data.HiddenPower import calculate_hidden_power
 from data.GameState import GameState
 from data.MapData import mapRSE #mapFRLG
+# Data processing
+import pandas as pd
 
 no_sleep_abilities = ["Shed Skin", "Insomnia", "Vital Spirit"]
 pickup_pokemon = ["Meowth", "Aipom", "Phanpy", "Teddiursa", "Zigzagoon", "Linoone"]
@@ -658,26 +660,26 @@ def pickup_items(): # If using a team of Pokemon with the ability "pickup", this
 
     wait_frames(60) # Wait for animations
     start_menu("pokemon") # Open Pokemon menu
-    wait_frames(60)
+    wait_frames(65)
 
     i = 0
     while i < party_size:
         pokemon = party_info[i]
         if pokemon["speciesName"] in pickup_pokemon and pokemon["heldItem"] != 0:
             # Take the item from the pokemon
-            emu_combo(["A", 10, "Up", 10, "Up", 10, "A", 10, "Down", 10, "A", 65, "B"])
+            emu_combo(["A", 15, "Up", 15, "Up", 15, "A", 15, "Down", 15, "A", 75, "B"])
             item_count -= 1
         
         if item_count == 0:
             break
 
-        emu_combo([10, "Down", 10])
+        emu_combo([15, "Down", 15])
         i += 1
 
     # Close out of menus
     for i in range(0, 5):
         press_button("B")
-        wait_frames(15)
+        wait_frames(20)
 
 def save_game(): # Function to save the game via the save option in the start menu
     try:
@@ -949,7 +951,8 @@ def identify_pokemon(starter: bool = False): # Identify opponent pokemon and inc
         if replace_battler:
             if not config["cycle_lead_pokemon"]:
                 debug_log.info("Lead Pokemon can no longer battle. Ending the script!")
-                os._exit(1)
+                flee_battle()
+                return
             else:
                 start_menu("pokemon")
 
@@ -1012,16 +1015,31 @@ def enrich_mon_data(pokemon: dict): # Function to add information to the pokemon
         pokemon["name"] = pokemon["speciesName"].capitalize() # Capitalise name
         pokemon["metLocationName"] = location_list[pokemon["metLocation"]] # Add a human readable location
         pokemon["type"] = pokemon_list[pokemon["name"]]["type"] # Get pokemon types
-        pokemon["ability"] = pokemon_list[pokemon["name"]]["ability"] # Get pokemon abilities
+        pokemon["ability"] = pokemon_list[pokemon["name"]]["ability"][0] # Get pokemon abilities
         pokemon["hiddenPowerType"] = calculate_hidden_power(pokemon)
         pokemon["nature"] = nature_list[pokemon["personality"] % 25] # Get pokemon nature
         pokemon["zeroPadNumber"] = f"{pokemon_list[pokemon['name']]['number']:03}" # Get zero pad number - e.g.: #5 becomes #005
         pokemon["itemName"] = item_list[pokemon['heldItem']] # Get held item's name
-        pokemon["personalityBin"] = format(pokemon["personality"], "032b") # Convert personality ID to binary
-        pokemon["personalityF"] = int(pokemon["personalityBin"][:16], 2) # Get first 16 bits of binary PID
-        pokemon["personalityL"] = int(pokemon["personalityBin"][16:], 2) # Get last 16 bits of binary PID
-        pokemon["shinyValue"] = int(bin(pokemon["personalityF"] ^ pokemon["personalityL"] ^ trainer_info["tid"] ^ trainer_info["sid"])[2:], 2) # https://bulbapedia.bulbagarden.net/wiki/Personality_value#Shininess
+
+        personalityBin = format(pokemon["personality"], "032b") # Convert personality ID to binary
+        personalityF = int(personalityBin[:16], 2) # Get first 16 bits of binary PID
+        personalityL = int(personalityBin[16:], 2) # Get last 16 bits of binary PID
+        pokemon["shinyValue"] = int(bin(personalityF ^ personalityL ^ trainer_info["tid"] ^ trainer_info["sid"])[2:], 2) # https://bulbapedia.bulbagarden.net/wiki/Personality_value#Shininess
         pokemon["shiny"] = True if pokemon["shinyValue"] < 8 else False
+
+        pokemon["move_1"] = pokemon["moves"][0]
+        pokemon["move_2"] = pokemon["moves"][1]
+        pokemon["move_3"] = pokemon["moves"][2]
+        pokemon["move_4"] = pokemon["moves"][3]
+        pokemon["move_1_pp"] = pokemon["pp"][0]
+        pokemon["move_2_pp"] = pokemon["pp"][1]
+        pokemon["move_3_pp"] = pokemon["pp"][2]
+        pokemon["move_4_pp"] = pokemon["pp"][3]
+        pokemon["type_1"] = pokemon["type"][0]
+
+        pokemon["type_2"] = "None"
+        if len(pokemon["type"]) == 2:
+            pokemon["type_2"] = pokemon["type"][1]
         
         pokemon["enrichedMoves"] = []
         for move in pokemon["moves"]:
@@ -1035,6 +1053,12 @@ def enrich_mon_data(pokemon: dict): # Function to add information to the pokemon
         else: 
             pokemon["pokerusStatus"] = "none"
         
+        now = datetime.now()
+        year, month, day, hour, minute, second = f"{now.year}", f"{(now.month):02}", f"{(now.day):02}", f"{(now.hour):02}", f"{(now.minute):02}", f"{(now.second):02}"
+
+        pokemon["date"] = (f"{year}-{month}-{day}")
+        pokemon["time"] = (f"{hour}:{minute}:{second}")
+
         return pokemon
     except Exception as e:
         if args.dm:
@@ -1194,6 +1218,12 @@ def httpServer(): # Run HTTP server to make data available via HTTP GET
             if encounter_log:
                 response = jsonify(encounter_log)
                 return response
+            else: abort(503)
+        @server.route('/shiny_log', methods=['GET'])		
+        def req_shiny_log():		
+            if shiny_log:		
+                response = jsonify(shiny_log)		
+                return response		
             else: abort(503)
         #@server.route('/config', methods=['POST'])
         #def submit_config():

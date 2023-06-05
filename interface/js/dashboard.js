@@ -198,11 +198,12 @@ function encounter_log() {
         })
         .done(function(encounter_log) {
             var tr = ''
+			
             var wrapper = document.getElementById("encounter_log");
 
             reverse_encounter_log = encounter_log["encounter_log"].reverse()
 
-            for (var i = 0; i < 10; i++) {
+            for (var i = 0; i < 25; i++) {
                 if (reverse_encounter_log[i]) {
                     if (reverse_encounter_log[i]["pokemon_obj"]["shiny"]) {
                         sprite_dir = "shiny/"
@@ -226,7 +227,44 @@ function encounter_log() {
             }
         })
 }
+function shiny_log() {
+    $.ajax({
+            method: "GET",
+            url: "http://127.0.0.1:6969/shiny_log",
+            crossDomain: true,
+            dataType: "json",
+            format: "json",
+            timeout: 50
+        })
+        .done(function(shiny_log) {
+            var tr = '';
+            var wrapper = document.getElementById("shiny_log");
 
+            reverse_shiny_log = shiny_log["shiny_log"].reverse();
+
+            for (var i = 0; i < 25; i++) {
+                if (reverse_shiny_log[i]) {
+                    if (reverse_shiny_log[i]["pokemon_obj"]["shiny"]) {
+                        sprite_dir = "shiny/";
+                        sv_colour = "gold";
+                    } else {
+                        sprite_dir = "";
+                        sv_colour = "red";
+                    }
+
+                    tr += '<tr><td><img class="sprite32" src="./sprites/pokemon/' + sprite_dir + reverse_shiny_log[i]["pokemon_obj"]["name"] + '.png"></td><td class="text-center">' + reverse_shiny_log[i]["pokemon_obj"]["name"] + '</td><td class="text-center">' + reverse_shiny_log[i]["pokemon_obj"]["level"] + '</td><td class="text-center">' + reverse_shiny_log[i]["pokemon_obj"]["nature"] + '</td><td class="text-center"><img title="' + reverse_shiny_log[i]["pokemon_obj"]["itemName"] + '" class="sprite16" src="./sprites/items/' + reverse_shiny_log[i]["pokemon_obj"]["itemName"] + '.png"></td><td class="text-center"><code class="code">' + reverse_shiny_log[i]["pokemon_obj"]["personality"] + '</code></td><td class="text-center" style="color:' + sv_colour + ';">' + reverse_shiny_log[i]["pokemon_obj"]["shinyValue"].toLocaleString() + '</td></tr>';
+                }
+            }
+			
+			wrapper.innerHTML = tr
+        })
+}
+
+window.setInterval(function() {
+    shiny_log();
+}, 1000);
+
+shiny_log();
 window.setInterval(function() {
     encounter_log();
 }, 1000);

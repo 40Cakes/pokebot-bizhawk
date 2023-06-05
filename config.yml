@@ -1,5 +1,24 @@
 # Bot Setup
 bot_mode: Starters
+# sweet scent
+# bunny hop
+# move between coords
+# move until obstructed
+# fishing
+# starters
+# rayquaza
+# groudon
+# kyogre
+# souther island
+# mew
+# regi trio
+# deoxys runaways
+# deoxys reset
+# fossil
+# castform
+# beldum
+# johto starters
+# buy premier balls
 coords:
   pos1:
     - 38
@@ -8,8 +27,16 @@ coords:
     - 39
     - 6
 direction: Horizontal
+# Vertical
+# Horizontal
 starter: Mudkip
+# Torchic
+# Mudkip
+# Treeko
 johto_starter: Cyndaquil
+# Cyndaquil
+# Chikorita
+# Totodile
 fossil: Anorith
 deoxys_puzzle_solved: false
 
@@ -35,13 +62,15 @@ save_game_on_start: false
 
 # Pickup
 pickup: true
-pickup_threshold: 2 # Number of pickup items to find before collection
+pickup_threshold: 3 # Number of pickup items to find before collection
 
 # Logging
 encounter_log_limit: 100
 log:
 - all_encounters
 - shiny_encounters
+csvlog: true
+jsonlog: false
   
 # Preferences
 control_map:
