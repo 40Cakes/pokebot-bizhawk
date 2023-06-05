@@ -83,12 +83,12 @@ def read_file(file: str): # Simple function to read data from a file, return Fal
         return False
 
 @staticmethod
-def write_file(file: str, value: str): # Simple function to write data to a file, will create the file if doesn't exist
+def write_file(file: str, value: str, mode: str = "w"): # Simple function to write data to a file, will create the file if doesn't exist
     dirname = os.path.dirname(file)
     if not os.path.exists(dirname):
         os.makedirs(dirname)
 
-    with open(file, mode="w", encoding="utf-8") as save_file:
+    with open(file, mode=mode, encoding="utf-8") as save_file:
         save_file.write(value)
         return True
 
@@ -605,7 +605,6 @@ def start_menu(entry: str): # Function to open any start menu item - presses STA
     while find_image(filename): # Press menu entry
         emu_combo(["A", 10])
 
-
 def bag_menu(category: str, item: str): # Function to find an item in the bag and use item in battle such as a pokeball
     if not category in ["berries", "items", "key_items", "pokeballs", "tms&hms"]:
         return False
@@ -774,39 +773,38 @@ def log_encounter(pokemon: dict):
         mon_stats["shiny_average"] = shiny_average
         encounter_log["encounter_log"] = encounter_log["encounter_log"][-config["encounter_log_limit"]:]
 
-        if not args.n:
-            write_file("stats/totals.json", json.dumps(stats, indent=4, sort_keys=True)) # Save stats file
-            write_file("stats/encounter_log.json", json.dumps(encounter_log, indent=4, sort_keys=True)) # Save encounter log file
-            write_file("stats/shiny_log.json", json.dumps(shiny_log, indent=4, sort_keys=True)) # Save shiny log file
+        write_file("stats/totals.json", json.dumps(stats, indent=4, sort_keys=True)) # Save stats file
+        write_file("stats/encounter_log.json", json.dumps(encounter_log, indent=4, sort_keys=True)) # Save encounter log file
+        write_file("stats/shiny_log.json", json.dumps(shiny_log, indent=4, sort_keys=True)) # Save shiny log file
 
-            now = datetime.now()
-            year, month, day, hour, minute, second = f"{now.year}", f"{(now.month):02}", f"{(now.day):02}", f"{(now.hour):02}", f"{(now.minute):02}", f"{(now.second):02}"
+        now = datetime.now()
+        year, month, day, hour, minute, second = f"{now.year}", f"{(now.month):02}", f"{(now.day):02}", f"{(now.hour):02}", f"{(now.minute):02}", f"{(now.second):02}"
             
-            if not args.n and not pokemon["shiny"] and "all_encounters" in config["log"]: 
-                # Log all encounters to a file
-                jsonpath = f"stats/encounters/Phase {total_shiny_encounters}/{pokemon['metLocationName']}/{year}-{month}-{day}/{pokemon['name']}/"
-                csvpath = f"stats/encounters/Phase {total_shiny_encounters}/"
-                os.makedirs(jsonpath, exist_ok=True)
-                os.makedirs(csvpath, exist_ok=True)
-                if config["jsonlog"]:
-                    write_file(f"{jsonpath}SV_{pokemon['shinyValue']} ({hour}-{minute}-{second}).json", json.dumps(pokemon, indent=4, sort_keys=True))
-                if config["csvlog"]:
-                    pokemondata = pd.DataFrame.from_dict(pokemon, orient = 'index').drop(['enrichedMoves', 'moves', 'pp', 'type']).sort_index().transpose()
-                    if os.path.exists(f"{csvpath}Encounters.csv"):
-                        pokemondata.to_csv(f"{csvpath}Encounters.csv", mode='a', encoding='utf-8',index=False, header=False)
-                    else:
-                        pokemondata.to_csv(f"{csvpath}Encounters.csv", mode='a', encoding='utf-8',index=False)
-            if pokemon["shiny"] and "shiny_encounters" in config["log"]: # Log shiny Pokemon to a file
-                path = f"stats/encounters/Shinies/"
-                os.makedirs(path, exist_ok=True)
-                if config["jsonlog"]:
-                    write_file(f"{path}SV_{pokemon['shinyValue']} {pokemon['name']} ({hour}-{minute}-{second}).json", json.dumps(pokemon, indent=4, sort_keys=True))
-                if config["csvlog"]:
-                    pokemondata = pd.DataFrame.from_dict(pokemon, orient = 'index').drop(['enrichedMoves', 'moves', 'pp', 'type']).sort_index().transpose()
-                    if os.path.exists(f"{path}Encounters.csv"):
-                        pokemondata.to_csv(f"{path}Encounters.csv", mode='a', encoding='utf-8',index=False, header=False)
-                    else:
-                        pokemondata.to_csv(f"{path}Encounters.csv", mode='a', encoding='utf-8',index=False)
+        if "all_encounters" in config["log"]: 
+            # Log all encounters to a file
+            jsonpath = f"stats/encounters/Phase {total_shiny_encounters}/{pokemon['metLocationName']}/{year}-{month}-{day}/{pokemon['name']}/"
+            csvpath = f"stats/encounters/Phase {total_shiny_encounters}/"
+            os.makedirs(jsonpath, exist_ok=True)
+            os.makedirs(csvpath, exist_ok=True)
+            if config["jsonlog"]:
+                write_file(f"{jsonpath}SV_{pokemon['shinyValue']} ({hour}-{minute}-{second}).json", json.dumps(pokemon, indent=4, sort_keys=True))
+            if config["csvlog"]:
+                pokemondata = pd.DataFrame.from_dict(pokemon, orient = 'index').drop(['enrichedMoves', 'moves', 'pp', 'type']).sort_index().transpose()
+                if os.path.exists(f"{csvpath}Encounters.csv"):
+                    pokemondata.to_csv(f"{csvpath}Encounters.csv", mode='a', encoding='utf-8',index=False, header=False)
+                else:
+                    pokemondata.to_csv(f"{csvpath}Encounters.csv", mode='a', encoding='utf-8',index=False)
+        if pokemon["shiny"] and "shiny_encounters" in config["log"]: # Log shiny Pokemon to a file
+            path = f"stats/encounters/Shinies/"
+            os.makedirs(path, exist_ok=True)
+            if config["jsonlog"]:
+                write_file(f"{path}SV_{pokemon['shinyValue']} {pokemon['name']} ({hour}-{minute}-{second}).json", json.dumps(pokemon, indent=4, sort_keys=True))
+            if config["csvlog"]:
+                pokemondata = pd.DataFrame.from_dict(pokemon, orient = 'index').drop(['enrichedMoves', 'moves', 'pp', 'type']).sort_index().transpose()
+                if os.path.exists(f"{path}Encounters.csv"):
+                    pokemondata.to_csv(f"{path}Encounters.csv", mode='a', encoding='utf-8',index=False, header=False)
+                else:
+                    pokemondata.to_csv(f"{path}Encounters.csv", mode='a', encoding='utf-8',index=False)
 
         debug_log.info(f"Phase encounters: {phase_encounters} | {pokemon['name']} Phase Encounters: {mon_stats['phase_encounters']}")
         debug_log.info(f"{pokemon['name']} Encounters: {mon_stats['encounters']:,} | Lowest {pokemon['name']} SV seen this phase: {mon_stats['phase_lowest_sv']}")
@@ -850,9 +848,7 @@ def log_encounter(pokemon: dict):
             stats["pokemon"][mon_name]["phase_lowest_sv"] = "-"
             stats["pokemon"][mon_name]["phase_encounters"] = 0
 
-        # Save stats file
-        if not args.n: 
-            write_file("stats/totals.json", json.dumps(stats, indent=4, sort_keys=True))
+        write_file("stats/totals.json", json.dumps(stats, indent=4, sort_keys=True)) # Save stats file
     else:
         debug_log.info("Non shiny Pokemon detected...")
 
@@ -922,8 +918,7 @@ def identify_pokemon(starter: bool = False): # Identify opponent pokemon and inc
         elif legendary_hunt:
             input("Pausing bot for manual intervention. (Don't forget to pause the pokebot.lua script so you can provide inputs). Press Enter to continue...")
 
-        if not args.n: 
-            write_file("stats/totals.json", json.dumps(stats, indent=4, sort_keys=True)) # Save stats file
+        write_file("stats/totals.json", json.dumps(stats, indent=4, sort_keys=True)) # Save stats file
         return True
     else:
         if config["bot_mode"] == "manual":
@@ -1299,6 +1294,8 @@ def mainLoop():
                     mode_johtoStarters()
                 case "buy premier balls":
                     purchase_success = mode_buyPremierBalls()
+                case "reporting":
+                    mode_reporting()
 
                     if not purchase_success:
                         debug_log.info(f"Ran out of money to buy Premier Balls. Script ended.")
@@ -1567,7 +1564,6 @@ def mode_deoxysResets():
             emu_combo(["A", 8])
 
         identify_pokemon()
-        
 
 def mode_sweetScent():
     debug_log.info(f"Using Sweet Scent...")
@@ -1800,37 +1796,6 @@ def mode_kyogre():
             (14, 27)
         ])
 
-def mode_rayquaza():
-    if (not player_on_map(MapDataEnum.SKY_PILLAR_G.value) or
-        not (trainer_info["posX"] == 14 and trainer_info["posY"] <= 12)):
-        debug_log.info("Please place the player below Rayquaza at the Sky Pillar and restart the script.")
-        os._exit(1)
-
-    while True:
-        while not opponent_changed():
-            emu_combo(["A", "Up"]) # Walk up toward Rayquaza while mashing A
-        
-        identify_pokemon()
-
-        # Wait until battle is over
-        while trainer_info["state"] != GameState.OVERWORLD:
-            continue
-
-        # Exit and re-enter
-        press_button("B")
-        follow_path([
-            (14, 11), 
-            (12, 11), 
-            (12, 15), 
-            (16, 15), 
-            (16, -99, MapDataEnum.SKY_PILLAR_F.value), 
-            (10, -99, MapDataEnum.SKY_PILLAR_G.value), 
-            (12, 15), 
-            (12, 11), 
-            (14, 11), 
-            (14, 7)
-        ])
-
 def mode_farawayMew():
     if (not player_on_map(MapDataEnum.FARAWAY_ISLAND.value) or not (22 <= trainer_info["posX"] <= 23 and 8 <= trainer_info["posY"] <= 10)):
         debug_log.info("Please place the player below the entrance to Mew's area, then restart the script.")
@@ -1915,10 +1880,60 @@ def mode_buyPremierBalls():
 
     return True
 
+def mode_reporting():
+    debug_log.info("Running in reporting mode... Don't forget to set `enable_input` to false in `pokebot.lua` before running in Bizhawk!")
+    report_trainer_info, report_emu_info = trainer_info, emu_info
+
+    report_template = read_file("data/report_template.html")
+    report_start = datetime.now().strftime('%Y%m%d-%H%M%S')
+
+    report_path = f"reports/{report_start}"
+    report_file = f"{report_path}/report.html"
+    report_image_path = f"reports/{report_start}/img"
+
+    if not os.path.exists(report_image_path):
+        os.makedirs(report_image_path)
+
+    write_file(report_file, report_template)
+
+    debug_log.info(f"Report will be generated to ./{report_file}")
+
+    def diff_dict(dict1: dict, dict2: dict):
+        return dict(set(dict1.items()) ^ set(dict2.items()))
+
+    while True:
+        html = ''
+
+        if diff_dict(report_trainer_info, trainer_info):
+
+            image_time = datetime.now().strftime('%Y%m%d-%H%M%S%f')
+            cv2.imwrite(f"reports/{report_start}/img/{image_time}.png", get_screenshot())
+
+            html = f"""
+            </br></br><hr><h2>{image_time}</h2>
+            <img src="img/{image_time}.png">
+            </br></br>emu_info:
+            </br><code>{emu_info}</code>
+            </br>diff:
+            </br><code>{diff_dict(report_emu_info, emu_info)}</code>
+            </br></br>trainer_info:
+            </br><code>{trainer_info}</code>
+            </br>diff:
+            </br><code>{diff_dict(report_trainer_info, trainer_info)}</code>
+            </br><section><article>
+            </br></br><details><summary>opponent_info</summary><code>{opponent_info}</code></details>
+            </br><details><summary>party_info</summary><code>{party_info}</code></details>
+            </article></section>
+            """
+
+            write_file(report_file, html, "a")
+
+        report_trainer_info, report_emu_info = trainer_info, emu_info
+        time.sleep(frames_to_ms(1))
+
 try:
     # Parse flags to change the behaviour of the bot
     parser = argparse.ArgumentParser()
-    parser.add_argument('-n', action='store_true')  # -n flag: "no stats mode" set to NOT save statistics or log encounters to file
     parser.add_argument('-s', action='store_true')  # -s flag: save the game after starting bot
     parser.add_argument('-m', action='store_true')  # -m flag: set to Manual Mode (bot will check for shinies and update stats without providing any button input)
     parser.add_argument('-d', action='store_true')  # -d flag: enable general debug logging

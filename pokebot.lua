@@ -322,28 +322,30 @@ function traverseNewInputs()
 		
 	end
 	g_current_index = current_index
-	joypad.set(input)
+	if enable_input then
+		joypad.set(input)
+	end
 end
 
 function handleHeldButtons()
-	if enable_input then
-		local pcall_result, hold_result = pcall(json.decode, comm.mmfRead("bizhawk_hold_input", 4096))
-		if pcall_result then
-			held_buttons = hold_result
+	
+	local pcall_result, hold_result = pcall(json.decode, comm.mmfRead("bizhawk_hold_input", 4096))
+	if pcall_result then
+		held_buttons = hold_result
+	end
+	for button, button_is_held in pairs (held_buttons) do
+		if button_is_held then
+			input[button] = true
+		else
+			; --Don't assign them false, this function is called after the presses and would overwrite them to false
 		end
-		for button, button_is_held in pairs (held_buttons) do
-			if button_is_held then
-				input[button] = true
-			else
-				; --Don't assign them false, this function is called after the presses and would overwrite them to false
-			end
-		end
-		if (last_state ~= trainer.state) then
-			last_state = trainer.state
-		end
-		joypad.set(input)
-		
+	end
+	if (last_state ~= trainer.state) then
+		last_state = trainer.state
+	end
 
+	if enable_input then
+		joypad.set(input)
 	end
 
 end
@@ -354,7 +356,9 @@ while true do
 	if emu_info.frameCount % NUM_OF_FRAMES_PER_PRESS == 0 then --Every n frame will skip the presses, so you can spam inputs in Python and them not get held, they won't be eaten, just deferred a frame. 
 		for button, buttons in pairs (input) do
 			input[button] = false 
-			joypad.set(input)
+			if enable_input then
+				joypad.set(input)
+			end
 		end
 	else
 		traverseNewInputs()
