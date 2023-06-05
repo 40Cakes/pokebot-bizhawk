@@ -7,3 +7,4 @@ ruamel.yaml==0.17.21
 pywebview==4.0.2
 fastjsonschema==2.16.3
 pandas==2.0.2
+discord-webhook==1.1.0
