@@ -1278,6 +1278,8 @@ def mainLoop():
                     while not opponent_changed(): 
                         wait_frames(20)
                     identify_pokemon()
+                case "spin":
+                    mode_spin()
                 case "sweet scent":
                     mode_sweetScent()
                 case "bunny hop":
@@ -1335,6 +1337,14 @@ def mainLoop():
             release_all_inputs()
             time.sleep(0.2)
         wait_frames(1)
+
+def mode_spin():
+    while True:
+        if opponent_changed(): identify_pokemon()
+        directions = ["Up", "Right", "Down", "Left"]
+        directions.remove(trainer_info["facing"])
+        press_button(random.choice(directions))
+        time.sleep(frames_to_ms(3))
 
 def mode_beldum():
     x, y = trainer_info["posX"], trainer_info["posY"]

@@ -196,6 +196,21 @@ function readMonData(address)
 	return mon
 end
 
+function trainer_dir(num) -- TODO Hacky test implementation for Emerald, other games may have different [N, E, S, W] values
+	if num == 27 then
+		return "Up"
+	end
+	if num == 61 then
+		return "Right"
+	end
+	if num == 10 then 
+		return "Down"
+	end
+	if num == 44 then
+		return "Left"
+	end
+end
+
 -- Function to read trainer data
 -- Trainer data structure: https://bulbapedia.bulbagarden.net/wiki/Save_data_structure_(Generation_III)
 function getTrainer()
@@ -210,6 +225,7 @@ function getTrainer()
 		mapBank = Memory.readbyte(GameSettings.trainerpointer + 201), -- TODO Test this on RS and FRLG
 		posX = Memory.readbyte(GameSettings.coords + 0) - 7,
 		posY = Memory.readbyte(GameSettings.coords + 2) - 7,
+		facing = trainer_dir(Memory.readbyte(GameSettings.coords + 8) - 7),
 		roamerMapId = Memory.readbyte(GameSettings.mapbank + 7)
 	}
 	

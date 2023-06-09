@@ -8,6 +8,7 @@
         "mapBank": { "type": "number" },
         "posX": { "type": "number" },
         "posY": { "type": "number" },
+        "facing": { "type": "string" },
         "roamerMapId": { "type": "number" }
     }
 }
