@@ -693,7 +693,7 @@ def save_game(): # Function to save the game via the save option in the start me
                 emu_combo(["A", 30])
                 i += 1
         wait_frames(500) # Wait for game to save
-        press_button("SaveRAM")# Flush Bizhawk SaveRAM to disk
+        press_button("SaveRAM") # Flush Bizhawk SaveRAM to disk
     except Exception as e:
         if args.dm: debug_log.exception(str(e))
 
@@ -1265,6 +1265,7 @@ def mainLoop():
         save_game()
     
     release_all_inputs()
+    press_button("SaveRAM") # Flush Bizhawk SaveRAM to disk
 
     while True:
         # Don't start bot until language is set
