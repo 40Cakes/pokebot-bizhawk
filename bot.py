@@ -142,6 +142,8 @@ def press_button(button: str): # Function to update the press_input object
             button = 's'
         case 'Start':
             button = 'S'
+        case 'SaveRAM':
+            button = 'x'
 
     index = g_current_index
     input_list_mmap.seek(index)
@@ -196,7 +198,6 @@ def opponent_changed(): # This function checks if there is a different opponent 
 
 def get_screenshot():
     g_bizhawk_screenshot = None
-    hold_button("Screenshot")
     time.sleep(max((1/max(emu_speed,1))*0.016,0.002)) # Give emulator time to produce a screenshot
     try:
         shmem = mmap.mmap(0, mmap_screenshot_size, mmap_screenshot_file)
@@ -208,9 +209,7 @@ def get_screenshot():
             screenshot.close()
         if args.dm:
             debug_log.exception('')
-        release_button("Screenshot")
         return None
-    release_button("Screenshot")
 
     if args.di:
         cv2.imshow("get_screenshot",g_bizhawk_screenshot)
@@ -221,7 +220,6 @@ def get_screenshot():
 def mem_pollScreenshot():
     global g_bizhawk_screenshot
     while True:
-        hold_button("Screenshot")
         time.sleep(max((1/max(emu_speed,1))*0.016,0.002)) # Give emulator time to produce a screenshot
         try:
             shmem = mmap.mmap(0, mmap_screenshot_size, mmap_screenshot_file)
@@ -234,7 +232,6 @@ def mem_pollScreenshot():
             if args.dm:
                 debug_log.exception(str(e))
             continue
-        release_button("Screenshot")
         if args.di:
             cv2.imshow("pollScreenShotData",g_bizhawk_screenshot)
             cv2.waitKey(1)
@@ -696,6 +693,7 @@ def save_game(): # Function to save the game via the save option in the start me
                 emu_combo(["A", 30])
                 i += 1
         wait_frames(500) # Wait for game to save
+        press_button("SaveRAM")# Flush Bizhawk SaveRAM to disk
     except Exception as e:
         if args.dm: debug_log.exception(str(e))
 
@@ -2036,7 +2034,7 @@ try:
 
         debug_log.info(f"Mode: {config['bot_mode']}")
 
-        default_input = {"A": False, "B": False, "L": False, "R": False, "Up": False, "Down": False, "Left": False, "Right": False, "Select": False, "Start": False, "Light Sensor": 0, "Power": False, "Tilt X": 0, "Tilt Y": 0, "Tilt Z": 0, "Screenshot": False}
+        default_input = {"A": False, "B": False, "L": False, "R": False, "Up": False, "Down": False, "Left": False, "Right": False, "Select": False, "Start": False, "Light Sensor": 0, "Power": False, "Tilt X": 0, "Tilt Y": 0, "Tilt Z": 0, "SaveRAM": False}
         
         input_list_mmap = mmap.mmap(-1, 4096, tagname="bizhawk_input_list", access=mmap.ACCESS_WRITE)
         g_current_index = 1 # Variable that keeps track of what input in the list we are on.

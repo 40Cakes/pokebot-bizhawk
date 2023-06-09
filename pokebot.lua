@@ -26,7 +26,7 @@ PokemonNames = require "PokemonNames"
 -- Release all keys after starting script
 if enable_input then
 	input = joypad.get()
-	input["A"], input["B"], input["L"], input["R"], input["Up"], input["Down"], input["Left"], input["Right"], input["Select"], input["Start"], input["Screenshot"] = false, false, false, false, false, false, false, false, false, false, false
+	input["A"], input["B"], input["L"], input["R"], input["Up"], input["Down"], input["Left"], input["Right"], input["Select"], input["Start"], input["Screenshot"], input["SaveRAM"] = false, false, false, false, false, false, false, false, false, false, false, false
 	joypad.set(input)
 end
 
@@ -45,7 +45,7 @@ comm.mmfWrite("bizhawk_emu_info", string.rep("\x00", 4096))
 
 input_list = {}
 for i = 0, 100 do --101 entries, the final entry is for the index.
-	input_list[i] = string.byte('a')
+	input_list[i] = string.byte("a")
 end
 
 -- Create memory mapped input files for Python script to write to
@@ -248,11 +248,11 @@ function mainLoop()
 	trainer = getTrainer()
 	party = getParty()
 	opponent = readMonData(GameSettings.estats)
-	
+
 	comm.mmfWrite("bizhawk_trainer_info", json.encode({["trainer"] = trainer}) .. "\x00")
 	comm.mmfWrite("bizhawk_party_info", json.encode({["party"] = party}) .. "\x00")
 	comm.mmfWrite("bizhawk_opponent_info", json.encode({["opponent"] = opponent}) .. "\x00")
-	
+
 	if write_files then
 		check_input = joypad.get()
 		if check_input["L"] and check_input["R"] then
@@ -296,27 +296,31 @@ function traverseNewInputs()
 				current_index = 1
 			end
 			button = utf8.char(list_of_inputs:byte(current_index))
-			if button == 'l' then
+			if button == "l" then
 				button = "Left"
 			end
-			if button == 'r' then
+			if button == "r" then
 				button = "Right"
 			end
-			if button == 'u' then
+			if button == "u" then
 				button = "Up"
 			end
-			if button == 'd' then	
+			if button == "d" then	
 				button = "Down"
 			end
-			if button == 's' then
+			if button == "s" then
 				button = "Select"
 			end
-			if button == 'S' then
+			if button == "S" then
 				button = "Start"
 			end
 			input[button] = true
 			if button == "A" then
 				input["B"] = false --If there are any new "A" presses after "B" in the list, discard the "B" presses before it
+			end
+			if button == "x" then
+				client.saveram()
+				console.log("SaveRAM flushed!")
 			end
 		end
 		
