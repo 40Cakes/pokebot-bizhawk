@@ -535,6 +535,7 @@ def follow_path(coords: list, run: bool = True, exit_when_stuck: bool = False):
                 release_button(direction)
 
             if opponent_changed():
+                identify_pokemon()
                 return
 
             last_pos = [trainer_info["posX"], trainer_info["posY"]]
@@ -1339,12 +1340,20 @@ def mainLoop():
         wait_frames(1)
 
 def mode_spin():
+    home_coords = (trainer_info["posX"], trainer_info["posY"])
+    debug_log.info(f"Spinning on the spot, home position is {home_coords}")
     while True:
         if opponent_changed(): identify_pokemon()
+        if home_coords != (trainer_info["posX"], trainer_info["posY"]): # Note: this will likely fail if the trainer accidentally changes maps
+            debug_log.info(f"Trainer has moved off home position, pathing back to {home_coords}...")
+            follow_path([
+                (home_coords[0], trainer_info["posY"]), 
+                (trainer_info["posX"], home_coords[1])
+            ], exit_when_stuck=True)
         directions = ["Up", "Right", "Down", "Left"]
         directions.remove(trainer_info["facing"])
         press_button(random.choice(directions))
-        time.sleep(frames_to_ms(3))
+        time.sleep(frames_to_ms(2))
 
 def mode_beldum():
     x, y = trainer_info["posX"], trainer_info["posY"]
