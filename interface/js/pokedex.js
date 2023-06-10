@@ -49,6 +49,7 @@ function dexEntries() {
           div.classList.add("toggle-on-hover");
           var dropdown = document.createElement("div");
           dropdown.classList.add("dropdown-menu");
+          dropdown.style.padding = "0";
 
           //create a table for the dropdown
           const table = document.createElement("table");
@@ -63,14 +64,20 @@ function dexEntries() {
           rateHeader.textContent = "Rate";
           headerRow.appendChild(rateHeader);
           table.appendChild(headerRow);
+          table.style.marginLeft = "1em";
+          table.style.marginRight = "1em";
+          table.style.tableLayout = "auto";
 
           //set values for the encounter
           const valuesRow = document.createElement("tr");
           const methodCell = document.createElement("td");
+          methodCell.style.whiteSpace = "nowrap";
           methodCell.textContent = getMethod(encounter.encounter_type);
           const levelsCell = document.createElement("td");
+          levelsCell.style.whiteSpace = "nowrap";
           levelsCell.textContent = encounter.levels;
           const rateCell = document.createElement("td");
+          rateCell.style.whiteSpace = "nowrap";
           rateCell.textContent = encounter.rate;
           valuesRow.appendChild(methodCell);
           valuesRow.appendChild(levelsCell);
