@@ -1,14 +1,15 @@
 # Run this if pokemon.json or routes-emerald.json are modified to regenerate the pokedex data.
 
 import json
+import codecs
 
 def generate_pokedex():
     # Read the pokemon.json file
-    with open('pokemon.json') as f:
+    with open('pokemon.json', encoding="utf-8") as f:
         pokemon_data = json.load(f)
 
     # Read the routes-emerald.json file
-    with open('routes-emerald.json') as f:
+    with open('routes-emerald.json', encoding="utf-8") as f:
         routes_data = json.load(f)
 
     # Initialize the pokedex list
@@ -58,8 +59,8 @@ def generate_pokedex():
             pokedex.append(pokedex_entry)
 
     # Save the pokedex as pokedex.json
-    with open('pokedex.json', 'w') as f:
-        json.dump(pokedex, f, indent=4)
+    with open('pokedex.json', "w", encoding="utf-8") as f:
+        json.dump(pokedex, f, indent=4, ensure_ascii=False)
 
 # Call the function to generate the pokedex
 generate_pokedex()
