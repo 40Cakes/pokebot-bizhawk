@@ -22,9 +22,10 @@ function dexEntries() {
       var imgCell = document.createElement("td");
       var pkmImg = document.createElement("img");
       imgCell.appendChild(pkmImg);
-      var cleanedPokemonName = item.name.replaceAll("'", "");
-      var cleanedPokemonName = item.name.replaceAll("♀", "_F");
-      var cleanedPokemonName = item.name.replaceAll("♂", "_M");
+      var cleanedPokemonName = item.name
+        .replaceAll("'", "")
+        .replaceAll("♀", "_F")
+        .replaceAll("♂", "_M");
       pkmImg.src = "./sprites/pokemon/" + cleanedPokemonName + ".png";
       pkmImg.width = "50";
 
