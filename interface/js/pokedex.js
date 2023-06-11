@@ -229,11 +229,10 @@ function encounter_log() {
     }
   });
 }
+// needed for encounters/hr calculation,
+// phase encounters/total encounters/shinys
 window.setInterval(function () {
   encounter_log();
-}, 1000);
-
-window.setInterval(function () {
   stats_info();
   emu_info();
-}, 250);
+}, 1000);
