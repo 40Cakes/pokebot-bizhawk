@@ -127,27 +127,113 @@ dexEntries();
 
 //mess tbh, but it formats the encounter type nicer
 function getMethod(method) {
-  const methodMap = {
-    walking: "Walking",
-    walk: "Walking",
-    fishing_old: "Old Rod",
-    fishing_good: "Good Rod",
-    fishing_super: "Super Rod",
-    special: "Special Encounter",
-    deepsand: "Deep Sand",
-    rocksmash: "Rock Smash",
-    surfing: "Surfing",
-    surf: "Surfing",
-    grass: "Grass",
-    swarm: "Swarm",
-    trade: "Trade",
-    gift: "Gift",
-    roam: "Roaming",
-    underwater: "Dive Underwater",
-    wailmerpail: "Wailmer Pail",
-    hidden: "Hidden",
-    starter: "Starter",
-  };
-
-  return methodMap[method] || "";
+  switch (method) {
+    case "walking":
+      return "Walking";
+    case "walk":
+      return "Walking";
+    case "fishing_old":
+      return "Old Rod";
+    case "fishing_good":
+      return "Good Rod";
+    case "fishing_super":
+      return "Super Rod";
+    case "special":
+      return "Special Encounter";
+    case "deepsand":
+      return "Deep Sand";
+    case "rocksmash":
+      return "Rock Smash";
+    case "surfing":
+      return "Surfing";
+    case "surf":
+      return "Surfing";
+    case "grass":
+      return "Grass";
+    case "swarm":
+      return "Swarm";
+    case "trade":
+      return "Trade";
+    case "gift":
+      return "Gift";
+    case "roam":
+      return "Roaming";
+    case "underwater":
+      return "Dive Underwater";
+    case "wailmerpail":
+      return "Wailmer Pail";
+    case "hidden":
+      return "Hidden";
+    case "starter":
+      return "Starter";
+  }
 }
+
+// todo - get game / fps / encounter rate / encounter phase # / ttl encounter / # shiny caught
+// get info from stats
+function stats_info() {
+  $.ajax({
+    method: "GET",
+    url: "http://127.0.0.1:6969/stats",
+    crossDomain: true,
+    dataType: "json",
+    format: "json",
+    timeout: 50,
+  }).done(function (stats) {
+    $("#nav_stat_phase").text(
+      stats["totals"]["phase_encounters"].toLocaleString()
+    );
+    $("#nav_stat_total").text(stats["totals"]["encounters"].toLocaleString());
+    $("#nav_stat_shiny").text(
+      stats["totals"]["shiny_encounters"].toLocaleString()
+    );
+  });
+}
+
+// get info from emulator for game / fps
+function emu_info() {
+  $.ajax({
+    method: "GET",
+    url: "http://127.0.0.1:6969/emu_info",
+    crossDomain: true,
+    dataType: "json",
+    format: "json",
+    timeout: 50,
+  }).done(function (emu_info) {
+    $("#nav_emu_info").text(
+      emu_info["detectedGame"] + " | " + emu_info["emuFPS"] + "fps"
+    );
+  });
+}
+
+// encounter log for encounters/hr
+function encounter_log() {
+  $.ajax({
+    method: "GET",
+    url: "http://127.0.0.1:6969/encounter_log",
+    crossDomain: true,
+    dataType: "json",
+    format: "json",
+    timeout: 50,
+  }).done(function (encounter_log) {
+    reverse_encounter_log = encounter_log["encounter_log"].reverse();
+    if (encounter_log["encounter_log"][50]) {
+      var range = moment(reverse_encounter_log[0]["time_encountered"])
+        .subtract(moment(reverse_encounter_log[10]["time_encountered"]))
+        .format("x");
+      $("#encounters_hour").text(
+        Math.round((60 / (range / 1000 / 60)) * 10).toLocaleString() + "/h"
+      );
+    } else {
+      $("#encounters_hour").text("-");
+    }
+  });
+}
+window.setInterval(function () {
+  encounter_log();
+}, 1000);
+
+window.setInterval(function () {
+  stats_info();
+  emu_info();
+}, 250);
