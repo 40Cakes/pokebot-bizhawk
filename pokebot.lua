@@ -9,6 +9,7 @@
 
 local utils = require("utils")
 
+bot_instance_id = "pokebot_1" -- If running multiple instances of the bot, set this to the same `bot_instance_id` string in config.yml (use a unique string per bot instance)
 enable_input = true -- Toggle inputs to the emulator, useful for testing
 write_files = false -- Toggle output of data to files (press L+R in emulator to save files to testing/ folder)
 
@@ -32,16 +33,16 @@ end
 
 console.log("Detected game: " .. GameSettings.gamename)
 -- Allocate memory mapped file sizes
-comm.mmfWrite("bizhawk_screenshot", string.rep("\x00", 24576))
-comm.mmfSetFilename("bizhawk_screenshot")
+comm.mmfWrite("bizhawk_screenshot-" .. bot_instance_id, string.rep("\x00", 24576))
+comm.mmfSetFilename("bizhawk_screenshot-" .. bot_instance_id)
 comm.mmfScreenshot()
 
-comm.mmfWrite("bizhawk_press_input", string.rep("\x00", 4096))
-comm.mmfWrite("bizhawk_hold_input", string.rep("\x00", 4096))
-comm.mmfWrite("bizhawk_trainer_info", string.rep("\x00", 4096))
-comm.mmfWrite("bizhawk_party_info", string.rep("\x00", 8192))
-comm.mmfWrite("bizhawk_opponent_info", string.rep("\x00", 4096))
-comm.mmfWrite("bizhawk_emu_info", string.rep("\x00", 4096))
+comm.mmfWrite("bizhawk_press_input-" .. bot_instance_id, string.rep("\x00", 4096))
+comm.mmfWrite("bizhawk_hold_input-" .. bot_instance_id, string.rep("\x00", 4096))
+comm.mmfWrite("bizhawk_trainer_info-" .. bot_instance_id, string.rep("\x00", 4096))
+comm.mmfWrite("bizhawk_party_info-" .. bot_instance_id, string.rep("\x00", 8192))
+comm.mmfWrite("bizhawk_opponent_info-" .. bot_instance_id, string.rep("\x00", 4096))
+comm.mmfWrite("bizhawk_emu_info-" .. bot_instance_id, string.rep("\x00", 4096))
 
 input_list = {}
 for i = 0, 100 do --101 entries, the final entry is for the index.
@@ -49,10 +50,10 @@ for i = 0, 100 do --101 entries, the final entry is for the index.
 end
 
 -- Create memory mapped input files for Python script to write to
-comm.mmfWrite("bizhawk_hold_input", json.encode(input) .. "\x00")
-comm.mmfWrite("bizhawk_input_list", string.rep("\x00", 4096))
+comm.mmfWrite("bizhawk_hold_input-" .. bot_instance_id, json.encode(input) .. "\x00")
+comm.mmfWrite("bizhawk_input_list-" .. bot_instance_id, string.rep("\x00", 4096))
 
-comm.mmfWriteBytes("bizhawk_input_list", input_list)
+comm.mmfWriteBytes("bizhawk_input_list-" .. bot_instance_id, input_list)
 
 
 last_posY = 0
@@ -265,9 +266,9 @@ function mainLoop()
 	party = getParty()
 	opponent = readMonData(GameSettings.estats)
 
-	comm.mmfWrite("bizhawk_trainer_info", json.encode({["trainer"] = trainer}) .. "\x00")
-	comm.mmfWrite("bizhawk_party_info", json.encode({["party"] = party}) .. "\x00")
-	comm.mmfWrite("bizhawk_opponent_info", json.encode({["opponent"] = opponent}) .. "\x00")
+	comm.mmfWrite("bizhawk_trainer_info-" .. bot_instance_id, json.encode({["trainer"] = trainer}) .. "\x00")
+	comm.mmfWrite("bizhawk_party_info-" .. bot_instance_id, json.encode({["party"] = party}) .. "\x00")
+	comm.mmfWrite("bizhawk_opponent_info-" .. bot_instance_id, json.encode({["opponent"] = opponent}) .. "\x00")
 
 	if write_files then
 		check_input = joypad.get()
@@ -298,7 +299,7 @@ end
 
 g_current_index = 1 --Keep track of where Lua is in it's traversal of the input list
 function traverseNewInputs()
-	local pcall_result, list_of_inputs = pcall(comm.mmfRead,"bizhawk_input_list", 4096)
+	local pcall_result, list_of_inputs = pcall(comm.mmfRead,"bizhawk_input_list-" .. bot_instance_id, 4096)
 	if pcall_result == false then
 		gui.addmessage("pcall fail list")
 		return false	
@@ -349,7 +350,7 @@ end
 
 function handleHeldButtons()
 	
-	local pcall_result, hold_result = pcall(json.decode, comm.mmfRead("bizhawk_hold_input", 4096))
+	local pcall_result, hold_result = pcall(json.decode, comm.mmfRead("bizhawk_hold_input-" .. bot_instance_id, 4096))
 	if pcall_result then
 		held_buttons = hold_result
 	end
@@ -386,7 +387,7 @@ while true do
 	end
 	handleHeldButtons()
 	-- Save screenshot and other data to memory mapped files, as FPS is higher, reduce the number of reads and writes to memory
-	comm.mmfWrite("bizhawk_emu_info", json.encode({["emu"] = emu_info}) .. "\x00")
+	comm.mmfWrite("bizhawk_emu_info-" .. bot_instance_id, json.encode({["emu"] = emu_info}) .. "\x00")
 	fps = emu_info.emuFPS
 	if fps > 120 and fps <= 240  then -- Copy screenshot to memory every nth frame if running at higher than 1x to reduce memory writes
 		if (emu_info.frameCount % 2 == 0) then

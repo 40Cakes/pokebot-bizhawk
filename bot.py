@@ -1096,7 +1096,7 @@ def mem_getEmuInfo(): # Loop repeatedly to read emulator info from memory
 
     while True:
         try:
-            emu_info_mmap = load_json_mmap(4096, "bizhawk_emu_info")
+            emu_info_mmap = load_json_mmap(4096, "bizhawk_emu_info-" + config["bot_instance_id"])
             if emu_info_mmap:
                 if validate_emu_info(emu_info_mmap["emu"]):
                     emu_info = emu_info_mmap["emu"]
@@ -1123,7 +1123,7 @@ def mem_getTrainerInfo(): # Loop repeatedly to read trainer info from memory
 
     while True:
         try:
-            trainer_info_mmap = load_json_mmap(4096, "bizhawk_trainer_info")
+            trainer_info_mmap = load_json_mmap(4096, "bizhawk_trainer_info-" + config["bot_instance_id"])
             if trainer_info_mmap:
                 if validate_trainer_info(trainer_info_mmap["trainer"]):
                     if trainer_info_mmap["trainer"]["posX"] < 0: 
@@ -1141,7 +1141,7 @@ def mem_getPartyInfo(): # Loop repeatedly to read party info from memory
 
     while True:
         try:
-            party_info_mmap = load_json_mmap(8192, "bizhawk_party_info")
+            party_info_mmap = load_json_mmap(8192, "bizhawk_party_info-" + config["bot_instance_id"])
 
             if party_info_mmap:
                 enriched_party_obj = []
@@ -1164,7 +1164,7 @@ def mem_getOpponentInfo(): # Loop repeatedly to read opponent info from memory
 
     while True:
         try:
-            opponent_info_mmap = load_json_mmap(4096, "bizhawk_opponent_info")
+            opponent_info_mmap = load_json_mmap(4096, "bizhawk_opponent_info-" + config["bot_instance_id"])
 
             if opponent_info_mmap:
                 if validate_pokemon(opponent_info_mmap):
@@ -2026,8 +2026,12 @@ try:
 
     debug_log.info(f"Running pokebot on Python {v_major}.{v_minor}")
 
+    yaml = YAML()
+    yaml.default_flow_style = False
+    config = yaml.load(read_file("config.yml")) # Load config
+
     # Confirm that the Lua Console is open by doing a test screenshot
-    mmap_screenshot_size, mmap_screenshot_file = 24576, "bizhawk_screenshot"
+    mmap_screenshot_size, mmap_screenshot_file = 24576, "bizhawk_screenshot-" + config["bot_instance_id"]
     can_start_bot = True
 
     try:
@@ -2036,11 +2040,6 @@ try:
     except:
         debug_log.error("\n\nUnable to initialize pokebot!\nPlease confirm that the Lua Console is open in BizHawk, and that it remains open while the bot is active.\nIt can be opened through 'Tools > Lua Console'.\n\nStarting in dashboard-only mode...\n")
         can_start_bot = False
-
-    yaml = YAML()
-    yaml.default_flow_style = False
-
-    config = yaml.load(read_file("config.yml")) # Load config
 
     last_trainer_state, last_opponent_personality, trainer_info, opponent_info, emu_info, party_info, emu_speed, language, MapDataEnum = None, None, None, None, None, None, 1, None, None
     ImageFile.LOAD_TRUNCATED_IMAGES = True
@@ -2056,7 +2055,7 @@ try:
 
         default_input = {"A": False, "B": False, "L": False, "R": False, "Up": False, "Down": False, "Left": False, "Right": False, "Select": False, "Start": False, "Light Sensor": 0, "Power": False, "Tilt X": 0, "Tilt Y": 0, "Tilt Z": 0, "SaveRAM": False}
         
-        input_list_mmap = mmap.mmap(-1, 4096, tagname="bizhawk_input_list", access=mmap.ACCESS_WRITE)
+        input_list_mmap = mmap.mmap(-1, 4096, tagname="bizhawk_input_list-" + config["bot_instance_id"], access=mmap.ACCESS_WRITE)
         g_current_index = 1 # Variable that keeps track of what input in the list we are on.
         input_list_mmap.seek(0)
 
@@ -2077,7 +2076,7 @@ try:
         emu_info_schema = json.loads(read_file("data/schemas/emu_info.json"))
         validate_emu_info = fastjsonschema.compile(emu_info_schema)
 
-        hold_input_mmap = mmap.mmap(-1, 4096, tagname="bizhawk_hold_input", access=mmap.ACCESS_WRITE)
+        hold_input_mmap = mmap.mmap(-1, 4096, tagname="bizhawk_hold_input-" + config["bot_instance_id"], access=mmap.ACCESS_WRITE)
         hold_input = default_input
 
         poll_screenshot = Thread(target=mem_pollScreenshot)

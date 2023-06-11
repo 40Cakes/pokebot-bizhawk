@@ -80,7 +80,10 @@ log:
 - shiny_encounters
 csvlog: true
 jsonlog: false
-  
+
+bot_instance_id: pokebot_1
+# If running multiple instances of the bot, set this to the same `bot_instance` string at the top of pokebot.lua (use a unique string per bot instance)
+
 # Preferences
 control_map:
   a: x
