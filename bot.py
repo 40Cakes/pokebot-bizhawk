@@ -64,7 +64,7 @@ def language_id_to_iso_639(lang: int):
         case 6: return "it"
 
 @staticmethod
-def wait_frames(frames):
+def wait_frames(frames: float):
     time.sleep(max((frames/60.0) / emu_speed, 0.02))
 
 @staticmethod
