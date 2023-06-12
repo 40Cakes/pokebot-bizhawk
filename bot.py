@@ -973,6 +973,12 @@ def identify_pokemon(starter: bool = False): # Identify opponent pokemon and inc
         if config["pickup"] and not legendary_hunt: 
             pickup_items()
 
+        # if total encounters modulo 500 is 0, save the game
+        # prevents data loss (pickup, levels etc)
+        total_encounters = stats["totals"]["encounters"] + stats["totals"]["shiny_encounters"]
+        if total_encounters % 500 == 0 and total_encounters != 0:
+            save_game()
+
         if replace_battler:
             if not config["cycle_lead_pokemon"]:
                 debug_log.info("Lead Pokemon can no longer battle. Ending the script!")
