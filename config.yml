@@ -41,6 +41,10 @@ johto_starter: Cyndaquil
 fossil: Anorith
 deoxys_puzzle_solved: false
 
+# Autosaves
+periodic_save: true
+save_every_x_encounters: 1000
+
 # Discord Webhook settings (optional)
 discord_webhook_url:
 # Your raw webhook URL here, if unspecified, the function's disabled.
@@ -74,7 +78,6 @@ pickup: true
 pickup_threshold: 3 # Number of pickup items to find before collection
 
 # Logging
-encounter_log_limit: 100
 log:
 - all_encounters
 - shiny_encounters

@@ -772,7 +772,7 @@ def log_encounter(pokemon: dict):
         encounter_log["encounter_log"].append(log_obj)
 
         mon_stats["shiny_average"] = shiny_average
-        encounter_log["encounter_log"] = encounter_log["encounter_log"][-config["encounter_log_limit"]:]
+        encounter_log["encounter_log"] = encounter_log["encounter_log"][-100:]
 
         write_file("stats/totals.json", json.dumps(stats, indent=4, sort_keys=True)) # Save stats file
         write_file("stats/encounter_log.json", json.dumps(encounter_log, indent=4, sort_keys=True)) # Save encounter log file
@@ -973,10 +973,10 @@ def identify_pokemon(starter: bool = False): # Identify opponent pokemon and inc
         if config["pickup"] and not legendary_hunt: 
             pickup_items()
 
-        # if total encounters modulo 500 is 0, save the game
-        # prevents data loss (pickup, levels etc)
+        # If total encounters modulo config["save_every_x_encounters"] is 0, save the game
+        # Save every x encounters to prevent data loss (pickup, levels etc)
         total_encounters = stats["totals"]["encounters"] + stats["totals"]["shiny_encounters"]
-        if total_encounters % 500 == 0 and total_encounters != 0:
+        if config["periodic_save"] and total_encounters % config["save_every_x_encounters"] == 0 and total_encounters != 0:
             save_game()
 
         if replace_battler:
