@@ -65,7 +65,7 @@ def language_id_to_iso_639(lang: int):
 
 @staticmethod
 def wait_frames(frames):
-    time.sleep(frames_to_ms(frames))
+    time.sleep(max((frames/60.0) / emu_speed, 0.02))
 
 @staticmethod
 def emu_combo(sequence: list): # Function to send a sequence of inputs and delays to the emulator
@@ -122,9 +122,6 @@ def load_json_mmap(size, file):
     except Exception as e:
         if args.dm: debug_log.exception(str(e))
         return False
-
-def frames_to_ms(frames: float):
-    return max((frames/60.0) / emu_speed, 0.02)
 
 def press_button(button: str): # Function to update the press_input object
     global g_current_index
@@ -1369,7 +1366,7 @@ def mode_spin():
         directions = ["Up", "Right", "Down", "Left"]
         directions.remove(trainer_info["facing"])
         press_button(random.choice(directions))
-        time.sleep(frames_to_ms(2))
+        wait_frames(2)
 
 def mode_beldum():
     x, y = trainer_info["posX"], trainer_info["posY"]
@@ -1989,7 +1986,7 @@ def mode_reporting():
             write_file(report_file, html, "a")
 
         report_trainer_info, report_emu_info = trainer_info, emu_info
-        time.sleep(frames_to_ms(1))
+        wait_frames(1)
 
 try:
     # Parse flags to change the behaviour of the bot
