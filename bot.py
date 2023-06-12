@@ -29,6 +29,8 @@ import webview                                   # https://pypi.org/project/pywe
 # Parsing modules           
 from ruamel.yaml import YAML                     # https://pypi.org/project/ruamel.yaml/
 import fastjsonschema                            # https://pypi.org/project/fastjsonschema/
+
+from constants import LANG_MAPPING
 # Helper functions
 from data.HiddenPower import calculate_hidden_power
 from data.GameState import GameState
@@ -57,15 +59,7 @@ def average_iv_meets_threshold(pokemon: dict, threshold: int):
 
 @staticmethod
 def language_id_to_iso_639(lang: int):
-    lang_map={
-        1:"en",
-        2:"jp",
-        3:"fr",
-        4:"es",
-        5:"de",
-        6:"it"
-    }
-    return lang_map[lang]
+    return LANG_MAPPING[lang]
 
 @staticmethod
 def wait_frames(frames: float):
