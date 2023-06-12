@@ -1,52 +1,3 @@
-function stats_info() {
-  $.ajax({
-    method: "GET",
-    url: "http://127.0.0.1:6969/stats",
-    crossDomain: true,
-    dataType: "json",
-    format: "json",
-    timeout: 50,
-  }).done(function (stats) {
-    $("#stats_phase_encounters").text(
-      stats["totals"]["phase_encounters"].toLocaleString()
-    );
-    $("#stats_shiny_encounters").text(
-      stats["totals"]["shiny_encounters"].toLocaleString()
-    );
-    $("#stats_total_encounters").text(
-      stats["totals"]["encounters"].toLocaleString()
-    );
-    $("#stats_shiny_average").text(stats["totals"]["shiny_average"]);
-    $("#stats_shortest_phase").text(
-      stats["totals"]["shortest_phase_encounters"].toLocaleString()
-    );
-    $("#stats_longest_phase").text(
-      stats["totals"]["longest_phase_encounters"].toLocaleString()
-    );
-    $("#nav_stat_phase").text(
-      stats["totals"]["phase_encounters"].toLocaleString()
-    );
-    $("#nav_stat_total").text(stats["totals"]["encounters"].toLocaleString());
-    $("#nav_stat_shiny").text(
-      stats["totals"]["shiny_encounters"].toLocaleString()
-    );
-  });
-}
-
-function emu_info() {
-  $.ajax({
-    method: "GET",
-    url: "http://127.0.0.1:6969/emu_info",
-    crossDomain: true,
-    dataType: "json",
-    format: "json",
-    timeout: 50,
-  }).done(function (emu_info) {
-    $("#nav_emu_info").text(
-      emu_info["detectedGame"] + " | " + emu_info["emuFPS"] + "fps"
-    );
-  });
-}
 
 function trainer_info() {
   $.ajax({
@@ -281,16 +232,6 @@ function encounter_log() {
     }
 
     wrapper.innerHTML = tr;
-    if (encounter_log["encounter_log"][50]) {
-      var range = moment(reverse_encounter_log[0]["time_encountered"])
-        .subtract(moment(reverse_encounter_log[10]["time_encountered"]))
-        .format("x");
-      $("#encounters_hour").text(
-        Math.round((60 / (range / 1000 / 60)) * 10).toLocaleString() + "/h"
-      );
-    } else {
-      $("#encounters_hour").text("-");
-    }
   });
 }
 function shiny_log() {
@@ -337,8 +278,6 @@ window.setInterval(function () {
 }, 1000);
 
 window.setInterval(function () {
-  stats_info();
-  emu_info();
   opponent_info();
 }, 250);
 
@@ -346,8 +285,6 @@ window.setInterval(function () {
   trainer_info();
 }, 50);
 
-stats_info();
-emu_info();
 trainer_info();
 opponent_info();
 encounter_log();

@@ -2152,12 +2152,12 @@ try:
         debug_log.info("Dashboard closed on user input")
         os._exit(1)
 
-    url=f"http://127.0.0.1:{FLASK_PORT}/dashboard"
+    url=f"http://{FLASK_HOST}:{FLASK_PORT}/dashboard"
     print(url)
     window = webview.create_window("PokeBot", url=url, width=1280, height=720, resizable=True, hidden=False, frameless=False, easy_drag=True, fullscreen=False, text_select=True, zoomable=True)
     window.events.closed += on_window_close
 
-    webview.start(http_server=False,debug=True)
+    webview.start(http_server=False,debug=False)
 
 except Exception as e:
     debug_log.exception(str(e))
