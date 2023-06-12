@@ -1250,6 +1250,16 @@ def httpServer(): # Run HTTP server to make data available via HTTP GET
                 response = jsonify(shiny_log)		
                 return response		
             else: abort(503)
+        @server.route('/routes', methods=['GET'])
+        def req_routes():
+            if route_list:
+                routes = route_list
+                return routes
+        @server.route('/pokedex', methods=['GET'])
+        def req_pokedex():
+            if pokedex_list:
+                pokedex = pokedex_list
+                return pokedex
         #@server.route('/config', methods=['POST'])
         #def submit_config():
         #    debug_log.info(request.get_json()) # TODO HTTP config handler
@@ -2068,6 +2078,8 @@ try:
         pokemon_list = json.loads(read_file("data/pokemon.json"))
         type_list = json.loads(read_file("data/types.json"))
         nature_list = json.loads(read_file("data/natures.json"))
+        route_list = json.loads(read_file("data/routes-emerald.json"))
+        pokedex_list = json.loads(read_file("data/pokedex.json"))
 
         pokemon_schema = json.loads(read_file("data/schemas/pokemon.json"))
         validate_pokemon = fastjsonschema.compile(pokemon_schema)
