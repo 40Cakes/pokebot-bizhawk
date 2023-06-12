@@ -253,7 +253,7 @@ function filter() {
       !pkmName.toLocaleLowerCase().includes(searchStr) &&
       !locations.toLocaleLowerCase().includes(searchStr)
     ) {
-      row.style.display = "nonea";
+      row.style.display = "none";
     } else {
       row.style.display = "";
     }
