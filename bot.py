@@ -1273,11 +1273,14 @@ def httpServer(): # Run HTTP server to make data available via HTTP GET
             if route_list:
                 routes = route_list
                 return routes
+            else: abort(503)
+
         @server.route('/pokedex', methods=['GET'])
         def req_pokedex():
             if pokedex_list:
                 pokedex = pokedex_list
                 return pokedex
+            else: abort(503)
         #@server.route('/config', methods=['POST'])
         #def submit_config():
         #    debug_log.info(request.get_json()) # TODO HTTP config handler
@@ -2097,7 +2100,7 @@ try:
         type_list = json.loads(read_file("data/types.json"))
         nature_list = json.loads(read_file("data/natures.json"))
         route_list = json.loads(read_file("data/routes-emerald.json"))
-        pokedex_list = json.loads(read_file("data/pokedex.json"))
+
         pokemon_schema = json.loads(read_file("data/schemas/pokemon.json"))
         validate_pokemon = fastjsonschema.compile(pokemon_schema)
         trainer_info_schema = json.loads(read_file("data/schemas/trainer_info.json"))
@@ -2131,6 +2134,7 @@ try:
         main_loop.start()
 
     # Dashboard
+
     http_server = Thread(target=httpServer)
     http_server.start()
 
@@ -2143,8 +2147,8 @@ try:
     encounter_log = json.loads(encounters) if encounters else {"encounter_log": []}
     
     shinies = read_file("stats/shiny_log.json")
-    shiny_log = json.loads(shinies) if shinies else {"shiny_log": []} 
-
+    shiny_log = json.loads(shinies) if shinies else {"shiny_log": []}
+    pokedex_list = json.loads(read_file("data/pokedex.json"))
     def on_window_close():
         if can_start_bot:
             release_all_inputs()

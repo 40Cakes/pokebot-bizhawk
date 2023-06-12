@@ -26,7 +26,9 @@ function dexEntries() {
         .replaceAll("'", "")
         .replaceAll("♀", "_F")
         .replaceAll("♂", "_M");
+
       pkmImg.src = "/interface/sprites/pokemon/" + cleanedPokemonName + ".png";
+
       pkmImg.width = "50";
 
       var nameCell = document.createElement("td");
@@ -171,4 +173,3 @@ function getMethod(method) {
 
 // todo - get game / fps / encounter rate / encounter phase # / ttl encounter / # shiny caught
 // get info from stats
-

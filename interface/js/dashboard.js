@@ -20,9 +20,11 @@ function trainer_info() {
   });
 }
 
+
 function get_type_image(type_str){
     return `<img src=\"/interface/sprites/types/${type_str}.png\">`
         
+
 
 }
 function opponent_info() {
@@ -69,6 +71,7 @@ function opponent_info() {
             $("#opponent_spdef_iv").text(opponent_info["spDefenseIV"]);
             $("#opponent_speed").text(opponent_info["speed"].toLocaleString());
             $("#opponent_speed_iv").text(opponent_info["speedIV"]);
+
 
 
     if (opponent_info["hpIV"] <= 15) {
@@ -156,6 +159,7 @@ function opponent_info() {
       $("#opponent_phase_lowest_sv").text("-");
     }
 
+
     if (opponent_info["stats"]["phase_lowest_sv"] < 8) {
       $("#opponent_phase_lowest_sv").css("color", "green");
     } else {
@@ -232,6 +236,7 @@ function encounter_log() {
     }
 
     wrapper.innerHTML = tr;
+
   });
 }
 function shiny_log() {
@@ -259,12 +264,14 @@ function shiny_log() {
         }
 
 
+
                     tr += '<tr><td><img class="sprite32" src="/interface/sprites/pokemon/' + sprite_dir + reverse_shiny_log[i]["pokemon_obj"]["name"] + '.png"></td><td class="text-center">' + reverse_shiny_log[i]["pokemon_obj"]["name"] + '</td><td class="text-center">' + reverse_shiny_log[i]["pokemon_obj"]["level"] + '</td><td class="text-center">' + reverse_shiny_log[i]["pokemon_obj"]["nature"] + '</td><td class="text-center"><img title="' + reverse_shiny_log[i]["pokemon_obj"]["itemName"] + '" class="sprite16" src="/interface/sprites/items/' + reverse_shiny_log[i]["pokemon_obj"]["itemName"] + '.png"></td><td class="text-center"><code class="code">' + reverse_shiny_log[i]["pokemon_obj"]["personality"] + '</code></td><td class="text-center" style="color:' + sv_colour + ';">' + reverse_shiny_log[i]["pokemon_obj"]["shinyValue"].toLocaleString() + '</td></tr>';
                 }
             }
 			
 			wrapper.innerHTML = tr
         })
+
 
 }
 
