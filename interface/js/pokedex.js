@@ -11,7 +11,6 @@ function dexEntries() {
       var numberB = b.pokedex_id;
       return numberA - numberB;
     });
-    console.log(dexArray);
     //loop through dex and output data
     dexArray.forEach(function (item) {
       var row = document.createElement("tr");
@@ -27,6 +26,9 @@ function dexEntries() {
         .replaceAll("♀", "_F")
         .replaceAll("♂", "_M");
       pkmImg.src = "./sprites/pokemon/" + cleanedPokemonName + ".png";
+      row.setAttribute("data-pokemon", cleanedPokemonName);
+      let locationStrings = item.encounters.map((i) => i.location);
+      row.setAttribute("data-locations", JSON.stringify(locationStrings));
       pkmImg.width = "50";
 
       var nameCell = document.createElement("td");
@@ -49,7 +51,6 @@ function dexEntries() {
         // Iterate over grouped encounters and create elements
         Object.keys(groupedEncounters).forEach((location) => {
           var encounters = groupedEncounters[location];
-          console.log(encounters);
           // Create pillbadge for each location it can be found on
           var div = document.createElement("div");
           var pill = document.createElement("span");
@@ -236,3 +237,25 @@ window.setInterval(function () {
   stats_info();
   emu_info();
 }, 1000);
+
+// logic for search bar filtering on route/pokemon name
+function filter() {
+  let searchStr = document
+    .getElementById("searchBar")
+    .value.toLocaleLowerCase();
+  const table = document.getElementById("pokedex");
+
+  // filter table rows on data-pokemon or data-locations if either contain searchStr
+  for (let row of table.children) {
+    let pkmName = row.getAttribute("data-pokemon");
+    let locations = row.getAttribute("data-locations");
+    if (
+      !pkmName.toLocaleLowerCase().includes(searchStr) &&
+      !locations.toLocaleLowerCase().includes(searchStr)
+    ) {
+      row.style.display = "nonea";
+    } else {
+      row.style.display = "";
+    }
+  }
+}

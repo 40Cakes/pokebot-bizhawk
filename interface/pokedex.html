@@ -100,6 +100,7 @@
                                 Emerald Pokédex
                             </h1>
                             <div class="content">
+                                <input id="searchBar" type="text" class="form-control" placeholder="Search..." onkeyup="filter()" />
                                 <table class="table table-no-outer-padding">
                                     <thead>
                                         <tr>
@@ -110,8 +111,7 @@
                                         </tr>
                                     </thead>
                                     <tbody id="pokedex">
-                                        <!-- need to loop through /data/pokemon.json and add encounter rate, location, shiny, caught -->
-                                        
+                                        <!-- the rows are set in interface/js/pokedex.js -->
                                     </tbody>
                                 </table>
                             </div>
