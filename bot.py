@@ -19,15 +19,18 @@ import logging                                   # https://docs.python.org/3/lib
 from logging.handlers import RotatingFileHandler # https://docs.python.org/3/library/logging.html
 # Image processing and detection modules            
 import cv2                                       # https://pypi.org/project/opencv-python/
+import flask
 import numpy                                     # https://pypi.org/project/numpy/
 from PIL import Image, ImageGrab, ImageFile      # https://pypi.org/project/Pillow/
-# HTTP server/interface modules         
+# HTTP server/static modules
 from flask import Flask, abort, jsonify, request # https://pypi.org/project/Flask/
 from flask_cors import CORS                      # https://pypi.org/project/Flask-Cors/
 import webview                                   # https://pypi.org/project/pywebview/
 # Parsing modules           
 from ruamel.yaml import YAML                     # https://pypi.org/project/ruamel.yaml/
 import fastjsonschema                            # https://pypi.org/project/fastjsonschema/
+
+from constants import LANG_MAPPING
 # Helper functions
 from data.HiddenPower import calculate_hidden_power
 from data.GameState import GameState
@@ -36,7 +39,8 @@ from data.MapData import mapRSE #mapFRLG
 import pandas as pd
 # Webhook stuffs
 from discord_webhook import DiscordWebhook, DiscordEmbed
-
+FLASK_PORT=6969
+FLASK_HOST="127.0.0.1"
 no_sleep_abilities = ["Shed Skin", "Insomnia", "Vital Spirit"]
 pickup_pokemon = ["Meowth", "Aipom", "Phanpy", "Teddiursa", "Zigzagoon", "Linoone"]
 
@@ -55,13 +59,7 @@ def average_iv_meets_threshold(pokemon: dict, threshold: int):
 
 @staticmethod
 def language_id_to_iso_639(lang: int):
-    match lang:
-        case 1: return "en"
-        case 2: return "jp"
-        case 3: return "fr"
-        case 4: return "es"
-        case 5: return "de"
-        case 6: return "it"
+    return LANG_MAPPING[lang]
 
 @staticmethod
 def wait_frames(frames: float):
@@ -118,7 +116,8 @@ def load_json_mmap(size, file):
                 debug_log.debug(f"Byte string: {byte_str}")
                 debug_log.debug(f"JSON result: {json_obj}")
             return json_obj
-        else: return False
+        else:
+            return False
     except Exception as e:
         if args.dm: debug_log.exception(str(e))
         return False
@@ -784,30 +783,35 @@ def log_encounter(pokemon: dict):
             csvpath = f"stats/encounters/Phase {total_shiny_encounters}/"
             os.makedirs(jsonpath, exist_ok=True)
             os.makedirs(csvpath, exist_ok=True)
-            if config["jsonlog"]:
-                write_file(f"{jsonpath}SV_{pokemon['shinyValue']} ({hour}-{minute}-{second}).json", json.dumps(pokemon, indent=4, sort_keys=True))
-            if config["csvlog"]:
-                pokemondata = pd.DataFrame.from_dict(pokemon, orient = 'index').drop(['enrichedMoves', 'moves', 'pp', 'type']).sort_index().transpose()
-                if os.path.exists(f"{csvpath}Encounters.csv"):
-                    pokemondata.to_csv(f"{csvpath}Encounters.csv", mode='a', encoding='utf-8',index=False, header=False)
-                else:
-                    pokemondata.to_csv(f"{csvpath}Encounters.csv", mode='a', encoding='utf-8',index=False)
+            write_log(hour, minute, jsonpath if config["jsonlog"] else csvpath, second) # scuffed but whatever
         if pokemon["shiny"] and "shiny_encounters" in config["log"]: # Log shiny Pokemon to a file
             path = f"stats/encounters/Shinies/"
             os.makedirs(path, exist_ok=True)
-            if config["jsonlog"]:
-                write_file(f"{path}SV_{pokemon['shinyValue']} {pokemon['name']} ({hour}-{minute}-{second}).json", json.dumps(pokemon, indent=4, sort_keys=True))
-            if config["csvlog"]:
-                pokemondata = pd.DataFrame.from_dict(pokemon, orient = 'index').drop(['enrichedMoves', 'moves', 'pp', 'type']).sort_index().transpose()
-                if os.path.exists(f"{path}Encounters.csv"):
-                    pokemondata.to_csv(f"{path}Encounters.csv", mode='a', encoding='utf-8',index=False, header=False)
-                else:
-                    pokemondata.to_csv(f"{path}Encounters.csv", mode='a', encoding='utf-8',index=False)
+            write_log(hour, minute, path, second)
 
         debug_log.info(f"Phase encounters: {phase_encounters} | {pokemon['name']} Phase Encounters: {mon_stats['phase_encounters']}")
         debug_log.info(f"{pokemon['name']} Encounters: {mon_stats['encounters']:,} | Lowest {pokemon['name']} SV seen this phase: {mon_stats['phase_lowest_sv']}")
         debug_log.info(f"Shiny {pokemon['name']} Encounters: {mon_stats['shiny_encounters']:,} | {pokemon['name']} Shiny Average: {shiny_average}")
         debug_log.info(f"Total Encounters: {total_encounters:,} | Total Shiny Encounters: {total_shiny_encounters:,} | Total Shiny Average: {total_stats['shiny_average']}")
+
+    def write_log(hour, minute, path, second):
+        if config["jsonlog"]:
+            write_json_log(hour, path, minute, second)
+        if config["csvlog"]:
+            write_csv_log(path)
+
+    def write_json_log(hour, jsonpath, minute, second):
+        write_file(f"{jsonpath}SV_{pokemon['shinyValue']} ({hour}-{minute}-{second}).json",
+                   json.dumps(pokemon, indent=4, sort_keys=True))
+
+    def write_csv_log(path):
+        pokemondata = pd.DataFrame.from_dict(pokemon, orient='index').drop(
+            ['enrichedMoves', 'moves', 'pp', 'type']).sort_index().transpose()
+        if os.path.exists(f"{path}Encounters.csv"):
+            pokemondata.to_csv(f"{path}Encounters.csv", mode='a', encoding='utf-8', index=False, header=False)
+        else:
+            pokemondata.to_csv(f"{path}Encounters.csv", mode='a', encoding='utf-8', index=False)
+
 
     # Use the correct article when describing the Pokemon
     # e.g. "A Poochyena", "An Anorith"
@@ -988,7 +992,7 @@ def identify_pokemon(starter: bool = False): # Identify opponent pokemon and inc
                 party_pp = [0, 0, 0, 0, 0, 0]
                 i = 0
                 for mon in party_info:
-                    if mon == None:
+                    if mon is None:
                         continue
 
                     if mon["hp"] > 0 and i != 0:
@@ -1008,7 +1012,7 @@ def identify_pokemon(starter: bool = False): # Identify opponent pokemon and inc
                     os._exit(1)
 
                 lead = party_info[lead_idx]
-                if lead != None:
+                if lead is not None:
                     debug_log.info(f"Replacing lead battler with {lead['speciesName']} (Party slot {lead_idx})")
 
                 press_button("A")
@@ -1202,9 +1206,14 @@ def httpServer(): # Run HTTP server to make data available via HTTP GET
         log = logging.getLogger('werkzeug')
         if not args.d: log.setLevel(logging.ERROR)
 
-        server = Flask(__name__)
+        server = Flask(__name__,static_folder="interface")
         CORS(server)
-
+        @server.route('/dashboard',methods=['GET'])
+        def req_dashboard():
+            return flask.render_template("dashboard.html")
+        @server.route('/dashboard/pokedex',methods=['GET'])
+        def req_dashboard_pokedex():
+            return flask.render_template("pokedex.html")
         @server.route('/trainer_info', methods=['GET'])
         def req_trainer_info():
             if trainer_info:
@@ -1258,18 +1267,21 @@ def httpServer(): # Run HTTP server to make data available via HTTP GET
             if route_list:
                 routes = route_list
                 return routes
+            else: abort(503)
+
         @server.route('/pokedex', methods=['GET'])
         def req_pokedex():
             if pokedex_list:
                 pokedex = pokedex_list
                 return pokedex
+            else: abort(503)
         #@server.route('/config', methods=['POST'])
         #def submit_config():
         #    debug_log.info(request.get_json()) # TODO HTTP config handler
         #    response = jsonify({})
         #    return response
 
-        server.run(debug=False, threaded=True, host="127.0.0.1", port=6969)
+        server.run(debug=False, threaded=True, host=FLASK_HOST, port=FLASK_PORT)
     except Exception as e: debug_log.exception(str(e))
 
 def mainLoop():
@@ -2082,7 +2094,6 @@ try:
         type_list = json.loads(read_file("data/types.json"))
         nature_list = json.loads(read_file("data/natures.json"))
         route_list = json.loads(read_file("data/routes-emerald.json"))
-        pokedex_list = json.loads(read_file("data/pokedex.json"))
 
         pokemon_schema = json.loads(read_file("data/schemas/pokemon.json"))
         validate_pokemon = fastjsonschema.compile(pokemon_schema)
@@ -2117,6 +2128,7 @@ try:
         main_loop.start()
 
     # Dashboard
+
     http_server = Thread(target=httpServer)
     http_server.start()
 
@@ -2129,8 +2141,8 @@ try:
     encounter_log = json.loads(encounters) if encounters else {"encounter_log": []}
     
     shinies = read_file("stats/shiny_log.json")
-    shiny_log = json.loads(shinies) if shinies else {"shiny_log": []} 
-
+    shiny_log = json.loads(shinies) if shinies else {"shiny_log": []}
+    pokedex_list = json.loads(read_file("data/pokedex.json"))
     def on_window_close():
         if can_start_bot:
             release_all_inputs()
@@ -2138,9 +2150,9 @@ try:
         debug_log.info("Dashboard closed on user input")
         os._exit(1)
 
-    window = webview.create_window("PokeBot", url="interface/dashboard.html", width=1280, height=720, resizable=True, hidden=False, frameless=False, easy_drag=True, fullscreen=False, text_select=True, zoomable=True)
+    url=f"http://{FLASK_HOST}:{FLASK_PORT}/dashboard"
+    window = webview.create_window("PokeBot", url=url, width=1280, height=720, resizable=True, hidden=False, frameless=False, easy_drag=True, fullscreen=False, text_select=True, zoomable=True)
     window.events.closed += on_window_close
-
     webview.start()
 
 except Exception as e:

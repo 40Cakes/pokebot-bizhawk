@@ -6,3 +6,4 @@ reports/
 roms/
 testing/
 .venv
+.idea
