@@ -784,8 +784,7 @@ def log_encounter(pokemon: dict):
             pokemondata = pd.DataFrame.from_dict(pokemon, orient='index').drop(
                 ['enrichedMoves', 'moves', 'pp', 'type']).sort_index().transpose()
             os.makedirs(csvpath, exist_ok=True)
-            if os.path.exists(f"{csvpath}{csvfile}"):
-                header = True
+            header = True if os.path.exists(f"{csvpath}{csvfile}") else False
             pokemondata.to_csv(f"{csvpath}{csvfile}", mode='a', encoding='utf-8', index=False, header=header)
 
         debug_log.info(f"Phase encounters: {phase_encounters} | {pokemon['name']} Phase Encounters: {mon_stats['phase_encounters']}")
