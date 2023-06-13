@@ -11,7 +11,6 @@ function dexEntries() {
       var numberB = b.pokedex_id;
       return numberA - numberB;
     });
-    console.log(dexArray);
     //loop through dex and output data
     dexArray.forEach(function (item) {
       var row = document.createElement("tr");
@@ -26,9 +25,10 @@ function dexEntries() {
         .replaceAll("'", "")
         .replaceAll("♀", "_F")
         .replaceAll("♂", "_M");
-
       pkmImg.src = "/interface/sprites/pokemon/" + cleanedPokemonName + ".png";
-
+      row.setAttribute("data-pokemon", cleanedPokemonName);
+      let locationStrings = item.encounters.map((i) => i.location);
+      row.setAttribute("data-locations", JSON.stringify(locationStrings));
       pkmImg.width = "50";
 
       var nameCell = document.createElement("td");
@@ -51,7 +51,6 @@ function dexEntries() {
         // Iterate over grouped encounters and create elements
         Object.keys(groupedEncounters).forEach((location) => {
           var encounters = groupedEncounters[location];
-          console.log(encounters);
           // Create pillbadge for each location it can be found on
           var div = document.createElement("div");
           var pill = document.createElement("span");
@@ -171,5 +170,91 @@ function getMethod(method) {
   }
 }
 
-// todo - get game / fps / encounter rate / encounter phase # / ttl encounter / # shiny caught
 // get info from stats
+function stats_info() {
+  $.ajax({
+    method: "GET",
+    url: "http://127.0.0.1:6969/stats",
+    crossDomain: true,
+    dataType: "json",
+    format: "json",
+    timeout: 50,
+  }).done(function (stats) {
+    $("#nav_stat_phase").text(
+      stats["totals"]["phase_encounters"].toLocaleString()
+    );
+    $("#nav_stat_total").text(stats["totals"]["encounters"].toLocaleString());
+    $("#nav_stat_shiny").text(
+      stats["totals"]["shiny_encounters"].toLocaleString()
+    );
+  });
+}
+
+// get info from emulator for game / fps
+function emu_info() {
+  $.ajax({
+    method: "GET",
+    url: "http://127.0.0.1:6969/emu_info",
+    crossDomain: true,
+    dataType: "json",
+    format: "json",
+    timeout: 50,
+  }).done(function (emu_info) {
+    $("#nav_emu_info").text(
+      emu_info["detectedGame"] + " | " + emu_info["emuFPS"] + "fps"
+    );
+  });
+}
+
+// encounter log for encounters/hr
+function encounter_log() {
+  $.ajax({
+    method: "GET",
+    url: "http://127.0.0.1:6969/encounter_log",
+    crossDomain: true,
+    dataType: "json",
+    format: "json",
+    timeout: 50,
+  }).done(function (encounter_log) {
+    reverse_encounter_log = encounter_log["encounter_log"].reverse();
+    if (encounter_log["encounter_log"][50]) {
+      var range = moment(reverse_encounter_log[0]["time_encountered"])
+        .subtract(moment(reverse_encounter_log[10]["time_encountered"]))
+        .format("x");
+      $("#encounters_hour").text(
+        Math.round((60 / (range / 1000 / 60)) * 10).toLocaleString() + "/h"
+      );
+    } else {
+      $("#encounters_hour").text("-");
+    }
+  });
+}
+// needed for encounters/hr calculation,
+// phase encounters/total encounters/shinys
+window.setInterval(function () {
+  encounter_log();
+  stats_info();
+  emu_info();
+}, 1000);
+
+// logic for search bar filtering on route/pokemon name
+function filter() {
+  let searchStr = document
+    .getElementById("searchBar")
+    .value.toLocaleLowerCase();
+  const table = document.getElementById("pokedex");
+
+  // filter table rows on data-pokemon or data-locations if either contain searchStr
+  for (let row of table.children) {
+    let pkmName = row.getAttribute("data-pokemon");
+    let locations = row.getAttribute("data-locations");
+    if (
+      !pkmName.toLocaleLowerCase().includes(searchStr) &&
+      !locations.toLocaleLowerCase().includes(searchStr)
+    ) {
+      row.style.display = "none";
+    } else {
+      row.style.display = "";
+    }
+  }
+}
