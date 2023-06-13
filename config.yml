@@ -10,7 +10,7 @@ bot_mode: spin
 # rayquaza
 # groudon
 # kyogre
-# souther island
+# southern island
 # mew
 # regi trio
 # deoxys runaways
@@ -48,29 +48,29 @@ save_every_x_encounters: 1000
 # Discord Webhook settings (optional)
 discord_webhook_url:
 # Your raw webhook URL here, if unspecified, the function's disabled.
-discord_webhook_ivs: formatted 
+discord_webhook_ivs: formatted
 # Choose how the IVs will display, either basic layout on one line or formatted for readability
 discord_ping_mode: role
 # "user" or "role", if left empty/invalid: pings are disabled.
-discord_shiny_ping: 
+discord_shiny_ping:
 # Discord User/Role ID to ping. Does nothing if "discord_ping_mode" isn't set. Currently supports only one at a time.
 
 # Wild Battles
 manual_catch: false
 use_spore: true
 catch:
-- shinies
-- perfect_ivs
+  - shinies
+  - perfect_ivs
 battle_others: false
 pokeball_priority:
-- premier_ball
-- ultra_ball
-- great_ball
-- poke_ball
-pokeball_override: # Per-species exceptions to pokeball_priority. Falls back to pokeball_priority if it has no Pokeballs in the list
-  Abra: 
+  - premier_ball
   - ultra_ball
   - great_ball
+  - poke_ball
+pokeball_override: # Per-species exceptions to pokeball_priority. Falls back to pokeball_priority if it has no Pokeballs in the list
+  Abra:
+    - ultra_ball
+    - great_ball
 cycle_lead_pokemon: true
 save_game_after_catch: true
 save_game_on_start: false
@@ -81,8 +81,8 @@ pickup_threshold: 3 # Number of pickup items to find before collection
 
 # Logging
 log:
-- all_encounters
-- shiny_encounters
+  - all_encounters
+  - shiny_encounters
 csvlog: true
 jsonlog: false
 
@@ -103,50 +103,50 @@ control_map:
   start: enter
   emu_screenshot: f12
   emu_reset_combo:
-  - ctrl
-  - r
+    - ctrl
+    - r
 banned_moves:
-- None
-  # 2-turn
-- Bounce
-- Dig
-- Dive
-- Fly
-- Sky Attack
-- Razor Wind
-- Doom Desire
-- Solar Beam
-  # Inconsistent
-- Fake Out
-- False Swipe
-- Nature Power
-- Present
-- Destiny Bond
-- Wrap
-- Snore
-- Spit Up
-- Bide
-- Bind
-- Counter
-- Future Sight
-- Mirror Coat
-- Grudge
-- Snatch
-- Spite
-- Curse
-- Endeavor
-- Revenge
-- Assist
-- Focus Punch
-- Eruption
-- Flail
-  # Ends battle
-- Roar
-- Whirlwind
-- Selfdestruct
-- Perish Song
-- Explosion
-- Memento
+  - None
+    # 2-turn
+  - Bounce
+  - Dig
+  - Dive
+  - Fly
+  - Sky Attack
+  - Razor Wind
+  - Doom Desire
+  - Solar Beam
+    # Inconsistent
+  - Fake Out
+  - False Swipe
+  - Nature Power
+  - Present
+  - Destiny Bond
+  - Wrap
+  - Snore
+  - Spit Up
+  - Bide
+  - Bind
+  - Counter
+  - Future Sight
+  - Mirror Coat
+  - Grudge
+  - Snatch
+  - Spite
+  - Curse
+  - Endeavor
+  - Revenge
+  - Assist
+  - Focus Punch
+  - Eruption
+  - Flail
+    # Ends battle
+  - Roar
+  - Whirlwind
+  - Selfdestruct
+  - Perish Song
+  - Explosion
+  - Memento
 
 # Cheats
 do_realistic_hunt: true
