@@ -48,6 +48,8 @@ save_every_x_encounters: 1000
 # Discord Webhook settings (optional)
 discord_webhook_url:
 # Your raw webhook URL here, if unspecified, the function's disabled.
+discord_webhook_ivs: formatted 
+# Choose how the IVs will display, either basic layout on one line or formatted for readability
 discord_ping_mode: role
 # "user" or "role", if left empty/invalid: pings are disabled.
 discord_shiny_ping: 
