@@ -25,7 +25,7 @@ function dexEntries() {
         .replaceAll("'", "")
         .replaceAll("♀", "_F")
         .replaceAll("♂", "_M");
-      pkmImg.src = "./sprites/pokemon/" + cleanedPokemonName + ".png";
+      pkmImg.src = "/interface/sprites/pokemon/" + cleanedPokemonName + ".png";
       row.setAttribute("data-pokemon", cleanedPokemonName);
       let locationStrings = item.encounters.map((i) => i.location);
       row.setAttribute("data-locations", JSON.stringify(locationStrings));
@@ -170,7 +170,6 @@ function getMethod(method) {
   }
 }
 
-// todo - get game / fps / encounter rate / encounter phase # / ttl encounter / # shiny caught
 // get info from stats
 function stats_info() {
   $.ajax({

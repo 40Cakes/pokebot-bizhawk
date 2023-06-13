@@ -3,7 +3,7 @@ var pokemon = Array("Abra", "Absol", "Aerodactyl", "Aggron", "Aipom", "Alakazam"
 var icon = pokemon[Math.floor(Math.random() * pokemon.length)];
 
 if (Math.random() < 0.1) {
-    $("#icon").attr("src", "sprites/pokemon/shiny/" + icon + ".png");
+    $("#icon").attr("src", "/interface/sprites/pokemon/shiny/" + icon + ".png");
 } else {
-    $("#icon").attr("src", "sprites/pokemon/" + icon + ".png");
+    $("#icon").attr("src", "/interface/sprites/pokemon/" + icon + ".png");
 }

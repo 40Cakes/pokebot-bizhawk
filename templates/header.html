@@ -1,0 +1,43 @@
+        <nav class="navbar">
+            <!-- Reference: https://www.gethalfmoon.com/docs/navbar -->
+            <div class="navbar-content">
+            </div>
+            <!-- Navbar brand -->
+            <a href="#" class="navbar-brand">
+                <img src="" class="icon" id="icon"> PokeBot
+            </a>
+            <!-- text-monospace = font-family shifted to monospace -->
+            <!-- Navbar nav -->
+            <ul class="navbar-nav d-none d-md-flex">
+                <!-- d-none = display: none, d-md-flex = display: flex on medium screens and up (width > 768px) -->
+                <li class="nav-item active">
+                    <a href="/dashboard" class="nav-link">Dashboard</a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link"><s>Shinies</s></a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link"><s>Encounters</s></a>
+                </li>
+                <li class="nav-item">
+                    <a href="/dashboard/pokedex" class="nav-link">Pokédex</a>
+                </li>
+            </ul>
+            <span class="badge text-monospace ml-auto" id="nav_emu_info">No game detected! | 0fps</span>
+            <span class="badge text-monospace ml-10">
+                <span title="Approx. encounters per hour (roughly calculated from the 10 most recent encounters)" id="encounters_hour">-</span>
+            </span>
+            <span class="badge text-monospace ml-10">
+                <span title="Phase encounters" id="nav_stat_phase">-</span>
+            <i class="fa fa-dot-circle-o" aria-hidden="true"></i> |
+            <span title="Total ancounters" id="nav_stat_total">-</span> <i class="fa fa-circle" aria-hidden="true"></i> |
+            <span title="Shiny encounters" id="nav_stat_shiny">-</span> <i class="fa fa-star" aria-hidden="true"></i>
+            </span>
+            <!-- Dark mode toggle -->
+            <button class="btn btn-action mr-5 ml-10" type="button" onclick="halfmoon.toggleDarkMode()" aria-label="Toggle dark mode">
+              <i class="fa fa-moon-o" aria-hidden="true"></i>
+          </button>
+        </nav>
+        </script>
+    <script src="{{ url_for('static',filename='js/header.js') }}"> </script>
+    </script>
