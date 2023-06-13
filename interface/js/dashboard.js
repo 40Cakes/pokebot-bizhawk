@@ -1,4 +1,3 @@
-
 function trainer_info() {
   $.ajax({
     method: "GET",
@@ -20,12 +19,8 @@ function trainer_info() {
   });
 }
 
-
-function get_type_image(type_str){
-    return `<img src=\"/interface/sprites/types/${type_str}.png\">`
-        
-
-
+function get_type_image(type_str) {
+  return `<img src=\"/interface/sprites/types/${type_str}.png\">`;
 }
 function opponent_info() {
   $.ajax({
@@ -42,37 +37,44 @@ function opponent_info() {
       (opponent_info["hp"] / opponent_info["maxHP"]) * 100 + "%"
     );
 
-
-            if (opponent_info["shiny"]) {
-                $("#opponent_name").css("color", "gold");
-                $("#opponent_shiny").text("Yes!");
-                $("#opponent_sprite").attr("src", "/interface/sprites/pokemon/shiny/" + opponent_info["name"] + ".png");
-                $("#opponent_shiny").css("color", "gold");
-                $("#opponent_shiny_value").css("color", "gold");
-            } else {
-                $("#opponent_shiny").text("No");
-                $("#opponent_sprite").attr("src", "/interface/sprites/pokemon/" + opponent_info["name"] + ".png");
-                $("#opponent_shiny").css("color", "red");
-                $("#opponent_shiny_value").css("color", "red");
-                $("#opponent_name").css("color", "");
-            }
-            $("#opponent_shiny_value").text(opponent_info["shinyValue"].toLocaleString());
-            $("#opponent_hidden_power_type").html(get_type_image(opponent_info["hiddenPowerType"]));
-            $("#opponent_personality").text(opponent_info["personality"]);
-            $("#opponent_hp").text(opponent_info["hp"].toLocaleString());
-            $("#opponent_hp_iv").text(opponent_info["hpIV"]);
-            $("#opponent_attack").text(opponent_info["attack"].toLocaleString());
-            $("#opponent_attack_iv").text(opponent_info["attackIV"]);
-            $("#opponent_defense").text(opponent_info["defense"].toLocaleString());
-            $("#opponent_defense_iv").text(opponent_info["defenseIV"]);
-            $("#opponent_spattack").text(opponent_info["spAttack"].toLocaleString());
-            $("#opponent_spattack_iv").text(opponent_info["spAttackIV"]);
-            $("#opponent_spdef").text(opponent_info["spDefense"].toLocaleString());
-            $("#opponent_spdef_iv").text(opponent_info["spDefenseIV"]);
-            $("#opponent_speed").text(opponent_info["speed"].toLocaleString());
-            $("#opponent_speed_iv").text(opponent_info["speedIV"]);
-
-
+    if (opponent_info["shiny"]) {
+      $("#opponent_name").css("color", "gold");
+      $("#opponent_shiny").text("Yes!");
+      $("#opponent_sprite").attr(
+        "src",
+        "/interface/sprites/pokemon/shiny/" + opponent_info["name"] + ".png"
+      );
+      $("#opponent_shiny").css("color", "gold");
+      $("#opponent_shiny_value").css("color", "gold");
+    } else {
+      $("#opponent_shiny").text("No");
+      $("#opponent_sprite").attr(
+        "src",
+        "/interface/sprites/pokemon/" + opponent_info["name"] + ".png"
+      );
+      $("#opponent_shiny").css("color", "red");
+      $("#opponent_shiny_value").css("color", "red");
+      $("#opponent_name").css("color", "");
+    }
+    $("#opponent_shiny_value").text(
+      opponent_info["shinyValue"].toLocaleString()
+    );
+    $("#opponent_hidden_power_type").html(
+      get_type_image(opponent_info["hiddenPowerType"])
+    );
+    $("#opponent_personality").text(opponent_info["personality"]);
+    $("#opponent_hp").text(opponent_info["hp"].toLocaleString());
+    $("#opponent_hp_iv").text(opponent_info["hpIV"]);
+    $("#opponent_attack").text(opponent_info["attack"].toLocaleString());
+    $("#opponent_attack_iv").text(opponent_info["attackIV"]);
+    $("#opponent_defense").text(opponent_info["defense"].toLocaleString());
+    $("#opponent_defense_iv").text(opponent_info["defenseIV"]);
+    $("#opponent_spattack").text(opponent_info["spAttack"].toLocaleString());
+    $("#opponent_spattack_iv").text(opponent_info["spAttackIV"]);
+    $("#opponent_spdef").text(opponent_info["spDefense"].toLocaleString());
+    $("#opponent_spdef_iv").text(opponent_info["spDefenseIV"]);
+    $("#opponent_speed").text(opponent_info["speed"].toLocaleString());
+    $("#opponent_speed_iv").text(opponent_info["speedIV"]);
 
     if (opponent_info["hpIV"] <= 15) {
       $("#opponent_hp_iv").css("color", "red");
@@ -117,13 +119,14 @@ function opponent_info() {
       $("#opponent_speed_iv").css("color", "gold");
     }
 
-
-            $("#opponent_level").text(opponent_info["level"]);
-            $("#opponent_nature").text(opponent_info["nature"]);
-            $("#opponent_location").text(opponent_info["metLocationName"]);
-            $("#opponent_item").text(opponent_info["itemName"]);
-            $("#opponent_item_image").attr("src", "/interface/sprites/items/" + opponent_info["itemName"] + ".png");
-
+    $("#opponent_level").text(opponent_info["level"]);
+    $("#opponent_nature").text(opponent_info["nature"]);
+    $("#opponent_location").text(opponent_info["metLocationName"]);
+    $("#opponent_item").text(opponent_info["itemName"]);
+    $("#opponent_item_image").attr(
+      "src",
+      "/interface/sprites/items/" + opponent_info["itemName"] + ".png"
+    );
 
     opponent_info["type"] = opponent_info["type"].filter((e) => e !== "Fairy");
     var types = "";
@@ -158,7 +161,6 @@ function opponent_info() {
       $("#opponent_shiny_average").text("-");
       $("#opponent_phase_lowest_sv").text("-");
     }
-
 
     if (opponent_info["stats"]["phase_lowest_sv"] < 8) {
       $("#opponent_phase_lowest_sv").css("color", "green");
@@ -197,7 +199,6 @@ function encounter_log() {
 
     reverse_encounter_log = encounter_log["encounter_log"].reverse();
 
-
     for (var i = 0; i < 25; i++) {
       if (reverse_encounter_log[i]) {
         if (reverse_encounter_log[i]["pokemon_obj"]["shiny"]) {
@@ -207,7 +208,6 @@ function encounter_log() {
           sprite_dir = "";
           sv_colour = "red";
         }
-
 
         tr +=
           '<tr><td><img class="sprite32" src="/interface/sprites/pokemon/' +
@@ -236,7 +236,6 @@ function encounter_log() {
     }
 
     wrapper.innerHTML = tr;
-
   });
 }
 function shiny_log() {
@@ -262,17 +261,60 @@ function shiny_log() {
           sprite_dir = "";
           sv_colour = "red";
         }
+        tr +=
+          '<tr><td><img class="sprite32" src="/interface/sprites/pokemon/' +
+          sprite_dir +
+          reverse_shiny_log[i]["pokemon_obj"]["name"] +
+          '.png"></td><td class="text-center">' +
+          reverse_shiny_log[i]["pokemon_obj"]["name"] +
+          '</td><td class="text-center">' +
+          reverse_shiny_log[i]["pokemon_obj"]["level"] +
+          '</td><td class="text-center">' +
+          reverse_shiny_log[i]["pokemon_obj"]["nature"] +
+          '</td><td class="text-center"><img title="' +
+          reverse_shiny_log[i]["pokemon_obj"]["itemName"] +
+          '" class="sprite16" src="/interface/sprites/items/' +
+          reverse_shiny_log[i]["pokemon_obj"]["itemName"] +
+          '.png"></td><td class="text-center"><code class="code">' +
+          reverse_shiny_log[i]["pokemon_obj"]["personality"] +
+          '</code></td><td class="text-center" style="color:' +
+          sv_colour +
+          ';">' +
+          reverse_shiny_log[i]["pokemon_obj"]["shinyValue"].toLocaleString() +
+          "</td></tr>";
+      }
+    }
 
+    wrapper.innerHTML = tr;
+  });
+}
 
-
-                    tr += '<tr><td><img class="sprite32" src="/interface/sprites/pokemon/' + sprite_dir + reverse_shiny_log[i]["pokemon_obj"]["name"] + '.png"></td><td class="text-center">' + reverse_shiny_log[i]["pokemon_obj"]["name"] + '</td><td class="text-center">' + reverse_shiny_log[i]["pokemon_obj"]["level"] + '</td><td class="text-center">' + reverse_shiny_log[i]["pokemon_obj"]["nature"] + '</td><td class="text-center"><img title="' + reverse_shiny_log[i]["pokemon_obj"]["itemName"] + '" class="sprite16" src="/interface/sprites/items/' + reverse_shiny_log[i]["pokemon_obj"]["itemName"] + '.png"></td><td class="text-center"><code class="code">' + reverse_shiny_log[i]["pokemon_obj"]["personality"] + '</code></td><td class="text-center" style="color:' + sv_colour + ';">' + reverse_shiny_log[i]["pokemon_obj"]["shinyValue"].toLocaleString() + '</td></tr>';
-                }
-            }
-			
-			wrapper.innerHTML = tr
-        })
-
-
+function stats_info() {
+  $.ajax({
+    method: "GET",
+    url: "http://127.0.0.1:6969/stats",
+    crossDomain: true,
+    dataType: "json",
+    format: "json",
+    timeout: 50,
+  }).done(function (stats) {
+    $("#stats_phase_encounters").text(
+      stats["totals"]["phase_encounters"].toLocaleString()
+    );
+    $("#stats_shiny_encounters").text(
+      stats["totals"]["shiny_encounters"].toLocaleString()
+    );
+    $("#stats_total_encounters").text(
+      stats["totals"]["encounters"].toLocaleString()
+    );
+    $("#stats_shiny_average").text(stats["totals"]["shiny_average"]);
+    $("#stats_shortest_phase").text(
+      stats["totals"]["shortest_phase_encounters"].toLocaleString()
+    );
+    $("#stats_longest_phase").text(
+      stats["totals"]["longest_phase_encounters"].toLocaleString()
+    );
+  });
 }
 
 window.setInterval(function () {
@@ -291,6 +333,10 @@ window.setInterval(function () {
 window.setInterval(function () {
   trainer_info();
 }, 50);
+
+window.setInterval(function () {
+  stats_info();
+}, 500);
 
 trainer_info();
 opponent_info();

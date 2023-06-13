@@ -857,6 +857,7 @@ def log_encounter(pokemon: dict):
         stats["totals"]["phase_encounters"] = 0
         stats["totals"]["phase_lowest_sv"] = "-"
         stats["totals"]["phase_lowest_sv_pokemon"] = ""
+        stats["totals"]["shortest_phase"] = shortest_phase
 
         # Reset phase stats
         for mon_name in stats["pokemon"]:
@@ -877,6 +878,7 @@ def log_encounter(pokemon: dict):
         elif pokemon["shinyValue"] <= stats["totals"]["phase_lowest_sv"]:
             stats["totals"]["phase_lowest_sv"] = pokemon["shinyValue"]
             stats["totals"]["phase_lowest_sv_pokemon"] = pokemon["name"]
+            
 
         common_stats()
 
