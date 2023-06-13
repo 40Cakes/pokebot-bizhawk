@@ -777,41 +777,20 @@ def log_encounter(pokemon: dict):
         now = datetime.now()
         year, month, day, hour, minute, second = f"{now.year}", f"{(now.month):02}", f"{(now.day):02}", f"{(now.hour):02}", f"{(now.minute):02}", f"{(now.second):02}"
             
-        if "all_encounters" in config["log"]: 
-            # Log all encounters to a file
-            jsonpath = f"stats/encounters/Phase {total_shiny_encounters}/{pokemon['metLocationName']}/{year}-{month}-{day}/{pokemon['name']}/"
-            csvpath = f"stats/encounters/Phase {total_shiny_encounters}/"
-            os.makedirs(jsonpath, exist_ok=True)
+        if config["log"]:
+            # Log all encounters to a CSV file per phase
+            csvpath = "stats/encounters/"
+            csvfile = f"Phase {total_shiny_encounters} Encounters.csv"
+            pokemondata = pd.DataFrame.from_dict(pokemon, orient='index').drop(
+                ['enrichedMoves', 'moves', 'pp', 'type']).sort_index().transpose()
             os.makedirs(csvpath, exist_ok=True)
-            write_log(hour, minute, jsonpath if config["jsonlog"] else csvpath, second) # scuffed but whatever
-        if pokemon["shiny"] and "shiny_encounters" in config["log"]: # Log shiny Pokemon to a file
-            path = f"stats/encounters/Shinies/"
-            os.makedirs(path, exist_ok=True)
-            write_log(hour, minute, path, second)
+            header = True if os.path.exists(f"{csvpath}{csvfile}") else False
+            pokemondata.to_csv(f"{csvpath}{csvfile}", mode='a', encoding='utf-8', index=False, header=header)
 
         debug_log.info(f"Phase encounters: {phase_encounters} | {pokemon['name']} Phase Encounters: {mon_stats['phase_encounters']}")
         debug_log.info(f"{pokemon['name']} Encounters: {mon_stats['encounters']:,} | Lowest {pokemon['name']} SV seen this phase: {mon_stats['phase_lowest_sv']}")
         debug_log.info(f"Shiny {pokemon['name']} Encounters: {mon_stats['shiny_encounters']:,} | {pokemon['name']} Shiny Average: {shiny_average}")
         debug_log.info(f"Total Encounters: {total_encounters:,} | Total Shiny Encounters: {total_shiny_encounters:,} | Total Shiny Average: {total_stats['shiny_average']}")
-
-    def write_log(hour, minute, path, second):
-        if config["jsonlog"]:
-            write_json_log(hour, path, minute, second)
-        if config["csvlog"]:
-            write_csv_log(path)
-
-    def write_json_log(hour, jsonpath, minute, second):
-        write_file(f"{jsonpath}SV_{pokemon['shinyValue']} ({hour}-{minute}-{second}).json",
-                   json.dumps(pokemon, indent=4, sort_keys=True))
-
-    def write_csv_log(path):
-        pokemondata = pd.DataFrame.from_dict(pokemon, orient='index').drop(
-            ['enrichedMoves', 'moves', 'pp', 'type']).sort_index().transpose()
-        if os.path.exists(f"{path}Encounters.csv"):
-            pokemondata.to_csv(f"{path}Encounters.csv", mode='a', encoding='utf-8', index=False, header=False)
-        else:
-            pokemondata.to_csv(f"{path}Encounters.csv", mode='a', encoding='utf-8', index=False)
-
 
     # Use the correct article when describing the Pokemon
     # e.g. "A Poochyena", "An Anorith"
@@ -853,8 +832,12 @@ def log_encounter(pokemon: dict):
                 embed.add_embed_field(name='IVs', value=f"HP: {pokemon['hpIV']} | ATK: {pokemon['attackIV']} | DEF: {pokemon['defenseIV']} | SPATK: {pokemon['spAttackIV']} | SPDEF: {pokemon['spDefenseIV']} | SPE: {pokemon['speedIV']}", inline=False)
             # Formatted IV list
             if config["discord_webhook_ivs"] == "formatted":
-                embed.add_embed_field(name='IVs', value=f"`╔═══╤═══╤═══╤═══╤═══╤═══╗`\n`║HP │ATK│DEF│SPA│SPD│SPE║`\n`╠═══╪═══╪═══╪═══╪═══╪═══╣`\n`║{pokemon['hpIV']:^3}│{pokemon['attackIV']:^3}│{pokemon['defenseIV']:^3}│{pokemon['spAttackIV']:^3}│{pokemon['spDefenseIV']:^3}│{pokemon['speedIV']:^3}║`\n`╚═══╧═══╧═══╧═══╧═══╧═══╝`", inline=False)
-            embed.add_embed_field(name='Species Phase Encounters', value=f"{stats['pokemon'][mon_name]['phase_encounters']}")
+                embed.add_embed_field(name='IVs', value=f"""
+                `╔═══╤═══╤═══╤═══╤═══╤═══╗`\n`
+                 ║HP │ATK│DEF│SPA│SPD│SPE║`\n`
+                 ╠═══╪═══╪═══╪═══╪═══╪═══╣`\n`
+                 ║{pokemon['hpIV']:^3}│{pokemon['attackIV']:^3}│{pokemon['defenseIV']:^3}│{pokemon['spAttackIV']:^3}│{pokemon['spDefenseIV']:^3}│{pokemon['speedIV']:^3}║`\n`
+                 ╚═══╧═══╧═══╧═══╧═══╧═══╝`""", inline=False)            embed.add_embed_field(name='Species Phase Encounters', value=f"{stats['pokemon'][mon_name]['phase_encounters']}")
             embed.add_embed_field(name='All Phase Encounters', value=f"{stats['totals']['phase_encounters']}")
             with open(f"interface/sprites/pokemon/shiny/{pokemon['name']}.png", "rb") as shiny:
                 webhook.add_file(file=shiny.read(), filename='shiny.png')

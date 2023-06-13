@@ -10,7 +10,7 @@ bot_mode: spin
 # rayquaza
 # groudon
 # kyogre
-# souther island
+# southern island
 # mew
 # regi trio
 # deoxys runaways
@@ -79,12 +79,8 @@ save_game_on_start: false
 pickup: true
 pickup_threshold: 3 # Number of pickup items to find before collection
 
-# Logging
-log:
-- all_encounters
-- shiny_encounters
-csvlog: true
-jsonlog: false
+# Pokemon encounter data logging (logs to stats/encounters/)
+log: true
 
 bot_instance_id: pokebot_1
 # If running multiple instances of the bot, set this to the same `bot_instance_id` string at the top of pokebot.lua (use a unique string per bot instance)

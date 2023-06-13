@@ -54,11 +54,17 @@
                 <!-- Container-fluid -->
                 <div class="container-fluid">
                   <div class="row">
-                    <div class="col-12">
-                        <div class="card h-lg-600 overflow-y-lg-auto p-5">
+                    <div class="col-12">                        
+                        <div class="card overflow-y-lg-auto p-5" style="position:fixed; top:1.4em; z-index:50; width:93%; margin: var(--content-and-card-spacing)">
                             <h1 class="content-title">
                                 Emerald Pokédex
                             </h1>
+                            <p>
+                                <input id="searchBar" type="text" class="form-control" placeholder="Search..." onkeyup="filter()" />
+                            </p> 
+                        </div>
+                        <div class="card h-lg-600 overflow-y-lg-auto p-5">
+
                             <div class="content">
                                 <table class="table table-no-outer-padding">
                                     <thead>
