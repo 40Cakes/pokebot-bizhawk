@@ -779,14 +779,14 @@ def log_encounter(pokemon: dict):
             
         if config["log"]:
             # Log all encounters to a CSV file per phase
-            csvpath = f"stats/encounters/Phase {total_shiny_encounters}/"
+            csvpath = "stats/encounters/"
+            csvfile = f"Phase {total_shiny_encounters} Encounters.csv"
             pokemondata = pd.DataFrame.from_dict(pokemon, orient='index').drop(
                 ['enrichedMoves', 'moves', 'pp', 'type']).sort_index().transpose()
             os.makedirs(csvpath, exist_ok=True)
-            if os.path.exists(f"{csvpath}Encounters.csv"):
-                pokemondata.to_csv(f"{csvpath}Encounters.csv", mode='a', encoding='utf-8', index=False, header=False)
-            else:
-                pokemondata.to_csv(f"{csvpath}Encounters.csv", mode='a', encoding='utf-8', index=False)
+            if os.path.exists(f"{csvpath}{csvfile}"):
+                header = True
+            pokemondata.to_csv(f"{csvpath}{csvfile}", mode='a', encoding='utf-8', index=False, header=header)
 
         debug_log.info(f"Phase encounters: {phase_encounters} | {pokemon['name']} Phase Encounters: {mon_stats['phase_encounters']}")
         debug_log.info(f"{pokemon['name']} Encounters: {mon_stats['encounters']:,} | Lowest {pokemon['name']} SV seen this phase: {mon_stats['phase_lowest_sv']}")
