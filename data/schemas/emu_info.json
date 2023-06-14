@@ -1,9 +1,0 @@
-{
-    "type": "object",
-    "properties": {
-        "frameCount": { "type": "number" },
-        "emuFPS": { "type": "number" },
-        "detectedGame": { "type": "string" },
-        "rngState": { "type": "number" }
-    }
-}

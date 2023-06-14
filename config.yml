@@ -41,6 +41,13 @@ johto_starter: Cyndaquil
 fossil: Anorith
 deoxys_puzzle_solved: false
 
+# User Interface
+ui: false
+ui_width: 1280
+ui_height: 720
+ui_ip: 127.0.0.1
+ui_port: 8888
+
 # Autosaves
 periodic_save: true
 save_every_x_encounters: 1000
@@ -48,7 +55,7 @@ save_every_x_encounters: 1000
 # Discord Webhook settings (optional)
 discord_webhook_url:
 # Your raw webhook URL here, if unspecified, the function's disabled.
-discord_webhook_ivs: formatted 
+discord_webhook_ivs: basic 
 # Choose how the IVs will display, either basic layout on one line or formatted for readability
 discord_ping_mode: role
 # "user" or "role", if left empty/invalid: pings are disabled.
