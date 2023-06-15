@@ -1,3 +1,6 @@
+from modules.Inputs import PressButton
+from modules.Stats import OpponentChanged
+
 # TODO
 def mode_regiTrio():
     if (not player_on_map(MapDataEnum.DESERT_RUINS.value) and
@@ -7,7 +10,7 @@ def mode_regiTrio():
         os._exit(1)
 
     while True:
-        while not opponent_changed():
+        while not OpponentChanged():
             emu_combo(["Up", "A"])
 
         identify_pokemon()
@@ -16,7 +19,7 @@ def mode_regiTrio():
             continue
 
         # Exit and re-enter
-        press_button("B")
+        PressButton("B")
         follow_path([
             (8, 21), 
             (8, 11)

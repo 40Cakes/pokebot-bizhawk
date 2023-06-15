@@ -1,3 +1,5 @@
+from modules.Stats import OpponentChanged
+
 # TODO
 def mode_move_until_obstructed():
     direction = config["direction"].lower()
@@ -22,7 +24,7 @@ def mode_move_until_obstructed():
                     continue
 
                 follow_path([(pos1[0], pos1[1]), (pos2[0], pos2[1])])
-            opponent_changed()
+            OpponentChanged()
 
         identify_pokemon()
 

@@ -1,3 +1,5 @@
+from modules.Inputs import PressButton, WaitFrames
+
 # TODO
 def collect_gift_mon(target: str):
     rng_frames = get_rngState(GetTrainer()["tid"], target)
@@ -10,8 +12,8 @@ def collect_gift_mon(target: str):
     while True:
         # Button mash through intro/title
         while GetTrainer()["state"] != GameState.OVERWORLD:
-            press_button("A")
-            wait_frames(8)
+            PressButton("A")
+            WaitFrames(8)
         
         # Text goes faster with B held
         hold_button("B")
@@ -21,8 +23,8 @@ def collect_gift_mon(target: str):
             if emu["rngState"] in rng_frames:
                 log.debug(f"Already rolled on RNG state: {emu['rngState']}, waiting...")
                 continue
-            press_button("A")
-            wait_frames(5)
+            PressButton("A")
+            WaitFrames(5)
         
         rng_frames["rngState"].append(emu["rngState"])
         write_file(f"stats/{GetTrainer()['tid']}/{target.lower()}.json", json.dumps(rng_frames, indent=4, sort_keys=True))
@@ -35,29 +37,29 @@ def collect_gift_mon(target: str):
         if config["mem_hacks"] and not mon["shiny"]:
             log_encounter(mon)
             hold_button("Power")
-            wait_frames(60)
+            WaitFrames(60)
             release_button("Power")
             continue
 
         while not find_image("start_menu/select.png"):
-            press_button("B")
+            PressButton("B")
 
             for i in range(0, 4):
                 if find_image("start_menu/select.png"):
                     break
-                wait_frames(1)
+                WaitFrames(1)
 
         while find_image("start_menu/select.png"):
-            press_button("B")
+            PressButton("B")
             
             for i in range(0, 4):
                 if not find_image("start_menu/select.png"):
                     break
-                wait_frames(1)
+                WaitFrames(1)
 
         start_menu("pokemon")
 
-        wait_frames(60)
+        WaitFrames(60)
 
         i = 0
         while i < party_size:
@@ -70,7 +72,7 @@ def collect_gift_mon(target: str):
 
         if not mon["shiny"]:
             hold_button("Power")
-            wait_frames(60)
+            WaitFrames(60)
             release_button("Power")
         else:
             input("Pausing bot for manual intervention. (Don't forget to pause the pokebot.lua script so you can provide inputs). Press Enter to continue...")

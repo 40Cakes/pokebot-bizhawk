@@ -1,3 +1,8 @@
+from modules.Inputs import ReleaseAllInputs, PressButton, WaitFrames
+
+no_sleep_abilities = ["Shed Skin", "Insomnia", "Vital Spirit"]
+pickup_pokemon = ["Meowth", "Aipom", "Phanpy", "Teddiursa", "Zigzagoon", "Linoone"]
+
 def start_menu(entry: str): # Function to open any start menu item - presses START, finds the menu entry and opens it
     if not entry in ["bag", "bot", "exit", "option", "pokedex", "pokemon", "pokenav", "save"]:
         return False
@@ -5,7 +10,7 @@ def start_menu(entry: str): # Function to open any start menu item - presses STA
     log.info(f"Opening start menu entry: {entry}")
     filename = f"start_menu/{entry.lower()}.png"
     
-    release_all_inputs()
+    ReleaseAllInputs()
 
     while not find_image("start_menu/select.png"):
         emu_combo(["B", "Start"])
@@ -13,9 +18,9 @@ def start_menu(entry: str): # Function to open any start menu item - presses STA
         for i in range(0, 10):
             if find_image("start_menu/select.png"):
                 break
-            wait_frames(1)
+            WaitFrames(1)
 
-    wait_frames(5)
+    WaitFrames(5)
 
     while not find_image(filename): # Find menu entry
         emu_combo(["Down", 10])
@@ -32,7 +37,7 @@ def bag_menu(category: str, item: str): # Function to find an item in the bag an
     while not find_image(f"start_menu/bag/{category.lower()}.png"):
         emu_combo(["Right", 25]) # Press right until the correct category is selected
 
-    wait_frames(60) # Wait for animations
+    WaitFrames(60) # Wait for animations
 
     log.info(f"Scanning for item: {item}...")
     
@@ -76,9 +81,9 @@ def pickup_items(): # If using a team of Pokemon with the ability "pickup", this
         log.info(f"Party has {item_count} item(s), won't collect until at threshold {config['pickup_threshold']}")
         return
 
-    wait_frames(60) # Wait for animations
+    WaitFrames(60) # Wait for animations
     start_menu("pokemon") # Open Pokemon menu
-    wait_frames(65)
+    WaitFrames(65)
 
     i = 0
     while i < party_size:
@@ -96,8 +101,8 @@ def pickup_items(): # If using a team of Pokemon with the ability "pickup", this
 
     # Close out of menus
     for i in range(0, 5):
-        press_button("B")
-        wait_frames(20)
+        PressButton("B")
+        WaitFrames(20)
 
 def save_game(): # Function to save the game via the save option in the start menu
     try:
@@ -107,25 +112,25 @@ def save_game(): # Function to save the game via the save option in the start me
         start_menu("save")
         while i < 2:
             while not find_image("start_menu/save/yes.png"):
-                wait_frames(10)
+                WaitFrames(10)
             while find_image("start_menu/save/yes.png"):
                 emu_combo(["A", 30])
                 i += 1
-        wait_frames(500) # Wait for game to save
-        press_button("SaveRAM") # Flush Bizhawk SaveRAM to disk
+        WaitFrames(500) # Wait for game to save
+        PressButton("SaveRAM") # Flush Bizhawk SaveRAM to disk
     except Exception as e:
         log.exception(str(e))
 
 def reset_game():
     log.info("Resetting...")
     hold_button("Power")
-    wait_frames(60)
+    WaitFrames(60)
     release_button("Power")
 
 def catch_pokemon(): # Function to catch pokemon
     try:
         while not find_image("battle/fight.png"):
-            release_all_inputs()
+            ReleaseAllInputs()
             emu_combo(["B", "Up", "Left"]) # Press B + up + left until FIGHT menu is visible
         
         if config["manual_catch"]:
@@ -164,11 +169,11 @@ def catch_pokemon(): # Function to catch pokemon
                 log.info(f"Can't sleep the opponent! Ability is {ability}")
 
             while not find_image("battle/bag.png"): 
-                release_all_inputs()
+                ReleaseAllInputs()
                 emu_combo(["B", "Up", "Right"]) # Press B + up + right until BAG menu is visible
 
         while True:
-            if find_image("battle/bag.png"): press_button("A")
+            if find_image("battle/bag.png"): PressButton("A")
 
             # Preferred ball order to catch wild mons + exceptions 
             # TODO read this data from memory instead
@@ -199,9 +204,9 @@ def catch_pokemon(): # Function to catch pokemon
                 log.info("Pokemon caught!")
 
                 while GetTrainer()["state"] != GameState.OVERWORLD:
-                    press_button("B")
+                    PressButton("B")
 
-                wait_frames(120) # Wait for animations
+                WaitFrames(120) # Wait for animations
                 
                 if config["save_game_after_catch"]: 
                     save_game()
@@ -235,9 +240,9 @@ def battle(): # Function to battle wild pokemon
             flee_battle()
             return False
         
-        press_button("A")
+        PressButton("A")
 
-        wait_frames(5)
+        WaitFrames(5)
 
         log.info(f"Best move against foe is {best_move['name']} (Effective power is {best_move['power']})")
 
@@ -252,13 +257,13 @@ def battle(): # Function to battle wild pokemon
         elif i == 3:
             emu_combo(["Down", "Right"])
         
-        press_button("A")
+        PressButton("A")
 
-        wait_frames(5)
+        WaitFrames(5)
 
         while GetTrainer()["state"] != GameState.OVERWORLD and not find_image("battle/fight.png"):
-            press_button("B")
-            wait_frames(1)
+            PressButton("B")
+            WaitFrames(1)
         
         ally_fainted = GetParty()[0]["hp"] == 0
         foe_fainted = GetOpponent()["hp"] == 0
@@ -322,8 +327,8 @@ def flee_battle(): # Function to run from wild pokemon
             while not find_image("battle/run.png") and GetTrainer()["state"] != GameState.OVERWORLD: 
                 emu_combo(["Right", 5, "Down", "B", 5])
             while find_image("battle/run.png") and GetTrainer()["state"] != GameState.OVERWORLD: 
-                press_button("A")
-            press_button("B")
-        wait_frames(30) # Wait for battle fade animation
+                PressButton("A")
+            PressButton("B")
+        WaitFrames(30) # Wait for battle fade animation
     except Exception as e:
         log.exception(str(e))

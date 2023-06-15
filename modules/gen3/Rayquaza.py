@@ -1,3 +1,6 @@
+from modules.Inputs import PressButton
+from modules.Stats import OpponentChanged
+
 # TODO
 def mode_rayquaza():
     trainer = GetTrainer()
@@ -7,7 +10,7 @@ def mode_rayquaza():
         os._exit(1)
 
     while True:
-        while not opponent_changed():
+        while not OpponentChanged():
             emu_combo(["A", "Up"]) # Walk up toward Rayquaza while mashing A
         
         identify_pokemon()
@@ -17,7 +20,7 @@ def mode_rayquaza():
             continue
 
         # Exit and re-enter
-        press_button("B")
+        PressButton("B")
         follow_path([
             (14, 11), 
             (12, 11), 

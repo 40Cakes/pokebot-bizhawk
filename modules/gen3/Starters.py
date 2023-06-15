@@ -1,3 +1,5 @@
+from modules.Inputs import ReleaseAllInputs, PressButton
+
 # TODO
 def mode_starters():
     choice = config["starter"].lower()
@@ -10,10 +12,10 @@ def mode_starters():
     log.info(f"Soft resetting starter Pokemon...")
     
     while True:
-        release_all_inputs()
+        ReleaseAllInputs()
 
         while GetTrainer()["state"] != GameState.OVERWORLD: 
-            press_button("A")
+            PressButton("A")
 
         # Short delay between A inputs to prevent accidental selection confirmations
         while GetTrainer()["state"] == GameState.OVERWORLD: 
@@ -33,13 +35,13 @@ def mode_starters():
                 log.debug(f"Already rolled on RNG state: {emu['rngState']}, waiting...")
             else:
                 while GetTrainer()["state"] == GameState.MISC_MENU: 
-                    press_button("A")
+                    PressButton("A")
 
                 starter_frames["rngState"].append(emu["rngState"])
                 write_file(f"stats/{GetTrainer()['tid']}/{choice}.json", json.dumps(starter_frames, indent=4, sort_keys=True))
 
                 while not find_image("battle/fight.png"):
-                    press_button("B")
+                    PressButton("B")
 
                     if config["mem_hacks"] and GetParty()[0]:
                         if identify_pokemon(starter=True):

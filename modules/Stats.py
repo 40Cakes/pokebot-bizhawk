@@ -1,5 +1,26 @@
+import os
+import math
+import pandas as pd
+from datetime import datetime
+from discord_webhook import DiscordWebhook, DiscordEmbed
+
+from modules.Inputs import ReleaseAllInputs, PressButton, WaitFrames
+
+os.makedirs("stats", exist_ok=True)
+
+totals = read_file("stats/totals.json")
+stats = json.loads(totals) if totals else {"pokemon": {}, "totals": {"longest_phase_encounters": 0, "shortest_phase_encounters": "-", "phase_lowest_sv": 99999, "phase_lowest_sv_pokemon": "", "encounters": 0, "phase_encounters": 0, "shiny_average": "-", "shiny_encounters": 0}}
+
+encounters = read_file("stats/encounter_log.json")
+encounter_log = json.loads(encounters) if encounters else {"encounter_log": []}
+    
+shinies = read_file("stats/shiny_log.json")
+shiny_log = json.loads(shinies) if shinies else {"shiny_log": []}
 # TODO
-def opponent_changed(): # This function checks if there is a different opponent since last check, indicating the game state is probably now in a battle
+
+last_opponent_personality = None
+
+def OpponentChanged(): # This function checks if there is a different opponent since last check, indicating the game state is probably now in a battle
     try:
         global last_opponent_personality
 
@@ -17,12 +38,6 @@ def opponent_changed(): # This function checks if there is a different opponent 
         return False
 
 def log_encounter(pokemon: dict):
-    global last_opponent_personality
-
-    # Show Gift Pokemon as the current encounter
-    if last_opponent_personality != pokemon["personality"]:
-        last_opponent_personality = pokemon["personality"]
-
     def common_stats():
         global stats, encounter_log
 
@@ -201,10 +216,10 @@ def identify_pokemon(starter: bool = False): # Identify opponent pokemon and inc
     legendary_hunt = config["bot_mode"] in ["manual", "rayquaza", "kyogre", "groudon", "southern island", "regi trio", "deoxys resets", "deoxys runaways", "mew"]
 
     log.info("Identifying Pokemon...")
-    release_all_inputs()
+    ReleaseAllInputs()
 
     if starter: 
-        wait_frames(30)
+        WaitFrames(30)
     else:
         i = 0
         while GetTrainer()["state"] not in [3, 255] and i < 250:
@@ -229,12 +244,9 @@ def identify_pokemon(starter: bool = False): # Identify opponent pokemon and inc
     else:
         if config["bot_mode"] == "manual":
             while GetTrainer()["state"] != GameState.OVERWORLD: 
-                wait_frames(100)
+                WaitFrames(100)
         elif starter:
             return False
-
-        if mon_is_desirable(pokemon):
-            catch_pokemon()
 
         if not legendary_hunt:
             if config["battle_others"]:
@@ -245,7 +257,7 @@ def identify_pokemon(starter: bool = False): # Identify opponent pokemon and inc
         elif config["bot_mode"] == "deoxys resets":
             if not config["mem_hacks"]:
                 # Wait until sprite has appeared in battle before reset
-                wait_frames(240)
+                WaitFrames(240)
             reset_game()
             return False
         else:
@@ -295,29 +307,29 @@ def identify_pokemon(starter: bool = False): # Identify opponent pokemon and inc
                 if lead is not None:
                     log.info(f"Replacing lead battler with {lead['speciesName']} (Party slot {lead_idx})")
 
-                press_button("A")
-                wait_frames(60)
-                press_button("A")
-                wait_frames(15)
+                PressButton("A")
+                WaitFrames(60)
+                PressButton("A")
+                WaitFrames(15)
 
                 for i in range(0, 3):
-                    press_button("Up")
-                    wait_frames(15)
+                    PressButton("Up")
+                    WaitFrames(15)
 
-                press_button("A")
-                wait_frames(15)
+                PressButton("A")
+                WaitFrames(15)
 
                 for i in range(0, lead_idx):
-                    press_button("Down")
-                    wait_frames(15)
+                    PressButton("Down")
+                    WaitFrames(15)
 
                 # Select target Pokemon and close out menu
-                press_button("A")
-                wait_frames(60)
+                PressButton("A")
+                WaitFrames(60)
                 
                 log.info("Replaced lead Pokemon!")
 
                 for i in range(0, 5):
-                    press_button("B")
-                    wait_frames(15)
+                    PressButton("B")
+                    WaitFrames(15)
         return False

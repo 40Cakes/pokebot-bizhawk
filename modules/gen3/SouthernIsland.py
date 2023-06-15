@@ -1,3 +1,6 @@
+from modules.Inputs import PressButton
+from modules.Stats import OpponentChanged
+
 # TODO
 def mode_southernIsland():
     trainer = GetTrainer()
@@ -7,7 +10,7 @@ def mode_southernIsland():
         os._exit(1)
 
     while True:
-        while not opponent_changed():
+        while not OpponentChanged():
             emu_combo(["A", "Up"])
 
         identify_pokemon()
@@ -17,7 +20,7 @@ def mode_southernIsland():
             continue
 
         # Exit and re-enter
-        press_button("B")
+        PressButton("B")
         follow_path([
             (13, 99, MapDataEnum.SOUTHERN_ISLAND.value), 
             (14, -99, MapDataEnum.SOUTHERN_ISLAND_A.value)

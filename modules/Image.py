@@ -25,7 +25,7 @@ def find_image(file: str): # Function to find an image in a BizHawk screenshot
             return True
         else:
             return False
-        
+
     except Exception as e:
         log.exception(str(e))
         return False

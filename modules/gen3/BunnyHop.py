@@ -1,15 +1,18 @@
+from modules.Inputs import ReleaseAllInputs, WaitFrames
+from modules.Stats import OpponentChanged
+
 # TODO
 def mode_bunnyHop():
     log.info("Bunny hopping...")
     i = 0
-    while not opponent_changed():
+    while not OpponentChanged():
         if i < 250:
             hold_button("B")
-            wait_frames(1)
+            WaitFrames(1)
         else:
-            release_all_inputs()
-            wait_frames(10)
+            ReleaseAllInputs()
+            WaitFrames(10)
             i = 0
         i += 1
-    release_all_inputs()
+    ReleaseAllInputs()
     identify_pokemon()

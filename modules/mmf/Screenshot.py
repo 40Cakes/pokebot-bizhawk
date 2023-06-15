@@ -3,6 +3,7 @@ import time
 import mmap
 import cv2
 import numpy
+import array
 from PIL import Image
 
 from modules.Config import GetConfig

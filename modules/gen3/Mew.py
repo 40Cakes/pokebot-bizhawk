@@ -1,3 +1,6 @@
+from modules.Inputs import PressButton, WaitFrames
+from modules.Stats import OpponentChanged
+
 # TODO
 def mode_farawayMew():
     trainer = GetTrainer()
@@ -14,7 +17,7 @@ def mode_farawayMew():
                 (22, -99, MapDataEnum.FARAWAY_ISLAND_A.value)
             ])
         
-        wait_frames(30)
+        WaitFrames(30)
         hold_button("B")
         
         follow_path([
@@ -25,14 +28,14 @@ def mode_farawayMew():
         # Follow Mew up while mashing A
         hold_button("Up")
 
-        while not opponent_changed():
+        while not OpponentChanged():
             emu_combo(["A", 8])
 
         identify_pokemon()
 
         for i in range(0, 6):
-            press_button("B")
-            wait_frames(10)
+            PressButton("B")
+            WaitFrames(10)
 
         # Exit to entrance area
         follow_path([

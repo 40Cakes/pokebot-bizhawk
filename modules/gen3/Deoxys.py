@@ -1,3 +1,6 @@
+from modules.Inputs import PressButton, WaitFrames
+from modules.Stats import OpponentChanged
+
 # TODO
 def mode_deoxysPuzzle(do_encounter: bool = True):
     def retry_puzzle_if_stuck(success: bool):
@@ -15,7 +18,7 @@ def mode_deoxysPuzzle(do_encounter: bool = True):
         while not GetTrainer()["state"] == GameState.OVERWORLD:
             emu_combo(["A", 8])
 
-        wait_frames(60)
+        WaitFrames(60)
 
         # Center
         if GetTrainer()["posY"] != 13:
@@ -66,12 +69,12 @@ def mode_deoxysPuzzle(do_encounter: bool = True):
             config["bot_mode"] = "deoxys resets"
             config["deoxys_puzzle_solved"] = True
             save_game()
-            wait_frames(10)
+            WaitFrames(10)
             return True
 
-        while not opponent_changed():
-            press_button("A")
-            wait_frames(1)
+        while not OpponentChanged():
+            PressButton("A")
+            WaitFrames(1)
 
         identify_pokemon()
 
@@ -79,8 +82,8 @@ def mode_deoxysPuzzle(do_encounter: bool = True):
             continue
 
         for i in range(0, 4):
-            press_button("B")
-            wait_frames(15)
+            PressButton("B")
+            WaitFrames(15)
 
         # Exit and re-enter
         follow_path([
@@ -101,7 +104,7 @@ def mode_deoxysResets():
             emu_combo(["A", 8])
 
         # Wait for area to load properly
-        wait_frames(60)
+        WaitFrames(60)
 
         if not player_on_map(MapDataEnum.BIRTH_ISLAND.value) or GetTrainer()["posX"] != 15:
             log.info("Please place the player below the triangle at its final position on Birth Island, then save before restarting the script.")
@@ -112,7 +115,7 @@ def mode_deoxysResets():
             if emu["rngState"] in deoxys_frames:
                 log.debug(f"Already rolled on RNG state: {emu['rngState']}, waiting...")
             else:
-                while not opponent_changed():
+                while not OpponentChanged():
                     emu_combo(["A", 8])
 
                 deoxys_frames["rngState"].append(emu["rngState"])

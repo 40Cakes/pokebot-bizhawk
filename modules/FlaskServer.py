@@ -12,6 +12,8 @@ config = GetConfig()
 
 # TODO there's an issue with relative pathing, the static folder can't be found
 
+pokedex_list = json.loads(read_file("data/pokedex.json")) # TODO
+
 def httpServer(): # Run Flask server to make bot data available via HTTP GET
     try:
         log = logging.getLogger("werkzeug")

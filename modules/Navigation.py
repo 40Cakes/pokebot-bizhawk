@@ -1,5 +1,8 @@
+from modules.Inputs import ReleaseAllInputs, PressButton, WaitFrames
+from modules.Stats import OpponentChanged
+
 def run_until_obstructed(direction: str, run: bool = True): # Function to run until trainer position stops changing
-    press_button("B") # press and release B in case of a random pokenav call
+    PressButton("B") # press and release B in case of a random pokenav call
 
     hold_button(direction)
     last_x = GetTrainer()["posX"]
@@ -13,7 +16,7 @@ def run_until_obstructed(direction: str, run: bool = True): # Function to run un
         if run: 
             hold_button("B")
         
-        wait_frames(1)
+        WaitFrames(1)
 
         trainer = GetTrainer()
         if last_x == trainer["posX"] and last_y == trainer["posY"]: 
@@ -24,13 +27,13 @@ def run_until_obstructed(direction: str, run: bool = True): # Function to run un
         last_y = trainer["posY"]
         dir_unchanged = 0
 
-        if opponent_changed():
+        if OpponentChanged():
             return None
 
-    release_all_inputs()
-    wait_frames(1)
-    press_button("B")
-    wait_frames(1)
+    ReleaseAllInputs()
+    WaitFrames(1)
+    PressButton("B")
+    WaitFrames(1)
 
     return [last_x, last_y]
 
@@ -51,7 +54,7 @@ def follow_path(coords: list, run: bool = True, exit_when_stuck: bool = False):
             if direction != None:
                 release_button(direction)
 
-            if opponent_changed():
+            if OpponentChanged():
                 identify_pokemon()
                 return
 
@@ -81,21 +84,21 @@ def follow_path(coords: list, run: bool = True, exit_when_stuck: bool = False):
                     log.info("Bot hasn't moved for a while. Is it stuck?")
                     
                     if exit_when_stuck:
-                        release_all_inputs()
+                        ReleaseAllInputs()
                         return False
 
                 # Press B occasionally in case there's a menu/dialogue open
                 if stuck_time % 120 == 0:
                     release_button("B")
-                    wait_frames(1)
-                    press_button("B")
+                    WaitFrames(1)
+                    PressButton("B")
             else:
                 stuck_time = 0
 
             hold_button(direction)
-            wait_frames(1)
+            WaitFrames(1)
 
-    release_all_inputs()
+    ReleaseAllInputs()
     return True
 
 def player_on_map(map_data: tuple):
