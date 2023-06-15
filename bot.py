@@ -833,11 +833,11 @@ def log_encounter(pokemon: dict):
             # Formatted IV list
             if config["discord_webhook_ivs"] == "formatted":
                 embed.add_embed_field(name='IVs', value=f"""
-                `╔═══╤═══╤═══╤═══╤═══╤═══╗`\n`
-                 ║HP │ATK│DEF│SPA│SPD│SPE║`\n`
-                 ╠═══╪═══╪═══╪═══╪═══╪═══╣`\n`
-                 ║{pokemon['hpIV']:^3}│{pokemon['attackIV']:^3}│{pokemon['defenseIV']:^3}│{pokemon['spAttackIV']:^3}│{pokemon['spDefenseIV']:^3}│{pokemon['speedIV']:^3}║`\n`
-                 ╚═══╧═══╧═══╧═══╧═══╧═══╝`""", inline=False)            
+                `╔═══╤═══╤═══╤═══╤═══╤═══╗`
+                `║HP │ATK│DEF│SPA│SPD│SPE║`
+                `╠═══╪═══╪═══╪═══╪═══╪═══╣`
+                `║{pokemon['hpIV']:^3}│{pokemon['attackIV']:^3}│{pokemon['defenseIV']:^3}│{pokemon['spAttackIV']:^3}│{pokemon['spDefenseIV']:^3}│{pokemon['speedIV']:^3}║`
+                `╚═══╧═══╧═══╧═══╧═══╧═══╝`""", inline=False)               
             embed.add_embed_field(name='Species Phase Encounters', value=f"{stats['pokemon'][mon_name]['phase_encounters']}")
             embed.add_embed_field(name='All Phase Encounters', value=f"{stats['totals']['phase_encounters']}")
             with open(f"interface/sprites/pokemon/shiny/{pokemon['name']}.png", "rb") as shiny:
