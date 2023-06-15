@@ -1,7 +1,9 @@
+host = window.location.protocol + "//" + window.location.host
+
 function dexEntries() {
     $.ajax({
         method: "GET",
-        url: "http://127.0.0.1:8888/pokedex",
+        url: host + "/pokedex",
     }).done(function(dex) {
         var tableBody = document.querySelector("#pokedex");
 
@@ -174,7 +176,7 @@ function getMethod(method) {
 function stats_data() {
     $.ajax({
         method: "GET",
-        url: "http://127.0.0.1:8888/stats",
+        url: host + "/stats",
         crossDomain: true,
         dataType: "json",
         format: "json",
@@ -194,7 +196,7 @@ function stats_data() {
 function emu_data() {
     $.ajax({
         method: "GET",
-        url: "http://127.0.0.1:8888/emu_data",
+        url: host + "/emu_data",
         crossDomain: true,
         dataType: "json",
         format: "json",
@@ -210,7 +212,7 @@ function emu_data() {
 function encounter_log() {
     $.ajax({
         method: "GET",
-        url: "http://127.0.0.1:8888/encounter_log",
+        url: host + "/encounter_log",
         crossDomain: true,
         dataType: "json",
         format: "json",

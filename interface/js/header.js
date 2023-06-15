@@ -1,7 +1,9 @@
+host = window.location.protocol + "//" + window.location.host
+
 function header_stats_data() {
     $.ajax({
         method: "GET",
-        url: "http://127.0.0.1:8888/stats",
+        url: host + "/stats",
         crossDomain: true,
         dataType: "json",
         format: "json",
@@ -21,7 +23,7 @@ function header_stats_data() {
 function header_emu_data() {
     $.ajax({
         method: "GET",
-        url: "http://127.0.0.1:8888/emu_data",
+        url: host + "/emu_data",
         crossDomain: true,
         dataType: "json",
         format: "json",
@@ -37,7 +39,7 @@ function header_emu_data() {
 function header_encounter_log() {
     $.ajax({
         method: "GET",
-        url: "http://127.0.0.1:8888/encounter_log",
+        url: host + "/encounter_log",
         crossDomain: true,
         dataType: "json",
         format: "json",

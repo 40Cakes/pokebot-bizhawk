@@ -42,24 +42,26 @@ fossil: Anorith
 deoxys_puzzle_solved: false
 
 # User Interface
-ui: false
-ui_width: 1280
-ui_height: 720
-ui_ip: 127.0.0.1
-ui_port: 8888
+ui:
+  enable: false
+  width: 1280
+  height: 720
+  ip: 127.0.0.1
+  port: 8888
 
 # Autosaves
 periodic_save: true
 save_every_x_encounters: 1000
 
+# TODO clean up this config
 # Discord Webhook settings (optional)
-discord_webhook_url:
-# Your raw webhook URL here, if unspecified, the function's disabled.
-discord_webhook_ivs: basic 
-# Choose how the IVs will display, either basic layout on one line or formatted for readability
-discord_ping_mode: role
-# "user" or "role", if left empty/invalid: pings are disabled.
-discord_shiny_ping: 
+#discord_webhook_url:
+## Your raw webhook URL here, if unspecified, the function's disabled.
+#discord_webhook_ivs: basic 
+## Choose how the IVs will display, either basic layout on one line or formatted for readability
+#discord_ping_mode: role
+## "user" or "role", if left empty/invalid: pings are disabled.
+#discord_shiny_ping: 
 # Discord User/Role ID to ping. Does nothing if "discord_ping_mode" isn't set. Currently supports only one at a time.
 
 # Wild Battles
@@ -80,7 +82,6 @@ pokeball_override: # Per-species exceptions to pokeball_priority. Falls back to 
   - great_ball
 cycle_lead_pokemon: true
 save_game_after_catch: true
-save_game_on_start: false
 
 # Pickup
 pickup: true
@@ -92,22 +93,6 @@ log: true
 bot_instance_id: pokebot_1
 # If running multiple instances of the bot, set this to the same `bot_instance_id` string at the top of pokebot.lua (use a unique string per bot instance)
 
-# Preferences
-control_map:
-  a: x
-  b: z
-  l: w
-  r: e
-  up: up
-  down: down
-  right: right
-  left: left
-  select: space
-  start: enter
-  emu_screenshot: f12
-  emu_reset_combo:
-  - ctrl
-  - r
 banned_moves:
 - None
   # 2-turn
@@ -152,4 +137,4 @@ banned_moves:
 - Memento
 
 # Cheats
-do_realistic_hunt: true
+mem_hacks: false # Perform "cheaty" actions such as peeking into eggs to check shininess, knowing instantly which route a roamer is on, uncover Feebas tiles etc.

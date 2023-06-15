@@ -1,7 +1,9 @@
+host = window.location.protocol + "//" + window.location.host
+
 function trainer_data() {
     $.ajax({
         method: "GET",
-        url: "http://127.0.0.1:8888/trainer_data",
+        url: host + "/trainer_data",
         crossDomain: true,
         dataType: "json",
         format: "json",
@@ -26,7 +28,7 @@ function get_type_image(type_str) {
 function encounter_info() {
     $.ajax({
         method: "GET",
-        url: "http://127.0.0.1:8888/encounter_info",
+        url: host + "/encounter_info",
         crossDomain: true,
         dataType: "json",
         format: "json",
@@ -188,7 +190,7 @@ function encounter_info() {
 function encounter_log() {
     $.ajax({
         method: "GET",
-        url: "http://127.0.0.1:8888/encounter_log",
+        url: host + "/encounter_log",
         crossDomain: true,
         dataType: "json",
         format: "json",
@@ -243,7 +245,7 @@ function encounter_log() {
 function shiny_log() {
     $.ajax({
         method: "GET",
-        url: "http://127.0.0.1:8888/shiny_log",
+        url: host + "/shiny_log",
         crossDomain: true,
         dataType: "json",
         format: "json",
@@ -294,7 +296,7 @@ function shiny_log() {
 function stats_data() {
     $.ajax({
         method: "GET",
-        url: "http://127.0.0.1:8888/stats",
+        url: host + "/stats",
         crossDomain: true,
         dataType: "json",
         format: "json",

@@ -13,6 +13,6 @@ def LoadJsonMmap(size, file):
             byte_str = bytes_io.read()
             json_obj = json.loads(byte_str.decode("utf-8").split("\x00")[0]) # Only grab the data before \x00 null chars
             return json_obj
-        else: return False
+        else: return None
     except:
         return None

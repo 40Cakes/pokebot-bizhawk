@@ -199,11 +199,7 @@ def GetParty():
     try:
         party = LoadJsonMmap(8192, "bizhawk_party_data-" + config["bot_instance_id"])["party"]
         if party:
-            party_list = []
-            for pokemon in party:
-                if PokemonValidator(pokemon):
-                    party_list.append(EnrichMonData(pokemon))
-                else: continue
+            party_list = [pokemon for pokemon in party if PokemonValidator(pokemon)]
             return party_list
         return None
     except Exception as e:
