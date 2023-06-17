@@ -1,4 +1,8 @@
-from modules.Inputs import ReleaseAllInputs, PressButton
+from data.GameState import GameState
+from modules.Files import WriteFile
+from modules.Image import DetectTemplate
+from modules.Inputs import EmuCombo, ReleaseAllInputs, PressButton
+from modules.Stats import EncounterPokemon
 
 # TODO
 def mode_starters():
@@ -19,15 +23,15 @@ def mode_starters():
 
         # Short delay between A inputs to prevent accidental selection confirmations
         while GetTrainer()["state"] == GameState.OVERWORLD: 
-            emu_combo(["A", 10])
+            EmuCombo(["A", 10])
 
         # Press B to back out of an accidental selection when scrolling to chosen starter
         if choice == "mudkip":
-            while not find_image("mudkip.png"): 
-                emu_combo(["B", "Right"])
+            while not DetectTemplate("mudkip.png"): 
+                EmuCombo(["B", "Right"])
         elif choice == "treecko":
-            while not find_image("treecko.png"): 
-                emu_combo(["B", "Left"])
+            while not DetectTemplate("treecko.png"): 
+                EmuCombo(["B", "Left"])
 
         while True:
             emu = GetEmu()
@@ -38,13 +42,13 @@ def mode_starters():
                     PressButton("A")
 
                 starter_frames["rngState"].append(emu["rngState"])
-                write_file(f"stats/{GetTrainer()['tid']}/{choice}.json", json.dumps(starter_frames, indent=4, sort_keys=True))
+                WriteFile(f"stats/{GetTrainer()['tid']}/{choice}.json", json.dumps(starter_frames, indent=4, sort_keys=True))
 
-                while not find_image("battle/fight.png"):
+                while not DetectTemplate("battle/fight.png"):
                     PressButton("B")
 
                     if config["mem_hacks"] and GetParty()[0]:
-                        if identify_pokemon(starter=True):
+                        if EncounterPokemon(starter=True):
                             input("Pausing bot for manual intervention. (Don't forget to pause the pokebot.lua script so you can provide inputs). Press Enter to continue...")
                         else:
                             reset_game()
@@ -52,7 +56,7 @@ def mode_starters():
                 else:
                     while True:
                         if GetParty()[0]:
-                            if identify_pokemon(starter=True): 
+                            if EncounterPokemon(starter=True): 
                                 input("Pausing bot for manual intervention. (Don't forget to pause the pokebot.lua script so you can provide inputs). Press Enter to continue...")
                             else:
                                 reset_game()

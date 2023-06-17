@@ -1,5 +1,5 @@
 from modules.Inputs import ReleaseAllInputs, WaitFrames
-from modules.Stats import OpponentChanged
+from modules.Stats import EncounterPokemon, OpponentChanged
 
 # TODO
 def mode_bunnyHop():
@@ -15,4 +15,4 @@ def mode_bunnyHop():
             i = 0
         i += 1
     ReleaseAllInputs()
-    identify_pokemon()
+    EncounterPokemon()

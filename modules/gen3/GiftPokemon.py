@@ -1,4 +1,7 @@
-from modules.Inputs import PressButton, WaitFrames
+from data.GameState import GameState
+from modules.Files import WriteFile
+from modules.Image import DetectTemplate
+from modules.Inputs import EmuCombo, PressButton, WaitFrames
 
 # TODO
 def collect_gift_mon(target: str):
@@ -27,7 +30,7 @@ def collect_gift_mon(target: str):
             WaitFrames(5)
         
         rng_frames["rngState"].append(emu["rngState"])
-        write_file(f"stats/{GetTrainer()['tid']}/{target.lower()}.json", json.dumps(rng_frames, indent=4, sort_keys=True))
+        WriteFile(f"stats/{GetTrainer()['tid']}/{target.lower()}.json", json.dumps(rng_frames, indent=4, sort_keys=True))
 
         mon = GetParty()[party_size]
         
@@ -41,19 +44,19 @@ def collect_gift_mon(target: str):
             release_button("Power")
             continue
 
-        while not find_image("start_menu/select.png"):
+        while not DetectTemplate("start_menu/select.png"):
             PressButton("B")
 
             for i in range(0, 4):
-                if find_image("start_menu/select.png"):
+                if DetectTemplate("start_menu/select.png"):
                     break
                 WaitFrames(1)
 
-        while find_image("start_menu/select.png"):
+        while DetectTemplate("start_menu/select.png"):
             PressButton("B")
             
             for i in range(0, 4):
-                if not find_image("start_menu/select.png"):
+                if not DetectTemplate("start_menu/select.png"):
                     break
                 WaitFrames(1)
 
@@ -63,10 +66,10 @@ def collect_gift_mon(target: str):
 
         i = 0
         while i < party_size:
-            emu_combo(["Down", 15])
+            EmuCombo(["Down", 15])
             i += 1
 
-        emu_combo(["A", 15, "A", 60])
+        EmuCombo(["A", 15, "A", 60])
 
         log_encounter(mon)
 

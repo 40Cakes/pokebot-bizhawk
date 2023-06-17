@@ -1,23 +1,21 @@
 import json
 import numpy
+import logging
 import fastjsonschema
 from datetime import datetime
 from modules.Config import GetConfig
+from modules.Files import ReadFile
 from modules.mmf.Common import LoadJsonMmap
 from modules.mmf.Trainer import GetTrainer
 
+log = logging.getLogger(__name__)
 config = GetConfig()
 
-with open("./data/items.json", mode="r", encoding="utf-8") as f:
-    item_list = json.loads(f.read())
-with open("./data/locations.json", mode="r", encoding="utf-8") as f:
-    location_list = json.loads(f.read())
-with open("./data/moves.json", mode="r", encoding="utf-8") as f:
-    move_list = json.loads(f.read())
-with open("./data/pokemon.json", mode="r", encoding="utf-8") as f:
-    pokemon_list = json.loads(f.read())
-with open("./data/placeholder_pokemon.json", mode="r", encoding="utf-8") as f:
-    placeholder_pokemon = json.loads(f.read())
+item_list = json.loads(ReadFile("./data/items.json"))
+location_list = json.loads(ReadFile("./data/locations.json"))
+move_list = json.loads(ReadFile("./data/moves.json"))
+pokemon_list = json.loads(ReadFile("./data/pokemon.json"))
+placeholder_pokemon = json.loads(ReadFile("./data/placeholder_pokemon.json"))
 
 pokemon_schema = {
     "type": "object",
@@ -179,20 +177,18 @@ def EnrichMonData(pokemon: dict): # Function to add information to the pokemon d
         else:
             return placeholder_pokemon
     except Exception as e:
-        print(str(e))
+        log.exception(str(e))
         return None
 
 def GetOpponent():
     try:
         opponent = LoadJsonMmap(4096, "bizhawk_opponent_data-" + config["bot_instance_id"])["opponent"]
-        if opponent:
-            if PokemonValidator(opponent):
-                return EnrichMonData(opponent)
+        if PokemonValidator(opponent):
+            return EnrichMonData(opponent)
         else:
-            return placeholder_pokemon
-        return None
+            return opponent
     except Exception as e:
-        print(str(e))
+        log.exception(str(e))
         return placeholder_pokemon
 
 def GetParty():
@@ -203,5 +199,5 @@ def GetParty():
             return party_list
         return None
     except Exception as e:
-        print(str(e))
+        log.exception(str(e))
         return None

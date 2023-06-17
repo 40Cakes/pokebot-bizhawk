@@ -1,8 +1,10 @@
 import json
+import logging
 import fastjsonschema
 from modules.Config import GetConfig
 from modules.mmf.Common import LoadJsonMmap
 
+log = logging.getLogger(__name__)
 config = GetConfig()
 
 emu_schema = {
@@ -39,5 +41,5 @@ def GetEmu():
             return emu
         return None
     except Exception as e:
-        print(str(e))
+        log.exception(str(e))
         return None

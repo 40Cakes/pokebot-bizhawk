@@ -1,5 +1,6 @@
-from modules.Inputs import PressButton
-from modules.Stats import OpponentChanged
+from data.GameState import GameState
+from modules.Inputs import EmuCombo, PressButton
+from modules.Stats import EncounterPokemon, OpponentChanged
 
 # TODO
 def mode_rayquaza():
@@ -11,9 +12,9 @@ def mode_rayquaza():
 
     while True:
         while not OpponentChanged():
-            emu_combo(["A", "Up"]) # Walk up toward Rayquaza while mashing A
+            EmuCombo(["A", "Up"]) # Walk up toward Rayquaza while mashing A
         
-        identify_pokemon()
+        EncounterPokemon()
 
         # Wait until battle is over
         while GetTrainer()["state"] != GameState.OVERWORLD:

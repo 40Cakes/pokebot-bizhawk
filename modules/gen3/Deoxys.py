@@ -1,5 +1,7 @@
-from modules.Inputs import PressButton, WaitFrames
-from modules.Stats import OpponentChanged
+from data.GameState import GameState
+from modules.Files import WriteFile
+from modules.Inputs import EmuCombo, PressButton, WaitFrames
+from modules.Stats import EncounterPokemon, OpponentChanged
 
 # TODO
 def mode_deoxysPuzzle(do_encounter: bool = True):
@@ -16,50 +18,50 @@ def mode_deoxysPuzzle(do_encounter: bool = True):
 
     while True:
         while not GetTrainer()["state"] == GameState.OVERWORLD:
-            emu_combo(["A", 8])
+            EmuCombo(["A", 8])
 
         WaitFrames(60)
 
         # Center
         if GetTrainer()["posY"] != 13:
             run_until_obstructed("Up")
-        emu_combo([delay, "A"])
+        EmuCombo([delay, "A"])
 
         # Left
         follow_path([(15, 14), (12, 14)])
-        emu_combo([delay, "Left", "A", delay])
+        EmuCombo([delay, "Left", "A", delay])
 
         # Top
         if retry_puzzle_if_stuck(follow_path([(15, 14), (15, 9)], True, True)): continue
-        emu_combo([delay, "Up", "A", delay])
+        EmuCombo([delay, "Up", "A", delay])
 
         # Right
         if retry_puzzle_if_stuck(follow_path([(15, 14), (18, 14)], True, True)): continue
-        emu_combo([delay, "Right", "A", delay])
+        EmuCombo([delay, "Right", "A", delay])
 
         # Middle Left
         if retry_puzzle_if_stuck(follow_path([(15, 14), (15, 11), (13, 11)], True, True)): continue
-        emu_combo([delay, "Left", "A", delay])
+        EmuCombo([delay, "Left", "A", delay])
 
         # Middle Right
         follow_path([(17, 11)])
-        emu_combo([delay, "Right", "A", delay])
+        EmuCombo([delay, "Right", "A", delay])
 
         # Bottom
         if retry_puzzle_if_stuck(follow_path([(15, 11), (15, 13)], True, True)): continue
-        emu_combo([delay, "Down", "A", delay])
+        EmuCombo([delay, "Down", "A", delay])
 
         # Bottom Left
         follow_path([(15, 14), (12, 14)])
-        emu_combo([delay, "Left", "A", delay])
+        EmuCombo([delay, "Left", "A", delay])
 
         # Bottom Right
         follow_path([(18, 14)])
-        emu_combo([delay, "Right", "A", delay])
+        EmuCombo([delay, "Right", "A", delay])
 
         # Bottom
         follow_path([(15, 14)])
-        emu_combo([delay, "Down", delay, "A", delay])
+        EmuCombo([delay, "Down", delay, "A", delay])
 
         # Center
         if retry_puzzle_if_stuck(follow_path([(15, 11)], True, True)): continue
@@ -76,7 +78,7 @@ def mode_deoxysPuzzle(do_encounter: bool = True):
             PressButton("A")
             WaitFrames(1)
 
-        identify_pokemon()
+        EncounterPokemon()
 
         while not GetTrainer()["state"] == GameState.OVERWORLD:
             continue
@@ -101,7 +103,7 @@ def mode_deoxysResets():
     while True:
         # Mash A to reach overworld from intro/title
         while GetTrainer()["state"] != GameState.OVERWORLD:
-            emu_combo(["A", 8])
+            EmuCombo(["A", 8])
 
         # Wait for area to load properly
         WaitFrames(60)
@@ -116,10 +118,10 @@ def mode_deoxysResets():
                 log.debug(f"Already rolled on RNG state: {emu['rngState']}, waiting...")
             else:
                 while not OpponentChanged():
-                    emu_combo(["A", 8])
+                    EmuCombo(["A", 8])
 
                 deoxys_frames["rngState"].append(emu["rngState"])
-                write_file(f"stats/{GetTrainer()['tid']}/deoxys.json", json.dumps(deoxys_frames, indent=4, sort_keys=True))
-                identify_pokemon()
+                WriteFile(f"stats/{GetTrainer()['tid']}/deoxys.json", json.dumps(deoxys_frames, indent=4, sort_keys=True))
+                EncounterPokemon()
             break
         continue

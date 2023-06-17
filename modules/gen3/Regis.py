@@ -1,5 +1,6 @@
-from modules.Inputs import PressButton
-from modules.Stats import OpponentChanged
+from data.GameState import GameState
+from modules.Inputs import EmuCombo, PressButton
+from modules.Stats import EncounterPokemon, OpponentChanged
 
 # TODO
 def mode_regiTrio():
@@ -11,9 +12,9 @@ def mode_regiTrio():
 
     while True:
         while not OpponentChanged():
-            emu_combo(["Up", "A"])
+            EmuCombo(["Up", "A"])
 
-        identify_pokemon()
+        EncounterPokemon()
 
         while not GetTrainer()["state"] == GameState.OVERWORLD:
             continue

@@ -1,17 +1,18 @@
-from modules.Inputs import PressButton
-from modules.Stats import OpponentChanged
+from modules.Image import DetectTemplate
+from modules.Inputs import EmuCombo, PressButton
+from modules.Stats import EncounterPokemon, OpponentChanged
 
 # TODO
 def mode_fishing():
     log.info(f"Fishing...")
-    emu_combo(["Select", 50]) # Cast rod and wait for fishing animation
+    EmuCombo(["Select", 50]) # Cast rod and wait for fishing animation
     started_fishing = time.time()
     while not OpponentChanged():
-        if find_image("oh_a_bite.png") or find_image("on_the_hook.png"): 
+        if DetectTemplate("oh_a_bite.png") or DetectTemplate("on_the_hook.png"): 
             PressButton("A")
-            while find_image("oh_a_bite.png"):
+            while DetectTemplate("oh_a_bite.png"):
                 pass #This keeps you from getting multiple A presses and failing the catch
-        if find_image("not_even_a_nibble.png") or find_image("it_got_away.png"): emu_combo(["B", 10, "Select"])
-        if not find_image("text_period.png"): emu_combo(["Select", 50]) # Re-cast rod if the fishing text prompt is not visible
+        if DetectTemplate("not_even_a_nibble.png") or DetectTemplate("it_got_away.png"): EmuCombo(["B", 10, "Select"])
+        if not DetectTemplate("text_period.png"): EmuCombo(["Select", 50]) # Re-cast rod if the fishing text prompt is not visible
 
-    identify_pokemon()
+    EncounterPokemon()

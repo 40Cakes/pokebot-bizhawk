@@ -1,22 +1,32 @@
 import os
+import json
 import math
+import logging
 import pandas as pd
 from datetime import datetime
 from discord_webhook import DiscordWebhook, DiscordEmbed
 
+from data.GameState import GameState
+from modules.Config import GetConfig
+from modules.Files import ReadFile, WriteFile
 from modules.Inputs import ReleaseAllInputs, PressButton, WaitFrames
+from modules.Menuing import FleeBattle, PickupItems
+from modules.mmf.Pokemon import GetOpponent
+from modules.mmf.Trainer import GetTrainer
+
+log = logging.getLogger(__name__)
+config = GetConfig()
 
 os.makedirs("stats", exist_ok=True)
 
-totals = read_file("stats/totals.json")
+totals = ReadFile("stats/totals.json")
 stats = json.loads(totals) if totals else {"pokemon": {}, "totals": {"longest_phase_encounters": 0, "shortest_phase_encounters": "-", "phase_lowest_sv": 99999, "phase_lowest_sv_pokemon": "", "encounters": 0, "phase_encounters": 0, "shiny_average": "-", "shiny_encounters": 0}}
 
-encounters = read_file("stats/encounter_log.json")
+encounters = ReadFile("stats/encounter_log.json")
 encounter_log = json.loads(encounters) if encounters else {"encounter_log": []}
     
-shinies = read_file("stats/shiny_log.json")
+shinies = ReadFile("stats/shiny_log.json")
 shiny_log = json.loads(shinies) if shinies else {"shiny_log": []}
-# TODO
 
 last_opponent_personality = None
 
@@ -29,10 +39,11 @@ def OpponentChanged(): # This function checks if there is a different opponent s
             return False
 
         opponent = GetOpponent()
-        if opponent and last_opponent_personality != opponent["personality"]:
+        log.debug(f"Checking if opponent's PID has changed... (if {last_opponent_personality} != {opponent['personality']})")
+        if last_opponent_personality != opponent["personality"]:
             log.info(f"Opponent has changed! Previous PID: {last_opponent_personality}, New PID: {opponent['personality']}")
             last_opponent_personality = opponent["personality"]
-            return True   
+            return True
     except Exception as e:
         log.exception(str(e))
         return False
@@ -97,9 +108,9 @@ def log_encounter(pokemon: dict):
         mon_stats["shiny_average"] = shiny_average
         encounter_log["encounter_log"] = encounter_log["encounter_log"][-100:]
 
-        write_file("stats/totals.json", json.dumps(stats, indent=4, sort_keys=True)) # Save stats file
-        write_file("stats/encounter_log.json", json.dumps(encounter_log, indent=4, sort_keys=True)) # Save encounter log file
-        write_file("stats/shiny_log.json", json.dumps(shiny_log, indent=4, sort_keys=True)) # Save shiny log file
+        WriteFile("stats/totals.json", json.dumps(stats, indent=4, sort_keys=True)) # Save stats file
+        WriteFile("stats/encounter_log.json", json.dumps(encounter_log, indent=4, sort_keys=True)) # Save encounter log file
+        WriteFile("stats/shiny_log.json", json.dumps(shiny_log, indent=4, sort_keys=True)) # Save shiny log file
 
         now = datetime.now()
         year, month, day, hour, minute, second = f"{now.year}", f"{(now.month):02}", f"{(now.day):02}", f"{(now.hour):02}", f"{(now.minute):02}", f"{(now.second):02}"
@@ -119,100 +130,103 @@ def log_encounter(pokemon: dict):
         log.info(f"Shiny {pokemon['name']} Encounters: {mon_stats['shiny_encounters']:,} | {pokemon['name']} Shiny Average: {shiny_average}")
         log.info(f"Total Encounters: {total_encounters:,} | Total Shiny Encounters: {total_shiny_encounters:,} | Total Shiny Average: {total_stats['shiny_average']}")
 
-    # Use the correct article when describing the Pokemon
-    # e.g. "A Poochyena", "An Anorith"
-    article = "an" if pokemon["name"].lower()[0] in {"a","e","i","o","u"} else "a"
+    try:
+        # Use the correct article when describing the Pokemon
+        # e.g. "A Poochyena", "An Anorith"
+        article = "an" if pokemon["name"].lower()[0] in {"a","e","i","o","u"} else "a"
 
-    log.info(f"------------------ {pokemon['name']} ------------------")
-    log.debug(pokemon)
-    log.info(f"Encountered {article} {pokemon['name']} at {pokemon['metLocationName']}")
-    log.info(f"HP: {pokemon['hpIV']} | ATK: {pokemon['attackIV']} | DEF: {pokemon['defenseIV']} | SPATK: {pokemon['spAttackIV']} | SPDEF: {pokemon['spDefenseIV']} | SPE: {pokemon['speedIV']}")
-    log.info(f"Shiny Value (SV): {pokemon['shinyValue']:,} (is {pokemon['shinyValue']:,} < 8 = {pokemon['shiny']})")
+        log.info(f"------------------ {pokemon['name']} ------------------")
+        log.debug(pokemon)
+        log.info(f"Encountered {article} {pokemon['name']} at {pokemon['metLocationName']}")
+        log.info(f"HP: {pokemon['hpIV']} | ATK: {pokemon['attackIV']} | DEF: {pokemon['defenseIV']} | SPATK: {pokemon['spAttackIV']} | SPDEF: {pokemon['spDefenseIV']} | SPE: {pokemon['speedIV']}")
+        log.info(f"Shiny Value (SV): {pokemon['shinyValue']:,} (is {pokemon['shinyValue']:,} < 8 = {pokemon['shiny']})")
 
-    # Set up pokemon stats if first encounter
-    if not pokemon["name"] in stats["pokemon"]:
-        stats["pokemon"].update({pokemon["name"]: {"encounters": 0, "shiny_encounters": 0, "phase_lowest_sv": "-", "phase_encounters": 0, "shiny_average": "-", "total_lowest_sv": "-"}})
+        # Set up pokemon stats if first encounter
+        if not pokemon["name"] in stats["pokemon"]:
+            stats["pokemon"].update({pokemon["name"]: {"encounters": 0, "shiny_encounters": 0, "phase_lowest_sv": "-", "phase_encounters": 0, "shiny_average": "-", "total_lowest_sv": "-"}})
 
-    if pokemon["shiny"]:
-        log.info("Shiny Pokemon detected!")
+        if pokemon["shiny"]:
+            log.info("Shiny Pokemon detected!")
 
-        shortest_phase = stats["totals"]["shortest_phase_encounters"]
-        encounters = stats["totals"]["phase_encounters"]
+            shortest_phase = stats["totals"]["shortest_phase_encounters"]
+            encounters = stats["totals"]["phase_encounters"]
 
-        # Send webhook message, if enabled.
-        if config["discord_webhook_url"]:
-            log.info("Sending Discord ping...")
-            if config["discord_shiny_ping"] and config["discord_ping_mode"] == "role": # Thanks Discord for making role and user IDs use the same format, but have different syntaxes for pinging them by ID, really cool.
-                content=f"<@&{config['discord_shiny_ping']}>"
-            elif config["discord_ping_mode"] == "user":
-                content=f"<@{config['discord_shiny_ping']}>"
+            # Send webhook message, if enabled.
+            if config["discord_webhook_url"]:
+                log.info("Sending Discord ping...")
+                if config["discord_shiny_ping"] and config["discord_ping_mode"] == "role": # Thanks Discord for making role and user IDs use the same format, but have different syntaxes for pinging them by ID, really cool.
+                    content=f"<@&{config['discord_shiny_ping']}>"
+                elif config["discord_ping_mode"] == "user":
+                    content=f"<@{config['discord_shiny_ping']}>"
+                else:
+                    content="" # It breaks if I don't do this, sorry.
+                webhook = DiscordWebhook(url=config["discord_webhook_url"], content=content)
+                embed = DiscordEmbed(title='Shiny encountered!', description=f"{pokemon['name']} at {pokemon['metLocationName']}", color='ffd242')
+                embed.set_footer(text='PokeBot')
+                embed.set_timestamp()
+                embed.add_embed_field(name='Shiny Value', value=f"{pokemon['shinyValue']:,}")
+                embed.add_embed_field(name='Nature', value=f"{pokemon['nature']}")
+                # Basic IV list
+                if config["discord_webhook_ivs"] == "basic" or config["discord_webhook_ivs"] == "":
+                    embed.add_embed_field(name='IVs', value=f"HP: {pokemon['hpIV']} | ATK: {pokemon['attackIV']} | DEF: {pokemon['defenseIV']} | SPATK: {pokemon['spAttackIV']} | SPDEF: {pokemon['spDefenseIV']} | SPE: {pokemon['speedIV']}", inline=False)
+                # Formatted IV list
+                if config["discord_webhook_ivs"] == "formatted":
+                    embed.add_embed_field(name='IVs', value=f"""
+                    `╔═══╤═══╤═══╤═══╤═══╤═══╗`
+                    `║HP │ATK│DEF│SPA│SPD│SPE║`
+                    `╠═══╪═══╪═══╪═══╪═══╪═══╣`
+                    `║{pokemon['hpIV']:^3}│{pokemon['attackIV']:^3}│{pokemon['defenseIV']:^3}│{pokemon['spAttackIV']:^3}│{pokemon['spDefenseIV']:^3}│{pokemon['speedIV']:^3}║`
+                    `╚═══╧═══╧═══╧═══╧═══╧═══╝`""", inline=False)
+                embed.add_embed_field(name='Species Phase Encounters', value=f"{stats['pokemon'][pokemon['name']]['phase_encounters']}")
+                embed.add_embed_field(name='All Phase Encounters', value=f"{stats['totals']['phase_encounters']}")
+                with open(f"interface/sprites/pokemon/shiny/{pokemon['name']}.png", "rb") as shiny:
+                    webhook.add_file(file=shiny.read(), filename='shiny.png')
+                embed.set_thumbnail(url='attachment://shiny.png')
+                webhook.add_embed(embed)
+                response = webhook.execute()
+
+            if shortest_phase == "-": 
+                shortest_phase = encounters
             else:
-                content="" # It breaks if I don't do this, sorry.
-            webhook = DiscordWebhook(url=config["discord_webhook_url"], content=content)
-            embed = DiscordEmbed(title='Shiny encountered!', description=f"{pokemon['name']} at {pokemon['metLocationName']}", color='ffd242')
-            embed.set_footer(text='PokeBot')
-            embed.set_timestamp()
-            embed.add_embed_field(name='Shiny Value', value=f"{pokemon['shinyValue']:,}")
-            embed.add_embed_field(name='Nature', value=f"{pokemon['nature']}")
-            # Basic IV list
-            if config["discord_webhook_ivs"] == "basic" or config["discord_webhook_ivs"] == "":
-                embed.add_embed_field(name='IVs', value=f"HP: {pokemon['hpIV']} | ATK: {pokemon['attackIV']} | DEF: {pokemon['defenseIV']} | SPATK: {pokemon['spAttackIV']} | SPDEF: {pokemon['spDefenseIV']} | SPE: {pokemon['speedIV']}", inline=False)
-            # Formatted IV list
-            if config["discord_webhook_ivs"] == "formatted":
-                embed.add_embed_field(name='IVs', value=f"""
-                `╔═══╤═══╤═══╤═══╤═══╤═══╗`
-                `║HP │ATK│DEF│SPA│SPD│SPE║`
-                `╠═══╪═══╪═══╪═══╪═══╪═══╣`
-                `║{pokemon['hpIV']:^3}│{pokemon['attackIV']:^3}│{pokemon['defenseIV']:^3}│{pokemon['spAttackIV']:^3}│{pokemon['spDefenseIV']:^3}│{pokemon['speedIV']:^3}║`
-                `╚═══╧═══╧═══╧═══╧═══╧═══╝`""", inline=False)
-            embed.add_embed_field(name='Species Phase Encounters', value=f"{stats['pokemon'][pokemon['name']]['phase_encounters']}")
-            embed.add_embed_field(name='All Phase Encounters', value=f"{stats['totals']['phase_encounters']}")
-            with open(f"interface/sprites/pokemon/shiny/{pokemon['name']}.png", "rb") as shiny:
-                webhook.add_file(file=shiny.read(), filename='shiny.png')
-            embed.set_thumbnail(url='attachment://shiny.png')
-            webhook.add_embed(embed)
-            response = webhook.execute()
-        
-        if shortest_phase == "-": 
-            shortest_phase = encounters
+                shortest_phase = max(shortest_phase, encounters)
+
+            stats["pokemon"][pokemon["name"]]["shiny_encounters"] += 1
+            stats["totals"]["shiny_encounters"] += 1
+            common_stats()
+            stats["totals"]["phase_encounters"] = 0
+            stats["totals"]["phase_lowest_sv"] = "-"
+            stats["totals"]["phase_lowest_sv_pokemon"] = ""
+            stats["totals"]["shortest_phase"] = shortest_phase
+
+            # Reset phase stats
+            for pokemon["name"] in stats["pokemon"]:
+                stats["pokemon"][pokemon["name"]]["phase_lowest_sv"] = "-"
+                stats["pokemon"][pokemon["name"]]["phase_encounters"] = 0
+
+            WriteFile("stats/totals.json", json.dumps(stats, indent=4, sort_keys=True)) # Save stats file
         else:
-            shortest_phase = max(shortest_phase, encounters)
+            log.info("Non shiny Pokemon detected...")
 
-        stats["pokemon"][pokemon["name"]]["shiny_encounters"] += 1
-        stats["totals"]["shiny_encounters"] += 1
-        common_stats()
-        stats["totals"]["phase_encounters"] = 0
-        stats["totals"]["phase_lowest_sv"] = "-"
-        stats["totals"]["phase_lowest_sv_pokemon"] = ""
-        stats["totals"]["shortest_phase"] = shortest_phase
+            stats["totals"]["encounters"] += 1
+            stats["totals"]["phase_encounters"] += 1
 
-        # Reset phase stats
-        for pokemon["name"] in stats["pokemon"]:
-            stats["pokemon"][pokemon["name"]]["phase_lowest_sv"] = "-"
-            stats["pokemon"][pokemon["name"]]["phase_encounters"] = 0
+            if stats["totals"]["phase_encounters"] > stats["totals"]["longest_phase_encounters"]: stats["totals"]["longest_phase_encounters"] = stats["totals"]["phase_encounters"]
+            if stats["totals"]["phase_lowest_sv"] == "-": 
+                stats["totals"]["phase_lowest_sv"] = pokemon["shinyValue"]
+                stats["totals"]["phase_lowest_sv_pokemon"] = pokemon["name"]
+            elif pokemon["shinyValue"] <= stats["totals"]["phase_lowest_sv"]:
+                stats["totals"]["phase_lowest_sv"] = pokemon["shinyValue"]
+                stats["totals"]["phase_lowest_sv_pokemon"] = pokemon["name"]
 
-        write_file("stats/totals.json", json.dumps(stats, indent=4, sort_keys=True)) # Save stats file
-    else:
-        log.info("Non shiny Pokemon detected...")
 
-        stats["totals"]["encounters"] += 1
-        stats["totals"]["phase_encounters"] += 1
+            common_stats()
 
-        if stats["totals"]["phase_encounters"] > stats["totals"]["longest_phase_encounters"]: stats["totals"]["longest_phase_encounters"] = stats["totals"]["phase_encounters"]
-        if stats["totals"]["phase_lowest_sv"] == "-": 
-            stats["totals"]["phase_lowest_sv"] = pokemon["shinyValue"]
-            stats["totals"]["phase_lowest_sv_pokemon"] = pokemon["name"]
-        elif pokemon["shinyValue"] <= stats["totals"]["phase_lowest_sv"]:
-            stats["totals"]["phase_lowest_sv"] = pokemon["shinyValue"]
-            stats["totals"]["phase_lowest_sv_pokemon"] = pokemon["name"]
-            
+        log.info(f"----------------------------------------")
+    except Exception as e:
+        log.exception(str(e))
+        return False
 
-        common_stats()
-
-    log.info(f"----------------------------------------")
-
-# TODO move to modules/Stats.py
-def identify_pokemon(starter: bool = False): # Identify opponent pokemon and incremement statistics, returns True if shiny, else False
+def EncounterPokemon(starter: bool = False): # New Pokemon encountered, record stats + decide whether to catch/battle/flee
     legendary_hunt = config["bot_mode"] in ["manual", "rayquaza", "kyogre", "groudon", "southern island", "regi trio", "deoxys resets", "deoxys runaways", "mew"]
 
     log.info("Identifying Pokemon...")
@@ -239,7 +253,7 @@ def identify_pokemon(starter: bool = False): # Identify opponent pokemon and inc
         elif legendary_hunt:
             input("Pausing bot for manual intervention. (Don't forget to pause the pokebot.lua script so you can provide inputs). Press Enter to continue...")
 
-        write_file("stats/totals.json", json.dumps(stats, indent=4, sort_keys=True)) # Save stats file
+        WriteFile("stats/totals.json", json.dumps(stats, indent=4, sort_keys=True)) # Save stats file
         return True
     else:
         if config["bot_mode"] == "manual":
@@ -253,7 +267,7 @@ def identify_pokemon(starter: bool = False): # Identify opponent pokemon and inc
                 battle_won = battle()
                 replace_battler = not battle_won
             else:
-                flee_battle()
+                FleeBattle()
         elif config["bot_mode"] == "deoxys resets":
             if not config["mem_hacks"]:
                 # Wait until sprite has appeared in battle before reset
@@ -261,10 +275,10 @@ def identify_pokemon(starter: bool = False): # Identify opponent pokemon and inc
             reset_game()
             return False
         else:
-            flee_battle()
+            FleeBattle()
 
         if config["pickup"] and not legendary_hunt: 
-            pickup_items()
+            PickupItems()
 
         # If total encounters modulo config["save_every_x_encounters"] is 0, save the game
         # Save every x encounters to prevent data loss (pickup, levels etc)
@@ -275,7 +289,7 @@ def identify_pokemon(starter: bool = False): # Identify opponent pokemon and inc
         if replace_battler:
             if not config["cycle_lead_pokemon"]:
                 log.info("Lead Pokemon can no longer battle. Ending the script!")
-                flee_battle()
+                FleeBattle()
                 return
             else:
                 start_menu("pokemon")

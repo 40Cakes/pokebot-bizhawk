@@ -43,7 +43,7 @@ deoxys_puzzle_solved: false
 
 # User Interface
 ui:
-  enable: false
+  enable: true
   width: 1280
   height: 720
   ip: 127.0.0.1

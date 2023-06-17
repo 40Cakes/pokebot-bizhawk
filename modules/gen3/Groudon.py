@@ -1,3 +1,5 @@
+from modules.Stats import EncounterPokemon
+
 # TODO
 def mode_groudon():
     trainer = GetTrainer()
@@ -9,7 +11,7 @@ def mode_groudon():
     while True:
         follow_path([(17, 26)])
 
-        identify_pokemon()
+        EncounterPokemon()
 
         # Exit and re-enter
         follow_path([

@@ -1,10 +1,16 @@
 import cv2
 import numpy
+import logging
 from PIL import Image, ImageGrab, ImageFile
+
+from modules.mmf.Emu import GetEmu
+from modules.mmf.Screenshot import GetScreenshot
+
+log = logging.getLogger(__name__)
 
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 
-def find_image(file: str): # Function to find an image in a BizHawk screenshot
+def DetectTemplate(file: str): # Return true if template (image) is found anywhere on-screen
     try:
         threshold = 0.999
         template = cv2.imread(f"data/templates/{GetEmu()['language']}/" + file, cv2.IMREAD_UNCHANGED)

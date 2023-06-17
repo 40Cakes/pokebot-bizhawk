@@ -6,9 +6,9 @@ from threading import Thread
 import logging
 from logging.handlers import RotatingFileHandler
 
-from data.GameState import GameState
 from data.MapData import mapRSE #mapFRLG
 from modules.Config import GetConfig
+from modules.Files import ReadFile
 from modules.Inputs import ReleaseAllInputs, PressButton, WaitFrames
 from modules.Stats import OpponentChanged
 from modules.mmf.Emu import GetEmu
@@ -20,7 +20,7 @@ from modules.gen3.Spin import Spin
 config = GetConfig()
 
 def get_rngState(tid: str, mon: str):
-    file = read_file(f"stats/{tid}/{mon.lower()}.json")
+    file = ReadFile(f"stats/{tid}/{mon.lower()}.json")
     data = json.loads(file) if file else {"rngState": []}
     return data
 
@@ -40,11 +40,11 @@ try:
     # Set up console log stream handler
     console_handler = logging.StreamHandler()
     console_handler.setFormatter(console_formatter)
-    console_handler.setLevel(logging.INFO)
+    console_handler.setLevel(logging.DEBUG)
 
     # Create logger and attach handlers
     log = logging.getLogger('root')
-    log.setLevel(logging.DEBUG)
+    log.setLevel(logging.INFO)
     log.addHandler(log_handler)
     log.addHandler(console_handler)
 except Exception as e:
@@ -75,9 +75,8 @@ try:
     config = GetConfig() # Load config
     log.info(f"Mode: {config['bot_mode']}")
         
-    item_list = json.loads(read_file("data/items.json"))
-    type_list = json.loads(read_file("data/types.json"))
-    route_list = json.loads(read_file("data/routes-emerald.json"))
+    item_list = json.loads(ReadFile("data/items.json"))
+    route_list = json.loads(ReadFile("data/routes-emerald.json"))
 
     emu = GetEmu()
     log.info("Detected game: " + emu["detectedGame"])
@@ -95,8 +94,7 @@ try:
         from modules.FlaskServer import httpServer
 
         def on_window_close():
-            if can_start_bot:
-                ReleaseAllInputs()
+            ReleaseAllInputs()
 
             log.info("Dashboard closed on user input...")
             os._exit(1)
@@ -106,7 +104,7 @@ try:
 
         # Webview UI
         url=f"http://{config['ui']['ip']}:{config['ui']['port']}/dashboard"
-        window = webview.create_window("PokeBot", url=url, width=config["width"], height=config["height"], resizable=True, hidden=False, frameless=False, easy_drag=True, fullscreen=False, text_select=True, zoomable=True)
+        window = webview.create_window("PokeBot", url=url, width=config["ui"]["width"], height=config["ui"]["height"], resizable=True, hidden=False, frameless=False, easy_drag=True, fullscreen=False, text_select=True, zoomable=True)
         window.events.closed += on_window_close
         webview.start()
     
@@ -171,9 +169,6 @@ try:
                     log.exception("Couldn't interpret bot mode: " + config["bot_mode"])
                     input("Press enter to continue...")
     else:
-        opponent = GetOpponent()
-        if opponent:
-            last_opponent_personality = opponent["personality"]
         ReleaseAllInputs()
         time.sleep(0.2)
     WaitFrames(1)

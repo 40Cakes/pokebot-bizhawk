@@ -78,7 +78,7 @@ def PressButton(button: str): # Function to update the press_input object
 def WaitFrames(frames: float):
     time.sleep(max((frames/60.0) / GetEmu()["speed"], 0.02))
 
-def emu_combo(sequence: list): # Function to send a sequence of inputs and delays to the emulator
+def EmuCombo(sequence: list): # Function to send a sequence of inputs and delays to the emulator
     for k in sequence:
         if type(k) is int:
             WaitFrames(k)

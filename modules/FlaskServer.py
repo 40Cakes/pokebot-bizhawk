@@ -1,18 +1,18 @@
+import json
 import flask
 import logging
 from flask import Flask, abort, jsonify, request
 from flask_cors import CORS
 
 from modules.Config import GetConfig
+from modules.Files import ReadFile
 from modules.mmf.Emu import GetEmu
 from modules.mmf.Pokemon import GetOpponent, GetParty
 from modules.mmf.Trainer import GetTrainer
 
 config = GetConfig()
 
-# TODO there's an issue with relative pathing, the static folder can't be found
-
-pokedex_list = json.loads(read_file("data/pokedex.json")) # TODO
+pokedex_list = json.loads(ReadFile("data/pokedex.json"))
 
 def httpServer(): # Run Flask server to make bot data available via HTTP GET
     try:

@@ -1,5 +1,5 @@
 from modules.Inputs import ReleaseAllInputs, PressButton, WaitFrames
-from modules.Stats import OpponentChanged
+from modules.Stats import EncounterPokemon, OpponentChanged
 
 def run_until_obstructed(direction: str, run: bool = True): # Function to run until trainer position stops changing
     PressButton("B") # press and release B in case of a random pokenav call
@@ -55,7 +55,7 @@ def follow_path(coords: list, run: bool = True, exit_when_stuck: bool = False):
                 release_button(direction)
 
             if OpponentChanged():
-                identify_pokemon()
+                EncounterPokemon()
                 return
 
             trainer = GetTrainer()

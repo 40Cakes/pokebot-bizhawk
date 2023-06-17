@@ -1,7 +1,6 @@
-from modules.Inputs import PressButton, WaitFrames
-from modules.Stats import OpponentChanged
+from modules.Inputs import EmuCombo, PressButton, WaitFrames
+from modules.Stats import EncounterPokemon, OpponentChanged
 
-# TODO
 def mode_farawayMew():
     trainer = GetTrainer()
     if (not player_on_map(MapDataEnum.FARAWAY_ISLAND.value) or not (22 <= trainer["posX"] <= 23 and 8 <= trainer["posY"] <= 10)):
@@ -29,9 +28,9 @@ def mode_farawayMew():
         hold_button("Up")
 
         while not OpponentChanged():
-            emu_combo(["A", 8])
+            EmuCombo(["A", 8])
 
-        identify_pokemon()
+        EncounterPokemon()
 
         for i in range(0, 6):
             PressButton("B")

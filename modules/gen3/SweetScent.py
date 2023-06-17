@@ -1,4 +1,6 @@
-from modules.Inputs import PressButton
+from modules.Image import DetectTemplate
+from modules.Inputs import EmuCombo, PressButton
+from modules.Stats import EncounterPokemon
 
 # TODO
 def mode_sweetScent():
@@ -7,8 +9,8 @@ def mode_sweetScent():
     PressButton("A") # Select first pokemon in party
 
     # Search for sweet scent in menu
-    while not find_image("sweet_scent.png"): 
+    while not DetectTemplate("sweet_scent.png"): 
         PressButton("Down")
 
-    emu_combo(["A", 300]) # Select sweet scent and wait for animation
-    identify_pokemon()
+    EmuCombo(["A", 300]) # Select sweet scent and wait for animation
+    EncounterPokemon()
