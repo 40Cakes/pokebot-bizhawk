@@ -1,4 +1,4 @@
-from data.GameState import GameState
+from modules.data.GameState import GameState
 from modules.Inputs import EmuCombo, PressButton
 from modules.Stats import EncounterPokemon, OpponentChanged
 

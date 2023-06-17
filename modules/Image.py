@@ -13,7 +13,7 @@ ImageFile.LOAD_TRUNCATED_IMAGES = True
 def DetectTemplate(file: str): # Return true if template (image) is found anywhere on-screen
     try:
         threshold = 0.999
-        template = cv2.imread(f"data/templates/{GetEmu()['language']}/" + file, cv2.IMREAD_UNCHANGED)
+        template = cv2.imread(f"./modules/data/templates/{GetEmu()['language']}/" + file, cv2.IMREAD_UNCHANGED)
         hh, ww = template.shape[:2]
 
         screenshot = GetScreenshot()    

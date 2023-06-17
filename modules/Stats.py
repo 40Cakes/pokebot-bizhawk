@@ -6,8 +6,8 @@ import pandas as pd
 from datetime import datetime
 from discord_webhook import DiscordWebhook, DiscordEmbed
 
-from data.GameState import GameState
 from modules.Config import GetConfig
+from modules.data.GameState import GameState
 from modules.Files import ReadFile, WriteFile
 from modules.Inputs import ReleaseAllInputs, PressButton, WaitFrames
 from modules.Menuing import FleeBattle, PickupItems
@@ -19,21 +19,49 @@ config = GetConfig()
 
 os.makedirs("stats", exist_ok=True)
 
-totals = ReadFile("stats/totals.json")
-stats = json.loads(totals) if totals else {"pokemon": {}, "totals": {"longest_phase_encounters": 0, "shortest_phase_encounters": "-", "phase_lowest_sv": 99999, "phase_lowest_sv_pokemon": "", "encounters": 0, "phase_encounters": 0, "shiny_average": "-", "shiny_encounters": 0}}
+files = {
+    "encounter_log": "stats/encounter_log.json",
+    "shiny_log": "stats/shiny_log.json",
+    "totals": "stats/totals.json"
+}
 
-encounters = ReadFile("stats/encounter_log.json")
-encounter_log = json.loads(encounters) if encounters else {"encounter_log": []}
-    
-shinies = ReadFile("stats/shiny_log.json")
-shiny_log = json.loads(shinies) if shinies else {"shiny_log": []}
+def GetStats():
+    default = {"pokemon": {}, "totals": {"longest_phase_encounters": 0, "shortest_phase_encounters": "-", "phase_lowest_sv": 99999, "phase_lowest_sv_pokemon": "", "encounters": 0, "phase_encounters": 0, "shiny_average": "-", "shiny_encounters": 0}}
+    try:
+        totals = ReadFile(files["totals"])
+        if totals:
+            return json.loads(totals)
+        return default
+    except Exception as e:
+        log.exception(str(e))
+        return default
+
+def GetEncounterLog():
+    default = {"encounter_log": []}
+    try:
+        encounter_log = ReadFile(files["encounter_log"])
+        if encounter_log:
+            return json.loads(encounter_log)
+        return default
+    except Exception as e:
+        log.exception(str(e))
+        return default
+
+def GetShinyLog():
+    default = {"shiny_log": []}
+    try:
+        shiny_log = ReadFile(files["shiny_log"])
+        if shiny_log:
+            return json.loads(shiny_log)
+        return default
+    except Exception as e:
+        log.exception(str(e))
+        return default
 
 last_opponent_personality = None
-
 def OpponentChanged(): # This function checks if there is a different opponent since last check, indicating the game state is probably now in a battle
+    global last_opponent_personality
     try:
-        global last_opponent_personality
-
         # Fixes a bug where the bot checks the opponent for up to 20 seconds if it was last closed in a battle
         if GetTrainer()["state"] == GameState.OVERWORLD:
             return False
@@ -48,9 +76,9 @@ def OpponentChanged(): # This function checks if there is a different opponent s
         log.exception(str(e))
         return False
 
-def log_encounter(pokemon: dict):
+def LogEncounter(pokemon: dict):
     def common_stats():
-        global stats, encounter_log
+        stats = GetStats()
 
         mon_stats = stats["pokemon"][pokemon["name"]]
         total_stats = stats["totals"]
@@ -100,17 +128,19 @@ def log_encounter(pokemon: dict):
             }
         }
 
-        if pokemon["shiny"]: 
+        if pokemon["shiny"]:
+            shiny_log = GetShinyLog()
             shiny_log["shiny_log"].append(log_obj)
+            WriteFile(files["shiny_log"], json.dumps(shiny_log, indent=4, sort_keys=True)) # Save shiny log file
 
+        encounter_log = GetEncounterLog()
         encounter_log["encounter_log"].append(log_obj)
 
         mon_stats["shiny_average"] = shiny_average
         encounter_log["encounter_log"] = encounter_log["encounter_log"][-100:]
 
-        WriteFile("stats/totals.json", json.dumps(stats, indent=4, sort_keys=True)) # Save stats file
-        WriteFile("stats/encounter_log.json", json.dumps(encounter_log, indent=4, sort_keys=True)) # Save encounter log file
-        WriteFile("stats/shiny_log.json", json.dumps(shiny_log, indent=4, sort_keys=True)) # Save shiny log file
+        WriteFile(files["totals"], json.dumps(stats, indent=4, sort_keys=True)) # Save stats file
+        WriteFile(files["encounter_log"], json.dumps(encounter_log, indent=4, sort_keys=True)) # Save encounter log file
 
         now = datetime.now()
         year, month, day, hour, minute, second = f"{now.year}", f"{(now.month):02}", f"{(now.day):02}", f"{(now.hour):02}", f"{(now.minute):02}", f"{(now.second):02}"
@@ -131,6 +161,7 @@ def log_encounter(pokemon: dict):
         log.info(f"Total Encounters: {total_encounters:,} | Total Shiny Encounters: {total_shiny_encounters:,} | Total Shiny Average: {total_stats['shiny_average']}")
 
     try:
+        stats = GetStats()
         # Use the correct article when describing the Pokemon
         # e.g. "A Poochyena", "An Anorith"
         article = "an" if pokemon["name"].lower()[0] in {"a","e","i","o","u"} else "a"
@@ -203,7 +234,7 @@ def log_encounter(pokemon: dict):
                 stats["pokemon"][pokemon["name"]]["phase_lowest_sv"] = "-"
                 stats["pokemon"][pokemon["name"]]["phase_encounters"] = 0
 
-            WriteFile("stats/totals.json", json.dumps(stats, indent=4, sort_keys=True)) # Save stats file
+            WriteFile(files["totals"], json.dumps(stats, indent=4, sort_keys=True)) # Save stats file
         else:
             log.info("Non shiny Pokemon detected...")
 
@@ -243,7 +274,7 @@ def EncounterPokemon(starter: bool = False): # New Pokemon encountered, record s
         return False
 
     pokemon = GetParty()[0] if starter else GetOpponent()
-    log_encounter(pokemon)
+    LogEncounter(pokemon)
 
     replace_battler = False
 
@@ -252,8 +283,6 @@ def EncounterPokemon(starter: bool = False): # New Pokemon encountered, record s
             catch_pokemon()
         elif legendary_hunt:
             input("Pausing bot for manual intervention. (Don't forget to pause the pokebot.lua script so you can provide inputs). Press Enter to continue...")
-
-        WriteFile("stats/totals.json", json.dumps(stats, indent=4, sort_keys=True)) # Save stats file
         return True
     else:
         if config["bot_mode"] == "manual":
@@ -282,6 +311,7 @@ def EncounterPokemon(starter: bool = False): # New Pokemon encountered, record s
 
         # If total encounters modulo config["save_every_x_encounters"] is 0, save the game
         # Save every x encounters to prevent data loss (pickup, levels etc)
+        stats = GetStats()
         total_encounters = stats["totals"]["encounters"] + stats["totals"]["shiny_encounters"]
         if config["periodic_save"] and total_encounters % config["save_every_x_encounters"] == 0 and total_encounters != 0:
             save_game()

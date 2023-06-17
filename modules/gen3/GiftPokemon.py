@@ -1,7 +1,8 @@
-from data.GameState import GameState
+from modules.data.GameState import GameState
 from modules.Files import WriteFile
 from modules.Image import DetectTemplate
 from modules.Inputs import EmuCombo, PressButton, WaitFrames
+from modules.Stats import LogEncounter
 
 # TODO
 def collect_gift_mon(target: str):
@@ -38,7 +39,7 @@ def collect_gift_mon(target: str):
         release_button("B")
 
         if config["mem_hacks"] and not mon["shiny"]:
-            log_encounter(mon)
+            LogEncounter(mon)
             hold_button("Power")
             WaitFrames(60)
             release_button("Power")
@@ -71,7 +72,7 @@ def collect_gift_mon(target: str):
 
         EmuCombo(["A", 15, "A", 60])
 
-        log_encounter(mon)
+        LogEncounter(mon)
 
         if not mon["shiny"]:
             hold_button("Power")

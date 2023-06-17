@@ -1,4 +1,4 @@
-from data.GameState import GameState
+from modules.data.GameState import GameState
 from modules.Files import WriteFile
 from modules.Image import DetectTemplate
 from modules.Inputs import EmuCombo, ReleaseAllInputs, PressButton

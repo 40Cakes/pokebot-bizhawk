@@ -6,20 +6,21 @@ from flask_cors import CORS
 
 from modules.Config import GetConfig
 from modules.Files import ReadFile
+from modules.Stats import GetEncounterLog, GetShinyLog, GetStats
 from modules.mmf.Emu import GetEmu
 from modules.mmf.Pokemon import GetOpponent, GetParty
 from modules.mmf.Trainer import GetTrainer
 
 config = GetConfig()
 
-pokedex_list = json.loads(ReadFile("data/pokedex.json"))
+pokedex_list = json.loads(ReadFile("./modules/data/pokedex.json"))
 
 def httpServer(): # Run Flask server to make bot data available via HTTP GET
     try:
         log = logging.getLogger("werkzeug")
         log.setLevel(logging.ERROR)
 
-        server = Flask(__name__,static_folder="interface")
+        server = Flask(__name__, static_folder="./interface")
         CORS(server)
         @server.route("/dashboard",methods=["GET"])
         def req_dashboard():
@@ -48,6 +49,7 @@ def httpServer(): # Run Flask server to make bot data available via HTTP GET
                 case other:
                     encounter = GetOpponent()
             if encounter:
+                stats = GetStats()
                 if stats: # TODO get stats from modules.Stats once created
                     try: 
                         encounter["stats"] = stats["pokemon"][encounter["name"]]
@@ -66,18 +68,21 @@ def httpServer(): # Run Flask server to make bot data available via HTTP GET
             else: abort(503)
         @server.route("/stats", methods=["GET"])
         def req_stats():
+            stats = GetStats()
             if stats:
                 response = jsonify(stats)
                 return response
             else: abort(503)
         @server.route("/encounter_log", methods=["GET"])
         def req_encounter_log():
+            encounter_log = GetEncounterLog()
             if encounter_log:
                 response = jsonify(encounter_log)
                 return response
             else: abort(503)
         @server.route("/shiny_log", methods=["GET"])		
-        def req_shiny_log():		
+        def req_shiny_log():	
+            shiny_log = GetShinyLog()
             if shiny_log:		
                 response = jsonify(shiny_log)		
                 return response		
@@ -88,7 +93,6 @@ def httpServer(): # Run Flask server to make bot data available via HTTP GET
                 routes = route_list
                 return routes
             else: abort(503)
-
         @server.route("/pokedex", methods=["GET"])
         def req_pokedex():
             if pokedex_list:

@@ -11,11 +11,11 @@ from modules.mmf.Trainer import GetTrainer
 log = logging.getLogger(__name__)
 config = GetConfig()
 
-item_list = json.loads(ReadFile("./data/items.json"))
-location_list = json.loads(ReadFile("./data/locations.json"))
-move_list = json.loads(ReadFile("./data/moves.json"))
-pokemon_list = json.loads(ReadFile("./data/pokemon.json"))
-placeholder_pokemon = json.loads(ReadFile("./data/placeholder_pokemon.json"))
+item_list = json.loads(ReadFile("./modules/data/items.json"))
+location_list = json.loads(ReadFile("./modules/data/locations.json"))
+move_list = json.loads(ReadFile("./modules/data/moves.json"))
+pokemon_list = json.loads(ReadFile("./modules/data/pokemon.json"))
+placeholder_pokemon = json.loads(ReadFile("./modules/data/placeholder_pokemon.json"))
 
 pokemon_schema = {
     "type": "object",

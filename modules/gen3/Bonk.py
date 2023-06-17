@@ -1,4 +1,4 @@
-from data.GameState import GameState
+from modules.data.GameState import GameState
 from modules.Stats import EncounterPokemon, OpponentChanged
 
 def mode_move_until_obstructed():

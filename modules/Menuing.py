@@ -1,8 +1,8 @@
 import json
 import logging
 
-from data.GameState import GameState
 from modules.Config import GetConfig
+from modules.data.GameState import GameState
 from modules.Files import ReadFile
 from modules.Image import DetectTemplate
 from modules.Inputs import EmuCombo, ReleaseAllInputs, PressButton, WaitFrames
@@ -15,7 +15,7 @@ config = GetConfig()
 no_sleep_abilities = ["Shed Skin", "Insomnia", "Vital Spirit"]
 pickup_pokemon = ["Meowth", "Aipom", "Phanpy", "Teddiursa", "Zigzagoon", "Linoone"]
 
-type_list = json.loads(ReadFile("data/types.json"))
+type_list = json.loads(ReadFile("./modules/data/types.json"))
 
 def start_menu(entry: str): # Function to open any start menu item - presses START, finds the menu entry and opens it
     if not entry in ["bag", "bot", "exit", "option", "pokedex", "pokemon", "pokenav", "save"]:

@@ -6,8 +6,8 @@ from threading import Thread
 import logging
 from logging.handlers import RotatingFileHandler
 
-from data.MapData import mapRSE #mapFRLG
 from modules.Config import GetConfig
+from modules.data.MapData import mapRSE #mapFRLG
 from modules.Files import ReadFile
 from modules.Inputs import ReleaseAllInputs, PressButton, WaitFrames
 from modules.Stats import OpponentChanged
@@ -75,8 +75,8 @@ try:
     config = GetConfig() # Load config
     log.info(f"Mode: {config['bot_mode']}")
         
-    item_list = json.loads(ReadFile("data/items.json"))
-    route_list = json.loads(ReadFile("data/routes-emerald.json"))
+    item_list = json.loads(ReadFile("./modules/data/items.json"))
+    route_list = json.loads(ReadFile("./modules/data/routes-emerald.json"))
 
     emu = GetEmu()
     log.info("Detected game: " + emu["detectedGame"])
