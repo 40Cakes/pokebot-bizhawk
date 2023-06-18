@@ -1,7 +1,6 @@
 import os
 import sys
 import json
-import time
 from threading import Thread
 import logging
 from logging.handlers import RotatingFileHandler
@@ -10,60 +9,128 @@ from modules.Config import GetConfig
 from modules.data.MapData import mapRSE #mapFRLG
 from modules.Files import ReadFile
 from modules.Inputs import ReleaseAllInputs, PressButton, WaitFrames
-from modules.Stats import OpponentChanged
+from modules.Stats import EncounterPokemon, OpponentChanged
 from modules.mmf.Emu import GetEmu
 from modules.mmf.Pokemon import GetOpponent, GetParty
 from modules.mmf.Screenshot import GetScreenshot
 from modules.mmf.Trainer import GetTrainer
-from modules.gen3.Spin import Spin
+from modules.gen3.General import ModeBonk, ModeBunnyHop, ModeFishing, ModeCoords, ModeSpin, ModeSweetScent, ModePremierBalls
+from modules.gen3.Starters import ModeStarters # ModeJohtoStarters
+from modules.gen3.Legendaries import ModeGroudon, ModeKyogre, ModeRayquaza, ModeMew, ModeRegis, ModeSouthernIsland, ModeDeoxysPuzzle, ModeDeoxysResets 
+from modules.gen3.GiftPokemon import ModeCastform, ModeBeldum, ModeFossil
 
 config = GetConfig()
 
-def get_rngState(tid: str, mon: str):
-    file = ReadFile(f"stats/{tid}/{mon.lower()}.json")
-    data = json.loads(file) if file else {"rngState": []}
-    return data
+def MainLoop():
+    # This is the main loop that runs in a thread
+    # TODO modes should always return True once the trainer is back in the overworld after an encounter, else False - then go into a "recovery" mode
+    # TODO after each pass, read updated config that gets POSTed by the UI
+
+    ReleaseAllInputs()
+    PressButton("SaveRAM") # Flush Bizhawk SaveRAM to disk
+
+    while True:
+        if GetTrainer() and GetEmu(): # Test that emulator information is accessible and valid
+            match config["bot_mode"]:
+                case "manual":
+                    while not OpponentChanged(): 
+                        WaitFrames(20)
+                    EncounterPokemon()
+                case "spin":
+                    ModeSpin()
+                case "sweet scent":
+                    ModeSweetScent()
+                case "bunny hop":
+                    ModeBunnyHop()
+                case "move between coords":
+                    ModeCoords()
+                case "bonk":
+                    ModeBonk()
+                case "fishing":
+                    ModeFishing()
+                case "starters":
+                    ModeStarters()
+                case "rayquaza":
+                    ModeRayquaza()
+                case "groudon":
+                    ModeGroudon()
+                case "kyogre":
+                    ModeKyogre()
+                case "southern island":
+                    ModeSouthernIsland()
+                case "mew":
+                    ModeMew()
+                case "regis":
+                    ModeRegis()
+                case "deoxys runaways":
+                    ModeDeoxysPuzzle()
+                case "deoxys resets":
+                    if config["deoxys_puzzle_solved"]:
+                        ModeDeoxysResets()
+                    else:
+                        ModeDeoxysPuzzle(False)
+                case "fossil":
+                    ModeFossil()
+                case "castform":
+                    ModeCastform()
+                case "beldum":
+                    ModeBeldum()
+                case "johto starters":
+                    ModeJohtoStarters()
+                case "buy premier balls":
+                    purchased = ModePremierBalls()
+
+                    if not purchased:
+                        log.info(f"Ran out of money to buy Premier Balls. Script ended.")
+                        input("Press enter to continue...")
+                case other:
+                    log.exception("Couldn't interpret bot mode: " + config["bot_mode"])
+                    input("Press enter to continue...")
+        else:
+            ReleaseAllInputs()
+            WaitFrames(5)
 
 try:
     # Set up log handler
-    log_formatter = logging.Formatter('%(asctime)s %(levelname)s %(funcName)s(line:%(lineno)d) %(message)s')
-    console_formatter = logging.Formatter('%(asctime)s - %(message)s')
-    path = "logs"
-    logFile = f"{path}/debug.log"
-    os.makedirs(path, exist_ok=True) # Create logs directory if not exist
+    LogFormatter = logging.Formatter('%(asctime)s %(levelname)s %(funcName)s(line:%(lineno)d) %(message)s')
+    ConsoleFormatter = logging.Formatter('%(asctime)s - %(message)s')
+    LogPath = "logs"
+    LogFile = f"{LogPath}/debug.log"
+    os.makedirs(LogPath, exist_ok=True) # Create logs directory if not exist
 
     # Set up log file rotation handler
-    log_handler = RotatingFileHandler(logFile, mode='a', maxBytes=20*1024*1024, backupCount=5, encoding=None, delay=0)
-    log_handler.setFormatter(log_formatter)
-    log_handler.setLevel(logging.INFO)
+    LogHandler = RotatingFileHandler(LogFile, mode='a', maxBytes=20*1024*1024, backupCount=5, encoding=None, delay=0)
+    LogHandler.setFormatter(LogFormatter)
+    LogHandler.setLevel(logging.INFO)
 
     # Set up console log stream handler
-    console_handler = logging.StreamHandler()
-    console_handler.setFormatter(console_formatter)
-    console_handler.setLevel(logging.DEBUG)
+    ConsoleHandler = logging.StreamHandler()
+    ConsoleHandler.setFormatter(ConsoleFormatter)
+    ConsoleHandler.setLevel(logging.DEBUG)
 
     # Create logger and attach handlers
     log = logging.getLogger('root')
     log.setLevel(logging.INFO)
-    log.addHandler(log_handler)
-    log.addHandler(console_handler)
+    log.addHandler(LogHandler)
+    log.addHandler(ConsoleHandler)
 except Exception as e:
-    log.exception(str(e))
+    print(str(e))
+    input("Press enter to continue...")
     os._exit(1)
 
 try:
     # Validate python version
-    min_major = 3
-    min_minor = 10
-    v_major = sys.version_info[0]
-    v_minor = sys.version_info[1]
+    MinMajorVersion = 3
+    MinMinorVersion = 10
+    MajorVersion = sys.version_info[0]
+    MinorVersion = sys.version_info[1]
 
-    if v_major < min_major or v_minor < min_minor:
-        log.error(f"\n\nPython version is out of date! (Minimum required version for pokebot is {min_major}.{min_minor})\nPlease install the latest version at https://www.python.org/downloads/\n")
+    if MajorVersion < MinMajorVersion or MinorVersion < MinMinorVersion:
+        log.error(f"\n\nPython version is out of date! (Minimum required version for pokebot is {MinMajorVersion}.{MinMinorVersion})\nPlease install the latest version at https://www.python.org/downloads/\n")
         input("Press enter to continue...")
         os._exit(1)
 
-    log.info(f"Running pokebot on Python {v_major}.{v_minor}")
+    log.info(f"Running pokebot on Python {MajorVersion}.{MinorVersion}")
 
     while True:
         if GetTrainer():
@@ -74,9 +141,6 @@ try:
 
     config = GetConfig() # Load config
     log.info(f"Mode: {config['bot_mode']}")
-        
-    item_list = json.loads(ReadFile("./modules/data/items.json"))
-    route_list = json.loads(ReadFile("./modules/data/routes-emerald.json"))
 
     emu = GetEmu()
     log.info("Detected game: " + emu["detectedGame"])
@@ -89,89 +153,28 @@ try:
         input("Press enter to continue...")
         os._exit(1)    
 
-    if config["ui"]["enable"]:
-        import webview
+    main = Thread(target=MainLoop)
+    main.start()
+
+    if config["server"]["enable"]:
         from modules.FlaskServer import httpServer
-
-        def on_window_close():
-            ReleaseAllInputs()
-
-            log.info("Dashboard closed on user input...")
-            os._exit(1)
 
         server = Thread(target=httpServer)
         server.start()
 
-        # Webview UI
-        url=f"http://{config['ui']['ip']}:{config['ui']['port']}/dashboard"
+    if config["ui"]["enable"]:
+        import webview
+        def OnWindowClose():
+            ReleaseAllInputs()
+            log.info("Dashboard closed on user input...")
+            os._exit(1)
+
+        url=f"http://{config['server']['ip']}:{config['server']['port']}/dashboard"
         window = webview.create_window("PokeBot", url=url, width=config["ui"]["width"], height=config["ui"]["height"], resizable=True, hidden=False, frameless=False, easy_drag=True, fullscreen=False, text_select=True, zoomable=True)
-        window.events.closed += on_window_close
+        window.events.closed += OnWindowClose
         webview.start()
-    
-    ReleaseAllInputs()
-    PressButton("SaveRAM") # Flush Bizhawk SaveRAM to disk
-
-    while True:
-        if GetTrainer() and GetEmu(): # Test that emulator information is accessible:
-            match config["bot_mode"]:
-                case "manual":
-                    while not OpponentChanged(): 
-                        WaitFrames(20)
-                    identify_pokemon()
-                case "spin":
-                    Spin()
-                case "sweet scent":
-                    mode_sweetScent()
-                case "bunny hop":
-                    mode_bunnyHop()
-                case "move between coords":
-                    mode_move_between_coords()
-                case "move until obstructed":
-                    mode_move_until_obstructed()
-                case "fishing":
-                    mode_fishing()
-                case "starters":
-                    mode_starters()
-                case "rayquaza":
-                    mode_rayquaza()
-                case "groudon":
-                    mode_groudon()
-                case "kyogre":
-                    mode_kyogre()
-                case "southern island":
-                    mode_southernIsland()
-                case "mew":
-                    mode_farawayMew()
-                case "regi trio":
-                    mode_regiTrio()
-                case "deoxys runaways":
-                    mode_deoxysPuzzle()
-                case "deoxys resets":
-                    if config["deoxys_puzzle_solved"]:
-                        mode_deoxysResets()
-                    else:
-                        mode_deoxysPuzzle(False)
-                case "fossil":
-                    mode_fossil()
-                case "castform":
-                    mode_castform()
-                case "beldum":
-                    mode_beldum()
-                case "johto starters":
-                    mode_johtoStarters()
-                case "buy premier balls":
-                    purchase_success = mode_buyPremierBalls()
-
-                    if not purchase_success:
-                        log.info(f"Ran out of money to buy Premier Balls. Script ended.")
-                        input("Press enter to continue...")
-                case other:
-                    log.exception("Couldn't interpret bot mode: " + config["bot_mode"])
-                    input("Press enter to continue...")
     else:
-        ReleaseAllInputs()
-        time.sleep(0.2)
-    WaitFrames(1)
+        main.join()
 
 except Exception as e:
     log.exception(str(e))

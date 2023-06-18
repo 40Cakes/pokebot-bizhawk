@@ -10,6 +10,7 @@ log = logging.getLogger(__name__)
 config = GetConfig()
 
 default_input = {"A": False, "B": False, "L": False, "R": False, "Up": False, "Down": False, "Left": False, "Right": False, "Select": False, "Start": False, "Light Sensor": 0, "Power": False, "Tilt X": 0, "Tilt Y": 0, "Tilt Z": 0, "SaveRAM": False}
+
 input_list_mmap = mmap.mmap(-1, 4096, tagname="bizhawk_input_list-" + config["bot_instance_id"], access=mmap.ACCESS_WRITE)
 input_list_mmap.seek(0)
 
@@ -21,7 +22,7 @@ g_current_index = 1 # Variable that keeps track of what input in the list we are
 for i in range(100): # Clear any prior inputs from last time script ran in case you haven't refreshed in Lua
     input_list_mmap.write(bytes('a', encoding="utf-8"))
 
-def hold_button(button: str): # Function to update the hold_input object
+def HoldButton(button: str): # Function to update the hold_input object
     global hold_input
     log.debug(f"Holding: {button}...")
 
@@ -29,7 +30,7 @@ def hold_button(button: str): # Function to update the hold_input object
     hold_input_mmap.seek(0)
     hold_input_mmap.write(bytes(json.dumps(hold_input), encoding="utf-8"))
 
-def release_button(button: str): # Function to update the hold_input object
+def ReleaseButton(button: str): # Function to update the hold_input object
     global hold_input
     log.debug(f"Releasing: {button}...")
 
@@ -38,7 +39,7 @@ def release_button(button: str): # Function to update the hold_input object
     hold_input_mmap.write(bytes(json.dumps(hold_input), encoding="utf-8"))
 
 def ReleaseAllInputs(): # Function to release all keys in all input objects
-    global press_input, hold_input
+    global hold_input
     log.debug(f"Releasing all inputs...")
 
     for button in ["A", "B", "L", "R", "Up", "Down", "Left", "Right", "Select", "Start", "Power"]:
@@ -46,7 +47,7 @@ def ReleaseAllInputs(): # Function to release all keys in all input objects
         hold_input_mmap.seek(0)
         hold_input_mmap.write(bytes(json.dumps(hold_input), encoding="utf-8"))
 
-def PressButton(button: str): # Function to update the press_input object
+def PressButton(button: str):
     global g_current_index
 
     match button:
@@ -75,13 +76,13 @@ def PressButton(button: str): # Function to update the press_input object
     if g_current_index > 99:
         g_current_index = 0
 
-def WaitFrames(frames: float):
-    time.sleep(max((frames/60.0) / GetEmu()["speed"], 0.02))
-
-def EmuCombo(sequence: list): # Function to send a sequence of inputs and delays to the emulator
+def ButtonCombo(sequence: list): # Function to send a sequence of inputs and delays to the emulator
     for k in sequence:
         if type(k) is int:
             WaitFrames(k)
         else:
             PressButton(k)
             WaitFrames(1)
+
+def WaitFrames(frames: float):
+    time.sleep(max((frames/60.0) / GetEmu()["speed"], 0.02))

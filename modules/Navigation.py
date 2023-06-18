@@ -1,10 +1,10 @@
-from modules.Inputs import ReleaseAllInputs, PressButton, WaitFrames
+from modules.Inputs import HoldButton, PressButton, ReleaseAllInputs, ReleaseButton, WaitFrames
 from modules.Stats import EncounterPokemon, OpponentChanged
 
-def run_until_obstructed(direction: str, run: bool = True): # Function to run until trainer position stops changing
+def Bonk(direction: str, run: bool = True): # Function to run until trainer position stops changing
     PressButton("B") # press and release B in case of a random pokenav call
 
-    hold_button(direction)
+    HoldButton(direction)
     last_x = GetTrainer()["posX"]
     last_y = GetTrainer()["posY"]
 
@@ -14,7 +14,7 @@ def run_until_obstructed(direction: str, run: bool = True): # Function to run un
     dir_unchanged = 0
     while dir_unchanged < move_speed:
         if run: 
-            hold_button("B")
+            HoldButton("B")
         
         WaitFrames(1)
 
@@ -37,7 +37,7 @@ def run_until_obstructed(direction: str, run: bool = True): # Function to run un
 
     return [last_x, last_y]
 
-def follow_path(coords: list, run: bool = True, exit_when_stuck: bool = False):
+def FollowPath(coords: list, run: bool = True, exit_when_stuck: bool = False):
     possibly_stuck = False
     direction = None
 
@@ -48,11 +48,11 @@ def follow_path(coords: list, run: bool = True, exit_when_stuck: bool = False):
         last_pos = [0, 0]
 
         if run:
-            hold_button("B")
+            HoldButton("B")
 
         while True:
             if direction != None:
-                release_button(direction)
+                ReleaseButton(direction)
 
             if OpponentChanged():
                 EncounterPokemon()
@@ -89,19 +89,19 @@ def follow_path(coords: list, run: bool = True, exit_when_stuck: bool = False):
 
                 # Press B occasionally in case there's a menu/dialogue open
                 if stuck_time % 120 == 0:
-                    release_button("B")
+                    ReleaseButton("B")
                     WaitFrames(1)
                     PressButton("B")
             else:
                 stuck_time = 0
 
-            hold_button(direction)
+            HoldButton(direction)
             WaitFrames(1)
 
     ReleaseAllInputs()
     return True
 
-def player_on_map(map_data: tuple):
+def PlayerOnMap(map_data: tuple):
     trainer = GetTrainer()
     on_map = trainer["mapBank"] == map_data[0] and trainer["mapId"] == map_data[1]
     log.debug(f"Player was not on target map of {map_data[0]},{map_data[1]}. Map was {trainer['mapBank']}, {trainer['mapId']}")

@@ -6,13 +6,13 @@ function utils.translatePath(path)
 	return pathTranslated == nil and path or pathTranslated
 end
 
-dofile (utils.translatePath("data\\lua\\Memory.lua"))
-dofile (utils.translatePath("data\\lua\\GameSettings.lua"))
+dofile (utils.translatePath("lua\\Memory.lua"))
+dofile (utils.translatePath("lua\\GameSettings.lua"))
 
 GameSettings.initialize()
 
 console.log("Lua Version: ".._VERSION)
-package.path = ";.\\data\\lua\\?.lua;"
+package.path = ";.\\lua\\?.lua;"
 
 function getTrainer()
 	local trainer = Memory.readdword(GameSettings.trainerpointer)

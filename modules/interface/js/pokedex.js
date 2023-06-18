@@ -173,7 +173,7 @@ function getMethod(method) {
 }
 
 // get info from stats
-function stats_data() {
+function stats() {
     $.ajax({
         method: "GET",
         url: host + "/stats",
@@ -193,17 +193,17 @@ function stats_data() {
 }
 
 // get info from emulator for game / fps
-function emu_data() {
+function emu() {
     $.ajax({
         method: "GET",
-        url: host + "/emu_data",
+        url: host + "/emu",
         crossDomain: true,
         dataType: "json",
         format: "json",
         timeout: 50,
-    }).done(function(emu_data) {
-        $("#nav_emu_data").text(
-            emu_data["detectedGame"] + " | " + emu_data["fps"] + "fps"
+    }).done(function(emu) {
+        $("#nav_emu").text(
+            emu["detectedGame"] + " | " + emu["fps"] + "fps"
         );
     });
 }
@@ -235,8 +235,8 @@ function encounter_log() {
 // phase encounters/total encounters/shinys
 window.setInterval(function() {
     encounter_log();
-    stats_data();
-    emu_data();
+    stats();
+    emu();
 }, 1000);
 
 // logic for search bar filtering on route/pokemon name

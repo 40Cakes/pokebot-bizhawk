@@ -10,7 +10,7 @@ from modules.Config import GetConfig
 from modules.data.GameState import GameState
 from modules.Files import ReadFile, WriteFile
 from modules.Inputs import ReleaseAllInputs, PressButton, WaitFrames
-from modules.Menuing import FleeBattle, PickupItems
+from modules.Menuing import CatchPokemon, FleeBattle, PickupItems, ResetGame, SaveGame, StartMenu
 from modules.mmf.Pokemon import GetOpponent
 from modules.mmf.Trainer import GetTrainer
 
@@ -58,6 +58,16 @@ def GetShinyLog():
         log.exception(str(e))
         return default
 
+def GetRNGState(tid: str, mon: str):
+    default = {"rngState": []}
+    try:
+        file = ReadFile(f"stats/{tid}/{mon.lower()}.json")
+        data = json.loads(file) if file else default
+        return data
+    except Exception as e:
+        log.exception(str(e))
+        return default
+
 last_opponent_personality = None
 def OpponentChanged(): # This function checks if there is a different opponent since last check, indicating the game state is probably now in a battle
     global last_opponent_personality
@@ -67,17 +77,20 @@ def OpponentChanged(): # This function checks if there is a different opponent s
             return False
 
         opponent = GetOpponent()
-        log.debug(f"Checking if opponent's PID has changed... (if {last_opponent_personality} != {opponent['personality']})")
-        if last_opponent_personality != opponent["personality"]:
-            log.info(f"Opponent has changed! Previous PID: {last_opponent_personality}, New PID: {opponent['personality']}")
-            last_opponent_personality = opponent["personality"]
-            return True
+        if opponent:
+            log.debug(f"Checking if opponent's PID has changed... (if {last_opponent_personality} != {opponent['personality']})")
+            if last_opponent_personality != opponent["personality"]:
+                log.info(f"Opponent has changed! Previous PID: {last_opponent_personality}, New PID: {opponent['personality']}")
+                last_opponent_personality = opponent["personality"]
+                return True
+        else:
+            return False
     except Exception as e:
         log.exception(str(e))
         return False
 
 def LogEncounter(pokemon: dict):
-    def common_stats():
+    def CommonStats():
         stats = GetStats()
 
         mon_stats = stats["pokemon"][pokemon["name"]]
@@ -223,7 +236,7 @@ def LogEncounter(pokemon: dict):
 
             stats["pokemon"][pokemon["name"]]["shiny_encounters"] += 1
             stats["totals"]["shiny_encounters"] += 1
-            common_stats()
+            CommonStats()
             stats["totals"]["phase_encounters"] = 0
             stats["totals"]["phase_lowest_sv"] = "-"
             stats["totals"]["phase_lowest_sv_pokemon"] = ""
@@ -250,7 +263,7 @@ def LogEncounter(pokemon: dict):
                 stats["totals"]["phase_lowest_sv_pokemon"] = pokemon["name"]
 
 
-            common_stats()
+            CommonStats()
 
         log.info(f"----------------------------------------")
     except Exception as e:
@@ -258,7 +271,7 @@ def LogEncounter(pokemon: dict):
         return False
 
 def EncounterPokemon(starter: bool = False): # New Pokemon encountered, record stats + decide whether to catch/battle/flee
-    legendary_hunt = config["bot_mode"] in ["manual", "rayquaza", "kyogre", "groudon", "southern island", "regi trio", "deoxys resets", "deoxys runaways", "mew"]
+    legendary_hunt = config["bot_mode"] in ["manual", "rayquaza", "kyogre", "groudon", "southern island", "regis", "deoxys resets", "deoxys runaways", "mew"]
 
     log.info("Identifying Pokemon...")
     ReleaseAllInputs()
@@ -280,7 +293,7 @@ def EncounterPokemon(starter: bool = False): # New Pokemon encountered, record s
 
     if pokemon["shiny"]:
         if not starter and not legendary_hunt and "shinies" in config["catch"]: 
-            catch_pokemon()
+            CatchPokemon()
         elif legendary_hunt:
             input("Pausing bot for manual intervention. (Don't forget to pause the pokebot.lua script so you can provide inputs). Press Enter to continue...")
         return True
@@ -301,7 +314,7 @@ def EncounterPokemon(starter: bool = False): # New Pokemon encountered, record s
             if not config["mem_hacks"]:
                 # Wait until sprite has appeared in battle before reset
                 WaitFrames(240)
-            reset_game()
+            ResetGame()
             return False
         else:
             FleeBattle()
@@ -314,7 +327,7 @@ def EncounterPokemon(starter: bool = False): # New Pokemon encountered, record s
         stats = GetStats()
         total_encounters = stats["totals"]["encounters"] + stats["totals"]["shiny_encounters"]
         if config["periodic_save"] and total_encounters % config["save_every_x_encounters"] == 0 and total_encounters != 0:
-            save_game()
+            SaveGame()
 
         if replace_battler:
             if not config["cycle_lead_pokemon"]:
@@ -322,7 +335,7 @@ def EncounterPokemon(starter: bool = False): # New Pokemon encountered, record s
                 FleeBattle()
                 return
             else:
-                start_menu("pokemon")
+                StartMenu("pokemon")
 
                 # Find another healthy battler
                 party_pp = [0, 0, 0, 0, 0, 0]

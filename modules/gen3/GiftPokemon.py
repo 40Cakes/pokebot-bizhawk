@@ -1,12 +1,14 @@
 from modules.data.GameState import GameState
 from modules.Files import WriteFile
 from modules.Image import DetectTemplate
-from modules.Inputs import EmuCombo, PressButton, WaitFrames
-from modules.Stats import LogEncounter
+from modules.Inputs import ButtonCombo, HoldButton, PressButton, ReleaseButton, WaitFrames
+from modules.Menuing import StartMenu
+from modules.Navigation import PlayerOnMap
+from modules.Stats import GetRNGState, LogEncounter
 
 # TODO
 def collect_gift_mon(target: str):
-    rng_frames = get_rngState(GetTrainer()["tid"], target)
+    rng_frames = GetRNGState(GetTrainer()["tid"], target)
     party_size = len(GetParty())
 
     if party_size == 6:
@@ -20,7 +22,7 @@ def collect_gift_mon(target: str):
             WaitFrames(8)
         
         # Text goes faster with B held
-        hold_button("B")
+        HoldButton("B")
 
         while len(GetParty()) == party_size:
             emu = GetEmu()
@@ -36,13 +38,13 @@ def collect_gift_mon(target: str):
         mon = GetParty()[party_size]
         
         # Open the menu and find Gift mon in party
-        release_button("B")
+        ReleaseButton("B")
 
         if config["mem_hacks"] and not mon["shiny"]:
             LogEncounter(mon)
-            hold_button("Power")
+            HoldButton("Power")
             WaitFrames(60)
-            release_button("Power")
+            ReleaseButton("Power")
             continue
 
         while not DetectTemplate("start_menu/select.png"):
@@ -61,51 +63,51 @@ def collect_gift_mon(target: str):
                     break
                 WaitFrames(1)
 
-        start_menu("pokemon")
+        StartMenu("pokemon")
 
         WaitFrames(60)
 
         i = 0
         while i < party_size:
-            EmuCombo(["Down", 15])
+            ButtonCombo(["Down", 15])
             i += 1
 
-        EmuCombo(["A", 15, "A", 60])
+        ButtonCombo(["A", 15, "A", 60])
 
         LogEncounter(mon)
 
         if not mon["shiny"]:
-            hold_button("Power")
+            HoldButton("Power")
             WaitFrames(60)
-            release_button("Power")
+            ReleaseButton("Power")
         else:
             input("Pausing bot for manual intervention. (Don't forget to pause the pokebot.lua script so you can provide inputs). Press Enter to continue...")
 
-def mode_beldum():
+def ModeBeldum():
     trainer = GetTrainer()
     x, y = trainer["posX"], trainer["posY"]
 
-    if (not player_on_map(MapDataEnum.MOSSDEEP_CITY_H.value) or not ((x == 3 and y == 3) or (x == 4 and y == 2))):
+    if (not PlayerOnMap(MapDataEnum.MOSSDEEP_CITY_H.value) or not ((x == 3 and y == 3) or (x == 4 and y == 2))):
         log.info("Please face the player toward the Pokeball in Steven's house after saving the game, then restart the script.")
         os._exit(1)
 
     collect_gift_mon("Beldum")
 
-def mode_castform():
+def ModeCastform():
     trainer = GetTrainer()
     x, y = trainer["posX"], trainer["posY"]
 
-    if (not player_on_map(MapDataEnum.ROUTE_119_B.value) or not ((x == 2 and y == 3) or (x == 3 and y == 2) or (x == 1 and y == 2))):
+    if (not PlayerOnMap(MapDataEnum.ROUTE_119_B.value) or not ((x == 2 and y == 3) or (x == 3 and y == 2) or (x == 1 and y == 2))):
         log.info("Please face the player toward the scientist after saving the game, then restart the script.")
         os._exit(1)
 
     collect_gift_mon("Castform")
 
-def mode_fossil():
+def ModeFossil():
     trainer = GetTrainer()
     x, y = trainer["posX"], trainer["posY"]
 
-    if not player_on_map(MapDataEnum.RUSTBORO_CITY_B.value) or y != 8 and not (x == 13 or x == 15):
+    if not PlayerOnMap(MapDataEnum.RUSTBORO_CITY_B.value) or y != 8 and not (x == 13 or x == 15):
         log.info("Please face the player toward the Fossil researcher after handing it over, re-entering the room, and saving the game. Then restart the script.")
         os._exit(1)
 

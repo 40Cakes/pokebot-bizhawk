@@ -19,14 +19,14 @@ function utils.translatePath(path)
 	return pathTranslated == nil and path or pathTranslated
 end
 
-dofile (utils.translatePath("data\\lua\\Memory.lua"))
-dofile (utils.translatePath("data\\lua\\GameSettings.lua"))
+dofile (utils.translatePath("lua\\Memory.lua"))
+dofile (utils.translatePath("lua\\GameSettings.lua"))
 
 -- Initialize game settings before loading other files
 GameSettings.initialize()
 
 console.log("Lua Version: ".._VERSION)
-package.path = utils.translatePath(";.\\data\\lua\\?.lua;")
+package.path = utils.translatePath(";.\\lua\\?.lua;")
 
 json = require "json"
 PokemonNames = require "PokemonNames"

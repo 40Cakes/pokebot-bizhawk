@@ -13,7 +13,7 @@ from modules.mmf.Trainer import GetTrainer
 
 config = GetConfig()
 
-pokedex_list = json.loads(ReadFile("./modules/data/pokedex.json"))
+PokedexList = json.loads(ReadFile("./modules/data/pokedex.json"))
 
 def httpServer(): # Run Flask server to make bot data available via HTTP GET
     try:
@@ -22,35 +22,40 @@ def httpServer(): # Run Flask server to make bot data available via HTTP GET
 
         server = Flask(__name__, static_folder="./interface")
         CORS(server)
+
         @server.route("/dashboard",methods=["GET"])
-        def req_dashboard():
+        def Dashboard():
             return flask.render_template("dashboard.html")
+
         @server.route("/dashboard/pokedex",methods=["GET"])
-        def req_dashboard_pokedex():
+        def DashboardPokedex():
             return flask.render_template("pokedex.html")
-        @server.route("/trainer_data", methods=["GET"])
-        def req_trainer_data():
+
+        @server.route("/trainer", methods=["GET"])
+        def Trainer():
             trainer = GetTrainer()
             if trainer:
                 response = jsonify(trainer)
                 return response
             else: abort(503)
-        @server.route("/party_data", methods=["GET"])
-        def req_party_data():
+
+        @server.route("/party", methods=["GET"])
+        def Party():
             party = GetParty()
             if party:
                 response = jsonify(party)
             else: abort(503)
-        @server.route("/encounter_info", methods=["GET"])
-        def req_encounter_info():
-            match config["bot_mode"]: # change
+
+        @server.route("/encounter", methods=["GET"])
+        def Encounter():
+            match config["bot_mode"]: # TODO change
                 case "starters":
                     encounter = GetParty()[0]
                 case other:
                     encounter = GetOpponent()
             if encounter:
                 stats = GetStats()
-                if stats: # TODO get stats from modules.Stats once created
+                if stats:
                     try: 
                         encounter["stats"] = stats["pokemon"][encounter["name"]]
                         response = jsonify(encounter)
@@ -59,50 +64,57 @@ def httpServer(): # Run Flask server to make bot data available via HTTP GET
                 else: response = jsonify(encounter)
                 return response
             else: abort(503)
-        @server.route("/emu_data", methods=["GET"])
-        def req_emu_data():
+
+        @server.route("/emu", methods=["GET"])
+        def Emu():
             emu = GetEmu()
             if emu:
                 response = jsonify(emu)
                 return response
             else: abort(503)
+
         @server.route("/stats", methods=["GET"])
-        def req_stats():
+        def Stats():
             stats = GetStats()
             if stats:
                 response = jsonify(stats)
                 return response
             else: abort(503)
+
         @server.route("/encounter_log", methods=["GET"])
-        def req_encounter_log():
+        def EncounterLog():
             encounter_log = GetEncounterLog()
             if encounter_log:
                 response = jsonify(encounter_log)
                 return response
             else: abort(503)
+
         @server.route("/shiny_log", methods=["GET"])		
-        def req_shiny_log():	
+        def ShinyLog():	
             shiny_log = GetShinyLog()
             if shiny_log:		
                 response = jsonify(shiny_log)		
                 return response		
             else: abort(503)
+
         @server.route("/routes", methods=["GET"])
-        def req_routes():
+        def Routes():
             if route_list:
                 routes = route_list
                 return routes
             else: abort(503)
+
         @server.route("/pokedex", methods=["GET"])
-        def req_pokedex():
-            if pokedex_list:
-                pokedex = pokedex_list
+        def Pokedex():
+            if PokedexList:
+                pokedex = PokedexList
                 return pokedex
             else: abort(503)
+
         #@server.route("/config", methods=["POST"])
-        #def submit_config():
+        #def Config():
         #    response = jsonify({})
         #    return response
 
-        server.run(debug=False, threaded=True, host=config["ui"]["ip"], port=config["ui"]["port"])
+        server.run(debug=False, threaded=True, host=config["server"]["ip"], port=config["server"]["port"])
     except Exception as e: log.exception(str(e))

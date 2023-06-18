@@ -27,7 +27,12 @@ config_schema = {
             "properties": {
                 "enable": { "type": "boolean"},
                 "width": { "type": "number"},
-                "height": { "type": "number"},
+                "height": { "type": "number"}
+            }
+        },
+        "server": { "type": "object",
+            "properties": {
+                "enable": { "type": "boolean"},
                 "ip": { "type": "string"},
                 "port": { "type": "number"}
             }

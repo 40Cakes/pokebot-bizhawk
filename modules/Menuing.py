@@ -5,7 +5,7 @@ from modules.Config import GetConfig
 from modules.data.GameState import GameState
 from modules.Files import ReadFile
 from modules.Image import DetectTemplate
-from modules.Inputs import EmuCombo, ReleaseAllInputs, PressButton, WaitFrames
+from modules.Inputs import ButtonCombo, HoldButton, ReleaseAllInputs, ReleaseButton, PressButton, WaitFrames
 from modules.mmf.Pokemon import GetOpponent, GetParty
 from modules.mmf.Trainer import GetTrainer
 
@@ -17,7 +17,7 @@ pickup_pokemon = ["Meowth", "Aipom", "Phanpy", "Teddiursa", "Zigzagoon", "Linoon
 
 type_list = json.loads(ReadFile("./modules/data/types.json"))
 
-def start_menu(entry: str): # Function to open any start menu item - presses START, finds the menu entry and opens it
+def StartMenu(entry: str): # Function to open any start menu item - presses START, finds the menu entry and opens it
     if not entry in ["bag", "bot", "exit", "option", "pokedex", "pokemon", "pokenav", "save"]:
         return False
 
@@ -27,7 +27,7 @@ def start_menu(entry: str): # Function to open any start menu item - presses STA
     ReleaseAllInputs()
 
     while not DetectTemplate("start_menu/select.png"):
-        EmuCombo(["B", "Start"])
+        ButtonCombo(["B", "Start"])
         
         for i in range(0, 10):
             if DetectTemplate("start_menu/select.png"):
@@ -37,19 +37,19 @@ def start_menu(entry: str): # Function to open any start menu item - presses STA
     WaitFrames(5)
 
     while not DetectTemplate(filename): # Find menu entry
-        EmuCombo(["Down", 10])
+        ButtonCombo(["Down", 10])
 
     while DetectTemplate(filename): # Press menu entry
-        EmuCombo(["A", 10])
+        ButtonCombo(["A", 10])
 
-def bag_menu(category: str, item: str): # Function to find an item in the bag and use item in battle such as a pokeball
+def BagMenu(category: str, item: str): # Function to find an item in the bag and use item in battle such as a pokeball
     if not category in ["berries", "items", "key_items", "pokeballs", "tms&hms"]:
         return False
 
     log.info(f"Scrolling to bag category: {category}...")
 
     while not DetectTemplate(f"start_menu/bag/{category.lower()}.png"):
-        EmuCombo(["Right", 25]) # Press right until the correct category is selected
+        ButtonCombo(["Right", 25]) # Press right until the correct category is selected
 
     WaitFrames(60) # Wait for animations
 
@@ -57,14 +57,14 @@ def bag_menu(category: str, item: str): # Function to find an item in the bag an
     
     i = 0
     while not DetectTemplate(f"start_menu/bag/items/{item}.png") and i < 50:
-        if i < 25: EmuCombo(["Down", 15])
-        else: EmuCombo(["Up", 15])
+        if i < 25: ButtonCombo(["Down", 15])
+        else: ButtonCombo(["Up", 15])
         i += 1
 
     if DetectTemplate(f"start_menu/bag/items/{item}.png"):
         log.info(f"Using item: {item}...")
         while GetTrainer()["state"] == GameState.BAG_MENU: 
-            EmuCombo(["A", 30]) # Press A to use the item
+            ButtonCombo(["A", 30]) # Press A to use the item
         return True
     else:
         return False
@@ -96,7 +96,7 @@ def PickupItems(): # If using a team of Pokemon with the ability "pickup", this 
         return
 
     WaitFrames(60) # Wait for animations
-    start_menu("pokemon") # Open Pokemon menu
+    StartMenu("pokemon") # Open Pokemon menu
     WaitFrames(65)
 
     i = 0
@@ -104,13 +104,13 @@ def PickupItems(): # If using a team of Pokemon with the ability "pickup", this 
         pokemon = GetParty()[i]
         if pokemon["speciesName"] in pickup_pokemon and pokemon["heldItem"] != 0:
             # Take the item from the pokemon
-            EmuCombo(["A", 15, "Up", 15, "Up", 15, "A", 15, "Down", 15, "A", 75, "B"])
+            ButtonCombo(["A", 15, "Up", 15, "Up", 15, "A", 15, "Down", 15, "A", 75, "B"])
             item_count -= 1
         
         if item_count == 0:
             break
 
-        EmuCombo([15, "Down", 15])
+        ButtonCombo([15, "Down", 15])
         i += 1
 
     # Close out of menus
@@ -118,34 +118,34 @@ def PickupItems(): # If using a team of Pokemon with the ability "pickup", this 
         PressButton("B")
         WaitFrames(20)
 
-def save_game(): # Function to save the game via the save option in the start menu
+def SaveGame(): # Function to save the game via the save option in the start menu
     try:
         log.info("Saving the game...")
 
         i = 0
-        start_menu("save")
+        StartMenu("save")
         while i < 2:
             while not DetectTemplate("start_menu/save/yes.png"):
                 WaitFrames(10)
             while DetectTemplate("start_menu/save/yes.png"):
-                EmuCombo(["A", 30])
+                ButtonCombo(["A", 30])
                 i += 1
         WaitFrames(500) # Wait for game to save
         PressButton("SaveRAM") # Flush Bizhawk SaveRAM to disk
     except Exception as e:
         log.exception(str(e))
 
-def reset_game():
+def ResetGame():
     log.info("Resetting...")
-    hold_button("Power")
+    HoldButton("Power")
     WaitFrames(60)
-    release_button("Power")
+    ReleaseButton("Power")
 
-def catch_pokemon(): # Function to catch pokemon
+def CatchPokemon(): # Function to catch pokemon
     try:
         while not DetectTemplate("battle/fight.png"):
             ReleaseAllInputs()
-            EmuCombo(["B", "Up", "Left"]) # Press B + up + left until FIGHT menu is visible
+            ButtonCombo(["B", "Up", "Left"]) # Press B + up + left until FIGHT menu is visible
         
         if config["manual_catch"]:
             input("Pausing bot for manual catch (don't forget to pause pokebot.lua script so you can provide inputs). Press Enter to continue...")
@@ -169,22 +169,22 @@ def catch_pokemon(): # Function to catch pokemon
                     i += 1
 
                 if spore_pp != 0:
-                    EmuCombo(["A", 15])
+                    ButtonCombo(["A", 15])
                     if spore_move_num == 0: seq = ["Up", "Left"]
                     elif spore_move_num == 1: seq = ["Up", "Right"]
                     elif spore_move_num == 2: seq = ["Left", "Down"]
                     elif spore_move_num == 3: seq = ["Right", "Down"]
 
                     while not DetectTemplate("spore.png"):
-                        EmuCombo(seq)
+                        ButtonCombo(seq)
 
-                    EmuCombo(["A", 240]) # Select move and wait for animations
+                    ButtonCombo(["A", 240]) # Select move and wait for animations
             elif not can_spore:
                 log.info(f"Can't sleep the opponent! Ability is {ability}")
 
             while not DetectTemplate("battle/bag.png"): 
                 ReleaseAllInputs()
-                EmuCombo(["B", "Up", "Right"]) # Press B + up + right until BAG menu is visible
+                ButtonCombo(["B", "Up", "Right"]) # Press B + up + right until BAG menu is visible
 
         while True:
             if DetectTemplate("battle/bag.png"): PressButton("A")
@@ -199,14 +199,14 @@ def catch_pokemon(): # Function to catch pokemon
                     species_rule = config["pokeball_override"][opponent["speciesName"]]
                     
                     for ball in species_rule:
-                        if bag_menu(category="pokeballs", item=ball):
+                        if BagMenu(category="pokeballs", item=ball):
                             can_catch = True
                             break
 
                 # Check global pokeball priority 
                 if not can_catch:
                     for ball in config["pokeball_priority"]:
-                        if bag_menu(category="pokeballs", item=ball):
+                        if BagMenu(category="pokeballs", item=ball):
                             can_catch = True
                             break
 
@@ -223,7 +223,7 @@ def catch_pokemon(): # Function to catch pokemon
                 WaitFrames(120) # Wait for animations
                 
                 if config["save_game_after_catch"]: 
-                    save_game()
+                    SaveGame()
                 
                 return True
 
@@ -242,12 +242,12 @@ def battle(): # Function to battle wild pokemon
         log.info("Navigating to the FIGHT button...")
 
         while not DetectTemplate("battle/fight.png") and GetTrainer()["state"] != GameState.OVERWORLD:
-            EmuCombo(["B", 10, "Up", 10, "Left", 10]) # Press B + up + left until FIGHT menu is visible
+            ButtonCombo(["B", 10, "Up", 10, "Left", 10]) # Press B + up + left until FIGHT menu is visible
         
         if GetTrainer()["state"] == GameState.OVERWORLD:
             return True
 
-        best_move = find_effective_move(GetParty()[0], GetOpponent())
+        best_move = FindEffectiveMove(GetParty()[0], GetOpponent())
         
         if best_move["power"] <= 10:
             log.info("Lead Pokemon has no effective moves to battle the foe!")
@@ -263,13 +263,13 @@ def battle(): # Function to battle wild pokemon
         i = int(best_move["index"])
 
         if i == 0:
-            EmuCombo(["Up", "Left"])
+            ButtonCombo(["Up", "Left"])
         elif i == 1:
-            EmuCombo(["Up", "Right"])
+            ButtonCombo(["Up", "Right"])
         elif i == 2:
-            EmuCombo(["Down", "Left"])
+            ButtonCombo(["Down", "Left"])
         elif i == 3:
-            EmuCombo(["Down", "Right"])
+            ButtonCombo(["Down", "Right"])
         
         PressButton("A")
 
@@ -291,10 +291,10 @@ def battle(): # Function to battle wild pokemon
         return True
     return True
 
-def is_valid_move(move: dict):
+def IsValidMove(move: dict):
     return not move["name"] in config["banned_moves"] and move["power"] > 0
 
-def find_effective_move(ally: dict, foe: dict):
+def FindEffectiveMove(ally: dict, foe: dict):
     i = 0
     move_power = []
 
@@ -302,7 +302,7 @@ def find_effective_move(ally: dict, foe: dict):
         power = move["power"]
 
         # Ignore banned moves and those with 0 PP
-        if not is_valid_move(move) or ally["pp"][i] == 0:
+        if not IsValidMove(move) or ally["pp"][i] == 0:
             move_power.append(0)
             i += 1
             continue
@@ -339,7 +339,7 @@ def FleeBattle(): # Function to run from wild pokemon
         log.info("Running from battle...")
         while GetTrainer()["state"] != GameState.OVERWORLD:
             while not DetectTemplate("battle/run.png") and GetTrainer()["state"] != GameState.OVERWORLD: 
-                EmuCombo(["Right", 5, "Down", "B", 5])
+                ButtonCombo(["Right", 5, "Down", "B", 5])
             while DetectTemplate("battle/run.png") and GetTrainer()["state"] != GameState.OVERWORLD: 
                 PressButton("A")
             PressButton("B")

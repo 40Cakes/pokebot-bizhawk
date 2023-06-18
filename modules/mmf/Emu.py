@@ -20,7 +20,7 @@ emu_schema = {
 EmuValidator = fastjsonschema.compile(emu_schema) # Validate the data from the mmf, sometimes it sends junk
 
 @staticmethod
-def language_id_to_iso_639(lang: int):
+def LangISO(lang: int):
     match lang:
         case 1: return "en"
         case 2: return "jp"
@@ -37,7 +37,7 @@ def GetEmu():
         emu = LoadJsonMmap(4096, "bizhawk_emu_data-" + config["bot_instance_id"])["emu"]
         if EmuValidator(emu):
             emu["speed"] = clamp(emu["fps"]/60, 0.06, 1000)
-            emu["language"] = language_id_to_iso_639(emu["language"])
+            emu["language"] = LangISO(emu["language"])
             return emu
         return None
     except Exception as e:

@@ -4,7 +4,7 @@ bot_mode: spin
 # sweet scent
 # bunny hop
 # move between coords
-# move until obstructed
+# bonk
 # fishing
 # starters
 # rayquaza
@@ -12,7 +12,7 @@ bot_mode: spin
 # kyogre
 # southern island
 # mew
-# regi trio
+# regis
 # deoxys runaways
 # deoxys reset
 # fossil
@@ -43,9 +43,13 @@ deoxys_puzzle_solved: false
 
 # User Interface
 ui:
-  enable: false
+  enable: true
   width: 1280
   height: 720
+
+# Web Server (this must be enabled for the UI to work)
+server:
+  enable: true
   ip: 127.0.0.1
   port: 8888
 
