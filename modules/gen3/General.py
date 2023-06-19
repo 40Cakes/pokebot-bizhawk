@@ -2,6 +2,7 @@ import random
 import logging
 
 from modules.data.GameState import GameState
+from modules.Config import GetConfig
 from modules.Image import DetectTemplate
 from modules.Inputs import ButtonCombo, HoldButton, PressButton, ReleaseAllInputs, WaitFrames
 from modules.Menuing import StartMenu
@@ -10,16 +11,16 @@ from modules.Stats import EncounterPokemon, OpponentChanged
 from modules.mmf.Trainer import GetTrainer
 
 log = logging.getLogger(__name__)
+config = GetConfig()
 
 def ModeBonk():
     direction = config["direction"].lower()
 
     while True:
         pos1, pos2 = None, None
-        foe_personality = last_opponent_personality
         log.info(f"Pathing {direction} until bonk...")
 
-        while foe_personality == last_opponent_personality:
+        while not OpponentChanged():
             if pos1 == None or pos2 == None:
                 if direction == "horizontal":
                     pos1 = Bonk("Left")
@@ -73,15 +74,10 @@ def ModeFishing():
 def ModeCoords():
     coords = config["coords"]
     pos1, pos2 = coords["pos1"], coords["pos2"]
-
     while True:
-        foe_personality = last_opponent_personality
-
-        while foe_personality == last_opponent_personality:
+        while not OpponentChanged():
             FollowPath([(pos1[0], pos1[1]), (pos2[0], pos2[1])])
-
         EncounterPokemon()
-
         while GetTrainer()["state"] != GameState.OVERWORLD:
             continue
 
@@ -110,30 +106,22 @@ def ModeSweetScent():
     log.info(f"Using Sweet Scent...")
     StartMenu("pokemon")
     PressButton("A") # Select first pokemon in party
-
     # Search for sweet scent in menu
     while not DetectTemplate("sweet_scent.png"): 
         PressButton("Down")
-
     ButtonCombo(["A", 300]) # Select sweet scent and wait for animation
     EncounterPokemon()
 
 def ModePremierBalls():
     while not DetectTemplate("mart/times_01.png"):
         PressButton("A")
-        
         if DetectTemplate("mart/you_dont.png"):
             return False
-
         WaitFrames(30)
-
     PressButton("Right")
     WaitFrames(15)
-
     if not DetectTemplate("mart/times_10.png") and not DetectTemplate("mart/times_11.png"):
         return False
-
     if DetectTemplate("mart/times_11.png"):
         PressButton("Down")
-
     return True

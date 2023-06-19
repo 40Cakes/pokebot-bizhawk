@@ -6,7 +6,7 @@ from modules.data.GameState import GameState
 from modules.Files import ReadFile
 from modules.Image import DetectTemplate
 from modules.Inputs import ButtonCombo, HoldButton, ReleaseAllInputs, ReleaseButton, PressButton, WaitFrames
-from modules.mmf.Pokemon import GetOpponent, GetParty
+from modules.mmf.Pokemon import GetOpponent, GetParty, item_list
 from modules.mmf.Trainer import GetTrainer
 
 log = logging.getLogger(__name__)
