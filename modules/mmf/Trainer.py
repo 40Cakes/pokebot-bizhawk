@@ -28,7 +28,7 @@ def GetTrainer():
     while True:
         try:
             trainer = LoadJsonMmap(4096, "bizhawk_trainer_data-" + config["bot_instance_id"])["trainer"]
-            if trainer and TrainerValidator(trainer):
+            if TrainerValidator(trainer):
                 return trainer
         except Exception as e:
             log.debug("Failed to GetTrainer(), trying again...")
