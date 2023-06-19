@@ -190,9 +190,6 @@ def LogEncounter(pokemon: dict):
         if pokemon["shiny"]:
             log.info("Shiny Pokemon detected!")
 
-            shortest_phase = stats["totals"]["shortest_phase_encounters"]
-            encounters = stats["totals"]["phase_encounters"]
-
             # Send webhook message, if enabled.
             if config["discord"]["enable"]:
                 try:
@@ -231,10 +228,10 @@ def LogEncounter(pokemon: dict):
                     log.exception(str(e))
                     pass
 
-            if shortest_phase == "-": 
-                shortest_phase = encounters
+            if stats["totals"]["shortest_phase_encounters"] == "-": 
+                stats["totals"]["shortest_phase_encounters"] = stats["totals"]["phase_encounters"]
             else:
-                shortest_phase = max(shortest_phase, encounters)
+                stats["totals"]["shortest_phase_encounters"] = max(stats["totals"]["shortest_phase_encounters"], stats["totals"]["phase_encounters"])
 
             stats["pokemon"][pokemon["name"]]["shiny_encounters"] += 1
             stats["totals"]["shiny_encounters"] += 1
