@@ -16,7 +16,7 @@ from modules.gen3.Starters import ModeStarters # ModeJohtoStarters
 from modules.gen3.Legendaries import ModeGroudon, ModeKyogre, ModeRayquaza, ModeMew, ModeRegis, ModeSouthernIsland, ModeDeoxysPuzzle, ModeDeoxysResets 
 from modules.gen3.GiftPokemon import ModeCastform, ModeBeldum, ModeFossil
 
-LogLevel = logging.DEBUG # use logging.DEBUG while testing
+LogLevel = logging.INFO # use logging.DEBUG while testing
 config = GetConfig()
 
 def MainLoop():
