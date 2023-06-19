@@ -20,7 +20,6 @@ config_schema = {
         },
         "direction": { "type": "string" },
         "starter": { "type": "string" },
-        "johto_starter": { "type": "string" },
         "fossil": { "type": "string" },
         "deoxys_puzzle_solved": { "type": "boolean" },
         "ui": { "type": "object",
@@ -35,6 +34,12 @@ config_schema = {
                 "enable": { "type": "boolean"},
                 "ip": { "type": "string"},
                 "port": { "type": "number"}
+            }
+        },
+        "discord": { "type": "object",
+            "properties": {
+                "enable": { "type": "boolean"},
+                "iv_format": { "type": "string"}
             }
         },
         "periodic_save": { "type": "boolean" },

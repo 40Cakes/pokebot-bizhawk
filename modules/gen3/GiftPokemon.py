@@ -1,13 +1,19 @@
+import os
+import logging
+
 from modules.data.GameState import GameState
 from modules.Files import WriteFile
 from modules.Image import DetectTemplate
 from modules.Inputs import ButtonCombo, HoldButton, PressButton, ReleaseButton, WaitFrames
 from modules.Menuing import StartMenu
-from modules.Navigation import PlayerOnMap
+from modules.Navigation import MapDataEnum, PlayerOnMap
 from modules.Stats import GetRNGState, LogEncounter
+from modules.mmf.Emu import GetEmu
+from modules.mmf.Trainer import GetTrainer
 
-# TODO
-def collect_gift_mon(target: str):
+log = logging.getLogger(__name__)
+
+def CollectGiftMon(target: str):
     rng_frames = GetRNGState(GetTrainer()["tid"], target)
     party_size = len(GetParty())
 
@@ -91,7 +97,7 @@ def ModeBeldum():
         log.info("Please face the player toward the Pokeball in Steven's house after saving the game, then restart the script.")
         os._exit(1)
 
-    collect_gift_mon("Beldum")
+    CollectGiftMon("Beldum")
 
 def ModeCastform():
     trainer = GetTrainer()
@@ -101,7 +107,7 @@ def ModeCastform():
         log.info("Please face the player toward the scientist after saving the game, then restart the script.")
         os._exit(1)
 
-    collect_gift_mon("Castform")
+    CollectGiftMon("Castform")
 
 def ModeFossil():
     trainer = GetTrainer()
@@ -111,4 +117,4 @@ def ModeFossil():
         log.info("Please face the player toward the Fossil researcher after handing it over, re-entering the room, and saving the game. Then restart the script.")
         os._exit(1)
 
-    collect_gift_mon(config["fossil"])
+    CollectGiftMon(config["fossil"])

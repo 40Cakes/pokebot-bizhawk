@@ -48,11 +48,7 @@ def httpServer(): # Run Flask server to make bot data available via HTTP GET
 
         @server.route("/encounter", methods=["GET"])
         def Encounter():
-            match config["bot_mode"]: # TODO change
-                case "starters":
-                    encounter = GetParty()[0]
-                case other:
-                    encounter = GetOpponent()
+            encounter = GetEncounterLog()["encounter_log"].pop()["pokemon_obj"]
             if encounter:
                 stats = GetStats()
                 if stats:

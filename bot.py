@@ -6,19 +6,17 @@ import logging
 from logging.handlers import RotatingFileHandler
 
 from modules.Config import GetConfig
-from modules.data.MapData import mapRSE #mapFRLG
 from modules.Files import ReadFile
 from modules.Inputs import ReleaseAllInputs, PressButton, WaitFrames
 from modules.Stats import EncounterPokemon, OpponentChanged
 from modules.mmf.Emu import GetEmu
-from modules.mmf.Pokemon import GetOpponent, GetParty
-from modules.mmf.Screenshot import GetScreenshot
 from modules.mmf.Trainer import GetTrainer
 from modules.gen3.General import ModeBonk, ModeBunnyHop, ModeFishing, ModeCoords, ModeSpin, ModeSweetScent, ModePremierBalls
 from modules.gen3.Starters import ModeStarters # ModeJohtoStarters
 from modules.gen3.Legendaries import ModeGroudon, ModeKyogre, ModeRayquaza, ModeMew, ModeRegis, ModeSouthernIsland, ModeDeoxysPuzzle, ModeDeoxysResets 
 from modules.gen3.GiftPokemon import ModeCastform, ModeBeldum, ModeFossil
 
+LogLevel = logging.DEBUG # use logging.DEBUG while testing
 config = GetConfig()
 
 def MainLoop():
@@ -30,65 +28,68 @@ def MainLoop():
     PressButton("SaveRAM") # Flush Bizhawk SaveRAM to disk
 
     while True:
-        if GetTrainer() and GetEmu(): # Test that emulator information is accessible and valid
-            match config["bot_mode"]:
-                case "manual":
-                    while not OpponentChanged(): 
-                        WaitFrames(20)
-                    EncounterPokemon()
-                case "spin":
-                    ModeSpin()
-                case "sweet scent":
-                    ModeSweetScent()
-                case "bunny hop":
-                    ModeBunnyHop()
-                case "move between coords":
-                    ModeCoords()
-                case "bonk":
-                    ModeBonk()
-                case "fishing":
-                    ModeFishing()
-                case "starters":
-                    ModeStarters()
-                case "rayquaza":
-                    ModeRayquaza()
-                case "groudon":
-                    ModeGroudon()
-                case "kyogre":
-                    ModeKyogre()
-                case "southern island":
-                    ModeSouthernIsland()
-                case "mew":
-                    ModeMew()
-                case "regis":
-                    ModeRegis()
-                case "deoxys runaways":
-                    ModeDeoxysPuzzle()
-                case "deoxys resets":
-                    if config["deoxys_puzzle_solved"]:
-                        ModeDeoxysResets()
-                    else:
-                        ModeDeoxysPuzzle(False)
-                case "fossil":
-                    ModeFossil()
-                case "castform":
-                    ModeCastform()
-                case "beldum":
-                    ModeBeldum()
-                case "johto starters":
-                    ModeJohtoStarters()
-                case "buy premier balls":
-                    purchased = ModePremierBalls()
+        try:
+            if GetTrainer() and GetEmu(): # Test that emulator information is accessible and valid
+                match config["bot_mode"]:
+                    case "manual":
+                        while not OpponentChanged(): 
+                            WaitFrames(20)
+                        EncounterPokemon()
+                    case "spin":
+                        ModeSpin()
+                    case "sweet scent":
+                        ModeSweetScent()
+                    case "bunny hop":
+                        ModeBunnyHop()
+                    case "coords":
+                        ModeCoords()
+                    case "bonk":
+                        ModeBonk()
+                    case "fishing":
+                        ModeFishing()
+                    case "starters":
+                        ModeStarters()
+                    case "rayquaza":
+                        ModeRayquaza()
+                    case "groudon":
+                        ModeGroudon()
+                    case "kyogre":
+                        ModeKyogre()
+                    case "southern island":
+                        ModeSouthernIsland()
+                    case "mew":
+                        ModeMew()
+                    case "regis":
+                        ModeRegis()
+                    case "deoxys runaways":
+                        ModeDeoxysPuzzle()
+                    case "deoxys resets":
+                        if config["deoxys_puzzle_solved"]:
+                            ModeDeoxysResets()
+                        else:
+                            ModeDeoxysPuzzle(False)
+                    case "fossil":
+                        ModeFossil()
+                    case "castform":
+                        ModeCastform()
+                    case "beldum":
+                        ModeBeldum()
+                    case "johto starters":
+                        ModeJohtoStarters()
+                    case "buy premier balls":
+                        purchased = ModePremierBalls()
 
-                    if not purchased:
-                        log.info(f"Ran out of money to buy Premier Balls. Script ended.")
+                        if not purchased:
+                            log.info(f"Ran out of money to buy Premier Balls. Script ended.")
+                            input("Press enter to continue...")
+                    case other:
+                        log.exception("Couldn't interpret bot mode: " + config["bot_mode"])
                         input("Press enter to continue...")
-                case other:
-                    log.exception("Couldn't interpret bot mode: " + config["bot_mode"])
-                    input("Press enter to continue...")
-        else:
-            ReleaseAllInputs()
-            WaitFrames(5)
+            else:
+                ReleaseAllInputs()
+                WaitFrames(5)
+        except Exception as e:
+            log.exception(str(e))
 
 try:
     # Set up log handler
@@ -106,7 +107,7 @@ try:
     # Set up console log stream handler
     ConsoleHandler = logging.StreamHandler()
     ConsoleHandler.setFormatter(ConsoleFormatter)
-    ConsoleHandler.setLevel(logging.DEBUG)
+    ConsoleHandler.setLevel(LogLevel)
 
     # Create logger and attach handlers
     log = logging.getLogger('root')
@@ -141,17 +142,6 @@ try:
 
     config = GetConfig() # Load config
     log.info(f"Mode: {config['bot_mode']}")
-
-    emu = GetEmu()
-    log.info("Detected game: " + emu["detectedGame"])
-    if any([x in emu["detectedGame"] for x in ["Emerald"]]): # "Ruby", "Sapphire"
-        MapDataEnum = mapRSE
-    #if any([x in emu["detectedGame"] for x in ["FireRed", "LeafGreen"]]):
-    #    MapDataEnum = mapFRLG
-    else:
-        log.error("Unsupported game detected...")
-        input("Press enter to continue...")
-        os._exit(1)    
 
     main = Thread(target=MainLoop)
     main.start()

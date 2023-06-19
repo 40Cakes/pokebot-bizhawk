@@ -138,8 +138,9 @@ def SaveGame(): # Function to save the game via the save option in the start men
 def ResetGame():
     log.info("Resetting...")
     HoldButton("Power")
-    WaitFrames(60)
+    WaitFrames(10)
     ReleaseButton("Power")
+    WaitFrames(60)
 
 def CatchPokemon(): # Function to catch pokemon
     try:

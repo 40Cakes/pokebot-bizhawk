@@ -25,12 +25,11 @@ trainer_schema = {
 TrainerValidator = fastjsonschema.compile(trainer_schema) # Validate the data from the mmf, sometimes it sends junk
 
 def GetTrainer():
-    try:
-        trainer = LoadJsonMmap(4096, "bizhawk_trainer_data-" + config["bot_instance_id"])["trainer"]
-        if trainer:
-            if TrainerValidator(trainer):
+    while True:
+        try:
+            trainer = LoadJsonMmap(4096, "bizhawk_trainer_data-" + config["bot_instance_id"])["trainer"]
+            if trainer and TrainerValidator(trainer):
                 return trainer
-        return None
-    except Exception as e:
-        log.exception(str(e))
-        return None
+        except Exception as e:
+            log.debug("Failed to GetTrainer(), trying again...")
+            log.exception(str(e))

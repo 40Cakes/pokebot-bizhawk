@@ -11,7 +11,7 @@ from modules.data.GameState import GameState
 from modules.Files import ReadFile, WriteFile
 from modules.Inputs import ReleaseAllInputs, PressButton, WaitFrames
 from modules.Menuing import CatchPokemon, FleeBattle, PickupItems, ResetGame, SaveGame, StartMenu
-from modules.mmf.Pokemon import GetOpponent
+from modules.mmf.Pokemon import GetOpponent, GetParty
 from modules.mmf.Trainer import GetTrainer
 
 log = logging.getLogger(__name__)
@@ -91,8 +91,6 @@ def OpponentChanged(): # This function checks if there is a different opponent s
 
 def LogEncounter(pokemon: dict):
     def CommonStats():
-        stats = GetStats()
-
         mon_stats = stats["pokemon"][pokemon["name"]]
         total_stats = stats["totals"]
 
@@ -196,38 +194,42 @@ def LogEncounter(pokemon: dict):
             encounters = stats["totals"]["phase_encounters"]
 
             # Send webhook message, if enabled.
-            if config["discord_webhook_url"]:
-                log.info("Sending Discord ping...")
-                if config["discord_shiny_ping"] and config["discord_ping_mode"] == "role": # Thanks Discord for making role and user IDs use the same format, but have different syntaxes for pinging them by ID, really cool.
-                    content=f"<@&{config['discord_shiny_ping']}>"
-                elif config["discord_ping_mode"] == "user":
-                    content=f"<@{config['discord_shiny_ping']}>"
-                else:
-                    content="" # It breaks if I don't do this, sorry.
-                webhook = DiscordWebhook(url=config["discord_webhook_url"], content=content)
-                embed = DiscordEmbed(title='Shiny encountered!', description=f"{pokemon['name']} at {pokemon['metLocationName']}", color='ffd242')
-                embed.set_footer(text='PokeBot')
-                embed.set_timestamp()
-                embed.add_embed_field(name='Shiny Value', value=f"{pokemon['shinyValue']:,}")
-                embed.add_embed_field(name='Nature', value=f"{pokemon['nature']}")
-                # Basic IV list
-                if config["discord_webhook_ivs"] == "basic" or config["discord_webhook_ivs"] == "":
-                    embed.add_embed_field(name='IVs', value=f"HP: {pokemon['hpIV']} | ATK: {pokemon['attackIV']} | DEF: {pokemon['defenseIV']} | SPATK: {pokemon['spAttackIV']} | SPDEF: {pokemon['spDefenseIV']} | SPE: {pokemon['speedIV']}", inline=False)
-                # Formatted IV list
-                if config["discord_webhook_ivs"] == "formatted":
-                    embed.add_embed_field(name='IVs', value=f"""
-                    `╔═══╤═══╤═══╤═══╤═══╤═══╗`
-                    `║HP │ATK│DEF│SPA│SPD│SPE║`
-                    `╠═══╪═══╪═══╪═══╪═══╪═══╣`
-                    `║{pokemon['hpIV']:^3}│{pokemon['attackIV']:^3}│{pokemon['defenseIV']:^3}│{pokemon['spAttackIV']:^3}│{pokemon['spDefenseIV']:^3}│{pokemon['speedIV']:^3}║`
-                    `╚═══╧═══╧═══╧═══╧═══╧═══╝`""", inline=False)
-                embed.add_embed_field(name='Species Phase Encounters', value=f"{stats['pokemon'][pokemon['name']]['phase_encounters']}")
-                embed.add_embed_field(name='All Phase Encounters', value=f"{stats['totals']['phase_encounters']}")
-                with open(f"interface/sprites/pokemon/shiny/{pokemon['name']}.png", "rb") as shiny:
-                    webhook.add_file(file=shiny.read(), filename='shiny.png')
-                embed.set_thumbnail(url='attachment://shiny.png')
-                webhook.add_embed(embed)
-                response = webhook.execute()
+            if config["discord"]["enable"]:
+                try:
+                    log.info("Sending Discord ping...")
+                    if config["discord"]["shiny_ping"] and config["discord"]["ping_mode"] == "role": # Thanks Discord for making role and user IDs use the same format, but have different syntaxes for pinging them by ID, really cool.
+                        content=f"<@&{config['discord']['shiny_ping']}>"
+                    elif config["discord"]["ping_mode"] == "user":
+                        content=f"<@{config['discord']['shiny_ping']}>"
+                    else:
+                        content="" # It breaks if I don't do this, sorry.
+                    webhook = DiscordWebhook(url=config["discord"]["webhook_url"], content=content)
+                    embed = DiscordEmbed(title='Shiny encountered!', description=f"{pokemon['name']} at {pokemon['metLocationName']}", color='ffd242')
+                    embed.set_footer(text='PokeBot')
+                    embed.set_timestamp()
+                    embed.add_embed_field(name='Shiny Value', value=f"{pokemon['shinyValue']:,}")
+                    embed.add_embed_field(name='Nature', value=f"{pokemon['nature']}")
+                    # Basic IV list
+                    if config["discord"]["iv_format"] == "basic" or config["discord"]["iv_format"] == "":
+                        embed.add_embed_field(name='IVs', value=f"HP: {pokemon['hpIV']} | ATK: {pokemon['attackIV']} | DEF: {pokemon['defenseIV']} | SPATK: {pokemon['spAttackIV']} | SPDEF: {pokemon['spDefenseIV']} | SPE: {pokemon['speedIV']}", inline=False)
+                    # Formatted IV list
+                    if config["discord"]["iv_format"] == "formatted":
+                        embed.add_embed_field(name='IVs', value=f"""
+                        `╔═══╤═══╤═══╤═══╤═══╤═══╗`
+                        `║HP │ATK│DEF│SPA│SPD│SPE║`
+                        `╠═══╪═══╪═══╪═══╪═══╪═══╣`
+                        `║{pokemon['hpIV']:^3}│{pokemon['attackIV']:^3}│{pokemon['defenseIV']:^3}│{pokemon['spAttackIV']:^3}│{pokemon['spDefenseIV']:^3}│{pokemon['speedIV']:^3}║`
+                        `╚═══╧═══╧═══╧═══╧═══╧═══╝`""", inline=False)
+                    embed.add_embed_field(name='Species Phase Encounters', value=f"{stats['pokemon'][pokemon['name']]['phase_encounters']}")
+                    embed.add_embed_field(name='All Phase Encounters', value=f"{stats['totals']['phase_encounters']}")
+                    with open(f"interface/sprites/pokemon/shiny/{pokemon['name']}.png", "rb") as shiny:
+                        webhook.add_file(file=shiny.read(), filename='shiny.png')
+                    embed.set_thumbnail(url='attachment://shiny.png')
+                    webhook.add_embed(embed)
+                    response = webhook.execute()
+                except Exception as e:
+                    log.exception(str(e))
+                    pass
 
             if shortest_phase == "-": 
                 shortest_phase = encounters

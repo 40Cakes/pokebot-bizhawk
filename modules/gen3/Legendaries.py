@@ -2,8 +2,9 @@ from modules.data.GameState import GameState
 from modules.Files import WriteFile
 from modules.Inputs import ButtonCombo, HoldButton, PressButton, WaitFrames
 from modules.Menuing import ResetGame, SaveGame
-from modules.Navigation import Bonk, FollowPath, PlayerOnMap
+from modules.Navigation import Bonk, FollowPath, MapDataEnum, PlayerOnMap
 from modules.Stats import EncounterPokemon, GetRNGState, OpponentChanged
+from modules.mmf.Trainer import GetTrainer
 
 def ModeGroudon():
     trainer = GetTrainer()

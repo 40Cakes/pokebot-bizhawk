@@ -5,6 +5,7 @@ import fastjsonschema
 from datetime import datetime
 from modules.Config import GetConfig
 from modules.Files import ReadFile
+from modules.Inputs import WaitFrames
 from modules.mmf.Common import LoadJsonMmap
 from modules.mmf.Trainer import GetTrainer
 
@@ -15,7 +16,6 @@ item_list = json.loads(ReadFile("./modules/data/items.json"))
 location_list = json.loads(ReadFile("./modules/data/locations.json"))
 move_list = json.loads(ReadFile("./modules/data/moves.json"))
 pokemon_list = json.loads(ReadFile("./modules/data/pokemon.json"))
-placeholder_pokemon = json.loads(ReadFile("./modules/data/placeholder_pokemon.json"))
 
 pokemon_schema = {
     "type": "object",
@@ -175,29 +175,40 @@ def EnrichMonData(pokemon: dict): # Function to add information to the pokemon d
 
             return pokemon
         else:
-            return placeholder_pokemon
+            return None
     except Exception as e:
         log.exception(str(e))
         return None
 
 def GetOpponent():
-    try:
-        opponent = LoadJsonMmap(4096, "bizhawk_opponent_data-" + config["bot_instance_id"])["opponent"]
-        if PokemonValidator(opponent):
-            return EnrichMonData(opponent)
-        else:
-            return opponent
-    except Exception as e:
-        log.exception(str(e))
-        return placeholder_pokemon
+    while True:
+        try:
+            opponent = LoadJsonMmap(4096, "bizhawk_opponent_data-" + config["bot_instance_id"])["opponent"]
+            if opponent and PokemonValidator(opponent):
+                enriched = EnrichMonData(opponent)
+                if enriched:
+                    return enriched
+        except Exception as e:
+            log.debug("Failed to GetOpponent(), trying again...")
+            log.exception(str(e))
 
 def GetParty():
-    try:
-        party = LoadJsonMmap(8192, "bizhawk_party_data-" + config["bot_instance_id"])["party"]
-        if party:
-            party_list = [pokemon for pokemon in party if PokemonValidator(pokemon)]
-            return party_list
-        return None
-    except Exception as e:
-        log.exception(str(e))
-        return None
+    while True:
+        try:
+            party_list = []
+            party = LoadJsonMmap(8192, "bizhawk_party_data-" + config["bot_instance_id"])["party"]
+            if party:
+                for pokemon in party:
+                    if PokemonValidator(pokemon):
+                        enriched = EnrichMonData(pokemon)
+                        if enriched:
+                            party_list.append(enriched)
+                            continue
+                    else:
+                        WaitFrames(1)
+                        retry -= 1
+                        break
+                return party_list
+        except Exception as e:
+            log.debug("Failed to GetParty(), trying again...")
+            log.exception(str(e))

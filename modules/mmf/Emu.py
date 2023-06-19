@@ -1,4 +1,5 @@
 import json
+import time
 import logging
 import fastjsonschema
 from modules.Config import GetConfig
@@ -33,13 +34,13 @@ def clamp(n, minn, maxn):
     return max(min(maxn, n), minn)
 
 def GetEmu():
-    try:
-        emu = LoadJsonMmap(4096, "bizhawk_emu_data-" + config["bot_instance_id"])["emu"]
-        if EmuValidator(emu):
-            emu["speed"] = clamp(emu["fps"]/60, 0.06, 1000)
-            emu["language"] = LangISO(emu["language"])
-            return emu
-        return None
-    except Exception as e:
-        log.exception(str(e))
-        return None
+    while True:
+        try:
+            emu = LoadJsonMmap(4096, "bizhawk_emu_data-" + config["bot_instance_id"])["emu"]
+            if EmuValidator(emu):
+                emu["speed"] = clamp(emu["fps"]/60, 0.06, 1000)
+                emu["language"] = LangISO(emu["language"])
+                return emu
+        except Exception as e:
+            log.debug("Failed to GetEmu(), trying again...")
+            log.exception(str(e))
