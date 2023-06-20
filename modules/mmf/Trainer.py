@@ -32,4 +32,4 @@ def GetTrainer():
                 return trainer
         except Exception as e:
             log.debug("Failed to GetTrainer(), trying again...")
-            log.exception(str(e))
+            log.debug(str(e))

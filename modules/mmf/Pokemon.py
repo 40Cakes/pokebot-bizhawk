@@ -177,7 +177,7 @@ def EnrichMonData(pokemon: dict): # Function to add information to the pokemon d
         else:
             return None
     except Exception as e:
-        log.exception(str(e))
+        log.debug(str(e))
         return None
 
 def GetOpponent():
@@ -190,7 +190,7 @@ def GetOpponent():
                     return enriched
         except Exception as e:
             log.debug("Failed to GetOpponent(), trying again...")
-            log.exception(str(e))
+            log.debug(str(e))
 
 def GetParty():
     while True:
@@ -211,4 +211,4 @@ def GetParty():
                 return party_list
         except Exception as e:
             log.debug("Failed to GetParty(), trying again...")
-            log.exception(str(e))
+            log.debug(str(e))

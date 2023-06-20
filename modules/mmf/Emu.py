@@ -43,4 +43,4 @@ def GetEmu():
                 return emu
         except Exception as e:
             log.debug("Failed to GetEmu(), trying again...")
-            log.exception(str(e))
+            log.debug(str(e))

@@ -33,5 +33,5 @@ def DetectTemplate(file: str): # Return true if template (image) is found anywhe
             return False
 
     except Exception as e:
-        log.exception(str(e))
+        log.debug(str(e))
         return False
