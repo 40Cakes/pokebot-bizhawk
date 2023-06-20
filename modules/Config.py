@@ -20,6 +20,7 @@ config_schema = {
         },
         "direction": { "type": "string" },
         "starter": { "type": "string" },
+        "johto_starter": { "type": "string" },
         "fossil": { "type": "string" },
         "deoxys_puzzle_solved": { "type": "boolean" },
         "ui": { "type": "object",

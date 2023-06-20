@@ -118,3 +118,13 @@ def ModeFossil():
         os._exit(1)
 
     CollectGiftMon(config["fossil"])
+
+def ModeJohtoStarters():
+    trainer = GetTrainer()
+    x, y = trainer["posX"], trainer["posY"]
+
+    if (not PlayerOnMap(MapDataEnum.LITTLEROOT_TOWN_D.value) or not (y == 5 and x >= 8 and x <= 10)):
+        log.info("Please face the player toward a Pokeball in Birch's Lab after saving the game, then restart the script.")
+        os._exit(1)
+
+    CollectGiftMon(config["johto_starter"])

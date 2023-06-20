@@ -12,9 +12,9 @@ from modules.Stats import EncounterPokemon, OpponentChanged
 from modules.mmf.Emu import GetEmu
 from modules.mmf.Trainer import GetTrainer
 from modules.gen3.General import ModeBonk, ModeBunnyHop, ModeFishing, ModeCoords, ModeSpin, ModeSweetScent, ModePremierBalls
-from modules.gen3.Starters import ModeStarters # ModeJohtoStarters
+from modules.gen3.Starters import ModeStarters
 from modules.gen3.Legendaries import ModeGroudon, ModeKyogre, ModeRayquaza, ModeMew, ModeRegis, ModeSouthernIsland, ModeDeoxysPuzzle, ModeDeoxysResets 
-from modules.gen3.GiftPokemon import ModeCastform, ModeBeldum, ModeFossil
+from modules.gen3.GiftPokemon import ModeCastform, ModeBeldum, ModeFossil, ModeJohtoStarters
 
 LogLevel = logging.INFO # use logging.DEBUG while testing
 config = GetConfig()
