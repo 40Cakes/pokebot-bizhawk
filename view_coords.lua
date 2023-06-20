@@ -1,12 +1,18 @@
-local utils = require("utils")
+local utils = {}
 
-dofile (utils.translatePath("data\\lua\\Memory.lua"))
-dofile (utils.translatePath("data\\lua\\GameSettings.lua"))
+function utils.translatePath(path)
+	local separator = package.config:sub(1, 1)
+	local pathTranslated = string.gsub(path, "\\", separator)
+	return pathTranslated == nil and path or pathTranslated
+end
+
+dofile (utils.translatePath("lua\\Memory.lua"))
+dofile (utils.translatePath("lua\\GameSettings.lua"))
 
 GameSettings.initialize()
 
 console.log("Lua Version: ".._VERSION)
-package.path = ";.\\data\\lua\\?.lua;"
+package.path = ";.\\lua\\?.lua;"
 
 function getTrainer()
 	local trainer = Memory.readdword(GameSettings.trainerpointer)

@@ -3,7 +3,7 @@
 import json
 import codecs
 
-def generate_pokedex():
+def GenerateDex():
     # Read the pokemon.json file
     with open('pokemon.json', encoding="utf-8") as f:
         pokemon_data = json.load(f)
@@ -63,4 +63,4 @@ def generate_pokedex():
         json.dump(pokedex, f, indent=4, ensure_ascii=False)
 
 # Call the function to generate the pokedex
-generate_pokedex()
+GenerateDex()

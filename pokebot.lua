@@ -7,20 +7,26 @@
 -- https://github.com/besteon/Ironmon-Tracker/
 -- https://github.com/Gikkman/bizhawk-communication
 
-local utils = require("utils")
-
 bot_instance_id = "pokebot_1" -- If running multiple instances of the bot, set this to the same `bot_instance_id` string in config.yml (use a unique string per bot instance)
 enable_input = true -- Toggle inputs to the emulator, useful for testing
 write_files = false -- Toggle output of data to files (press L+R in emulator to save files to testing/ folder)
 
-dofile (utils.translatePath("data\\lua\\Memory.lua"))
-dofile (utils.translatePath("data\\lua\\GameSettings.lua"))
+local utils = {}
+
+function utils.translatePath(path)
+	local separator = package.config:sub(1, 1)
+	local pathTranslated = string.gsub(path, "\\", separator)
+	return pathTranslated == nil and path or pathTranslated
+end
+
+dofile (utils.translatePath("lua\\Memory.lua"))
+dofile (utils.translatePath("lua\\GameSettings.lua"))
 
 -- Initialize game settings before loading other files
 GameSettings.initialize()
 
 console.log("Lua Version: ".._VERSION)
-package.path = utils.translatePath(";.\\data\\lua\\?.lua;")
+package.path = utils.translatePath(";.\\lua\\?.lua;")
 
 json = require "json"
 PokemonNames = require "PokemonNames"
@@ -39,10 +45,10 @@ comm.mmfScreenshot()
 
 comm.mmfWrite("bizhawk_press_input-" .. bot_instance_id, string.rep("\x00", 4096))
 comm.mmfWrite("bizhawk_hold_input-" .. bot_instance_id, string.rep("\x00", 4096))
-comm.mmfWrite("bizhawk_trainer_info-" .. bot_instance_id, string.rep("\x00", 4096))
-comm.mmfWrite("bizhawk_party_info-" .. bot_instance_id, string.rep("\x00", 8192))
-comm.mmfWrite("bizhawk_opponent_info-" .. bot_instance_id, string.rep("\x00", 4096))
-comm.mmfWrite("bizhawk_emu_info-" .. bot_instance_id, string.rep("\x00", 4096))
+comm.mmfWrite("bizhawk_trainer_data-" .. bot_instance_id, string.rep("\x00", 4096))
+comm.mmfWrite("bizhawk_party_data-" .. bot_instance_id, string.rep("\x00", 8192))
+comm.mmfWrite("bizhawk_opponent_data-" .. bot_instance_id, string.rep("\x00", 4096))
+comm.mmfWrite("bizhawk_emu_data-" .. bot_instance_id, string.rep("\x00", 4096))
 
 input_list = {}
 for i = 0, 100 do --101 entries, the final entry is for the index.
@@ -249,15 +255,15 @@ end
 
 -- Function to get data related to the emulator itself
 function getEmu()
-	local emu_info = {
+	local emu_data = {
 		frameCount = emu.framecount(),
-		emuFPS = client.get_approx_framerate(),
+		fps = client.get_approx_framerate(),
 		detectedGame = GameSettings.gamename,
 		rngState = Memory.readdword(GameSettings.rng),
 		language = GameSettings.language
 	}
 	
-	return emu_info
+	return emu_data
 end
 
 -- Main function to write data to memory mapped files
@@ -266,30 +272,30 @@ function mainLoop()
 	party = getParty()
 	opponent = readMonData(GameSettings.estats)
 
-	comm.mmfWrite("bizhawk_trainer_info-" .. bot_instance_id, json.encode({["trainer"] = trainer}) .. "\x00")
-	comm.mmfWrite("bizhawk_party_info-" .. bot_instance_id, json.encode({["party"] = party}) .. "\x00")
-	comm.mmfWrite("bizhawk_opponent_info-" .. bot_instance_id, json.encode({["opponent"] = opponent}) .. "\x00")
+	comm.mmfWrite("bizhawk_trainer_data-" .. bot_instance_id, json.encode({["trainer"] = trainer}) .. "\x00")
+	comm.mmfWrite("bizhawk_party_data-" .. bot_instance_id, json.encode({["party"] = party}) .. "\x00")
+	comm.mmfWrite("bizhawk_opponent_data-" .. bot_instance_id, json.encode({["opponent"] = opponent}) .. "\x00")
 
 	if write_files then
 		check_input = joypad.get()
 		if check_input["L"] and check_input["R"] then
-			trainer_info_file = io.open(
-				utils.translatePath("testing\\trainer_info.json"), "w"
+			trainer_data_file = io.open(
+				utils.translatePath("testing\\trainer_data.json"), "w"
 			)
-			trainer_info_file:write(json.encode({["trainer"] = trainer}))
-			trainer_info_file:close()
+			trainer_data_file:write(json.encode({["trainer"] = trainer}))
+			trainer_data_file:close()
 			
-			party_info_file = io.open(
-				utils.translatePath("testing\\party_info.json"), "w"
+			party_data_file = io.open(
+				utils.translatePath("testing\\party_data.json"), "w"
 			)
-			party_info_file:write(json.encode({["party"] = party}))
-			party_info_file:close()
+			party_data_file:write(json.encode({["party"] = party}))
+			party_data_file:close()
 
-			opponent_info_file = io.open(
-				utils.translatePath("testing\\opponent_info.json"), "w"
+			opponent_data_file = io.open(
+				utils.translatePath("testing\\opponent_data.json"), "w"
 			)
-			opponent_info_file:write(json.encode({["opponent"] = opponent}))
-			opponent_info_file:close()
+			opponent_data_file:write(json.encode({["opponent"] = opponent}))
+			opponent_data_file:close()
 		end
 	end
 	
@@ -373,8 +379,8 @@ end
 mainLoop()
 NUM_OF_FRAMES_PER_PRESS = 5
 while true do
-	emu_info = getEmu()
-	if emu_info.frameCount % NUM_OF_FRAMES_PER_PRESS == 0 then --Every n frame will skip the presses, so you can spam inputs in Python and them not get held, they won't be eaten, just deferred a frame. 
+	emu_data = getEmu()
+	if emu_data.frameCount % NUM_OF_FRAMES_PER_PRESS == 0 then --Every n frame will skip the presses, so you can spam inputs in Python and them not get held, they won't be eaten, just deferred a frame. 
 		for button, buttons in pairs (input) do
 			input[button] = false 
 			if enable_input then
@@ -386,19 +392,19 @@ while true do
 
 	end
 	handleHeldButtons()
-	-- Save screenshot and other data to memory mapped files, as FPS is higher, reduce the number of reads and writes to memory
-	comm.mmfWrite("bizhawk_emu_info-" .. bot_instance_id, json.encode({["emu"] = emu_info}) .. "\x00")
-	fps = emu_info.emuFPS
+	-- Save screenshot and other data to memory mapped files, as fps is higher, reduce the number of reads and writes to memory
+	comm.mmfWrite("bizhawk_emu_data-" .. bot_instance_id, json.encode({["emu"] = emu_data}) .. "\x00")
+	fps = emu_data.fps
 	if fps > 120 and fps <= 240  then -- Copy screenshot to memory every nth frame if running at higher than 1x to reduce memory writes
-		if (emu_info.frameCount % 2 == 0) then
+		if (emu_data.frameCount % 2 == 0) then
 			mainLoop()
 		end
 	elseif fps > 240 and fps <= 480 then 
-		if (emu_info.frameCount % 3 == 0) then
+		if (emu_data.frameCount % 3 == 0) then
 			mainLoop()
 		end	
 	elseif fps > 480 then 
-		if (emu_info.frameCount % 4 == 0) then
+		if (emu_data.frameCount % 4 == 0) then
 			mainLoop()
 		end	
 	else

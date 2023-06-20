@@ -1,5 +1,7 @@
 *Thumbs.db*
 __pycache__
+build/
+dist/
 logs/
 stats/
 reports/
@@ -7,3 +9,4 @@ roms/
 testing/
 .venv
 .idea
+bot.spec

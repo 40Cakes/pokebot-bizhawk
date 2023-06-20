@@ -3,8 +3,8 @@ bot_mode: spin
 # spin
 # sweet scent
 # bunny hop
-# move between coords
-# move until obstructed
+# coords
+# bonk
 # fishing
 # starters
 # rayquaza
@@ -12,7 +12,7 @@ bot_mode: spin
 # kyogre
 # southern island
 # mew
-# regi trio
+# regis
 # deoxys runaways
 # deoxys reset
 # fossil
@@ -34,26 +34,44 @@ starter: Mudkip
 # Torchic
 # Mudkip
 # Treecko
-johto_starter: Cyndaquil
+johto_starter: Totodile
 # Cyndaquil
-# Chikorita
 # Totodile
+# Chikorita
 fossil: Anorith
 deoxys_puzzle_solved: false
+
+# User Interface
+ui:
+  enable: true
+  width: 1280
+  height: 720
+
+# Web Server (this must be enabled for the UI to work)
+server:
+  enable: true
+  ip: 127.0.0.1
+  port: 8888 # The server port must be unique for each instance of the bot you run
+
+bot_instance_id: pokebot_1
+# If running multiple instances of the bot, set this to the same `bot_instance_id` string at the top of pokebot.lua (use a unique string per bot instance)
 
 # Autosaves
 periodic_save: true
 save_every_x_encounters: 1000
 
 # Discord Webhook settings (optional)
-discord_webhook_url:
-# Your raw webhook URL here, if unspecified, the function's disabled.
-discord_webhook_ivs: formatted 
-# Choose how the IVs will display, either basic layout on one line or formatted for readability
-discord_ping_mode: role
-# "user" or "role", if left empty/invalid: pings are disabled.
-discord_shiny_ping: 
-# Discord User/Role ID to ping. Does nothing if "discord_ping_mode" isn't set. Currently supports only one at a time.
+discord:
+  # Toggle webhooks on/off
+  enable: true
+  # Your raw webhook URL here, WARNING: this webhook is SENSITIVE! Do not share this value with anyone! If you leak your webhook, anyone will be able to post in your channel
+  webhook_url: https://discord.com/api/webhooks/XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+  # Choose how the IVs will display, either basic layout on one line or formatted for readability
+  iv_format: basic
+  # "user" or "role", if left empty/invalid: pings are disabled.
+  ping_mode: role
+  # Discord User/Role ID to ping. Does nothing if "discord_ping_mode" isn't set. Currently supports only one at a time.
+  shiny_ping:
 
 # Wild Battles
 manual_catch: false
@@ -73,7 +91,6 @@ pokeball_override: # Per-species exceptions to pokeball_priority. Falls back to 
   - great_ball
 cycle_lead_pokemon: true
 save_game_after_catch: true
-save_game_on_start: false
 
 # Pickup
 pickup: true
@@ -82,25 +99,6 @@ pickup_threshold: 3 # Number of pickup items to find before collection
 # Pokemon encounter data logging (logs to stats/encounters/)
 log: true
 
-bot_instance_id: pokebot_1
-# If running multiple instances of the bot, set this to the same `bot_instance_id` string at the top of pokebot.lua (use a unique string per bot instance)
-
-# Preferences
-control_map:
-  a: x
-  b: z
-  l: w
-  r: e
-  up: up
-  down: down
-  right: right
-  left: left
-  select: space
-  start: enter
-  emu_screenshot: f12
-  emu_reset_combo:
-  - ctrl
-  - r
 banned_moves:
 - None
   # 2-turn
@@ -145,4 +143,4 @@ banned_moves:
 - Memento
 
 # Cheats
-do_realistic_hunt: true
+mem_hacks: false # Perform "cheaty" actions such as peeking into eggs to check shininess, knowing instantly which route a roamer is on, instantly locate Feebas tiles etc.
