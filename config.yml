@@ -60,8 +60,8 @@ save_every_x_encounters: 1000
 discord:
   # Toggle webhooks on/off
   enable: true
-  # Your raw webhook URL here, note: this value is SENSITIVE! Do not share this value with anyone!
-  webhook_url:
+  # Your raw webhook URL here, WARNING: this webhook is SENSITIVE! Do not share this value with anyone! If you leak your webhook, anyone will be able to post in your channel
+  webhook_url: https://discord.com/api/webhooks/XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
   # Choose how the IVs will display, either basic layout on one line or formatted for readability
   iv_format: basic
   # "user" or "role", if left empty/invalid: pings are disabled.

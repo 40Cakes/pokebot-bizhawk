@@ -91,58 +91,61 @@ def OpponentChanged(): # This function checks if there is a different opponent s
 
 def LogEncounter(pokemon: dict):
     def CommonStats():
-        mon_stats = stats["pokemon"][pokemon["name"]]
-        total_stats = stats["totals"]
+        try:
+            mon_stats = stats["pokemon"][pokemon["name"]]
+            total_stats = stats["totals"]
 
-        mon_stats["encounters"] += 1
-        mon_stats["phase_encounters"] += 1
+            mon_stats["encounters"] += 1
+            mon_stats["phase_encounters"] += 1
 
-        # Update encounter stats
-        phase_encounters = total_stats["phase_encounters"]
-        total_encounters = total_stats["encounters"] + total_stats["shiny_encounters"]
-        total_shiny_encounters = total_stats["shiny_encounters"]
+            # Update encounter stats
+            phase_encounters = total_stats["phase_encounters"]
+            total_encounters = total_stats["encounters"] + total_stats["shiny_encounters"]
+            total_shiny_encounters = total_stats["shiny_encounters"]
 
-        # Log lowest Shiny Value
-        if mon_stats["phase_lowest_sv"] == "-": 
-            mon_stats["phase_lowest_sv"] = pokemon["shinyValue"]
-        else:
-            mon_stats["phase_lowest_sv"] = min(pokemon["shinyValue"], mon_stats["phase_lowest_sv"])
+            # Log lowest Shiny Value
+            if mon_stats["phase_lowest_sv"] == "-": 
+                mon_stats["phase_lowest_sv"] = pokemon["shinyValue"]
+            else:
+                mon_stats["phase_lowest_sv"] = min(pokemon["shinyValue"], mon_stats["phase_lowest_sv"])
 
-        if mon_stats["total_lowest_sv"] == "-": 
-            mon_stats["total_lowest_sv"] = pokemon["shinyValue"]
-        else:
-            mon_stats["total_lowest_sv"] = min(pokemon["shinyValue"], mon_stats["total_lowest_sv"])
+            if mon_stats["total_lowest_sv"] == "-": 
+                mon_stats["total_lowest_sv"] = pokemon["shinyValue"]
+            else:
+                mon_stats["total_lowest_sv"] = min(pokemon["shinyValue"], mon_stats["total_lowest_sv"])
 
-        # Log shiny average
-        if mon_stats['shiny_encounters'] > 0: 
-            avg = int(math.floor(mon_stats['encounters']/mon_stats['shiny_encounters']))
-            shiny_average = f"1/{avg:,}"
-        else: 
-            shiny_average = "-"
+            # Log shiny average
+            if mon_stats['shiny_encounters'] > 0: 
+                avg = int(math.floor(mon_stats['encounters']/mon_stats['shiny_encounters']))
+                shiny_average = f"1/{avg:,}"
+            else: 
+                shiny_average = "-"
 
-        if total_shiny_encounters != 0 and mon_stats['encounters'] != 0: 
-            avg = int(math.floor(total_encounters/total_shiny_encounters))
-            total_stats["shiny_average"] = f"1/{avg:,}"
-        else: 
-            total_stats["shiny_average"] = "-"
+            if total_shiny_encounters != 0 and mon_stats['encounters'] != 0: 
+                avg = int(math.floor(total_encounters/total_shiny_encounters))
+                total_stats["shiny_average"] = f"1/{avg:,}"
+            else: 
+                total_stats["shiny_average"] = "-"
 
-        log_obj = {
-            "time_encountered": str(datetime.now()),
-            "pokemon_obj": pokemon,
-            "snapshot_stats": {
-                "phase_encounters": total_stats["phase_encounters"],
-                "species_encounters": mon_stats['encounters'],
-                "species_shiny_encounters": mon_stats['shiny_encounters'],
-                "total_encounters": total_encounters,
-                "total_shiny_encounters": total_shiny_encounters,
-                "shiny_average": shiny_average
+            log_obj = {
+                "time_encountered": str(datetime.now()),
+                "pokemon_obj": pokemon,
+                "snapshot_stats": {
+                    "phase_encounters": total_stats["phase_encounters"],
+                    "species_encounters": mon_stats['encounters'],
+                    "species_shiny_encounters": mon_stats['shiny_encounters'],
+                    "total_encounters": total_encounters,
+                    "total_shiny_encounters": total_shiny_encounters,
+                    "shiny_average": shiny_average
+                }
             }
-        }
 
-        if pokemon["shiny"]:
-            shiny_log = GetShinyLog()
-            shiny_log["shiny_log"].append(log_obj)
-            WriteFile(files["shiny_log"], json.dumps(shiny_log, indent=4, sort_keys=True)) # Save shiny log file
+            if pokemon["shiny"]:
+                shiny_log = GetShinyLog()
+                shiny_log["shiny_log"].append(log_obj)
+                WriteFile(files["shiny_log"], json.dumps(shiny_log, indent=4, sort_keys=True)) # Save shiny log file
+        except Exception as e:
+            log.exception(str(e))
 
         encounter_log = GetEncounterLog()
         encounter_log["encounter_log"].append(log_obj)
@@ -219,7 +222,7 @@ def LogEncounter(pokemon: dict):
                         `╚═══╧═══╧═══╧═══╧═══╧═══╝`""", inline=False)
                     embed.add_embed_field(name='Species Phase Encounters', value=f"{stats['pokemon'][pokemon['name']]['phase_encounters']}")
                     embed.add_embed_field(name='All Phase Encounters', value=f"{stats['totals']['phase_encounters']}")
-                    with open(f"interface/sprites/pokemon/shiny/{pokemon['name']}.png", "rb") as shiny:
+                    with open(f"modules/interface/sprites/pokemon/shiny/{pokemon['name']}.png", "rb") as shiny:
                         webhook.add_file(file=shiny.read(), filename='shiny.png')
                     embed.set_thumbnail(url='attachment://shiny.png')
                     webhook.add_embed(embed)
@@ -231,7 +234,7 @@ def LogEncounter(pokemon: dict):
             if stats["totals"]["shortest_phase_encounters"] == "-": 
                 stats["totals"]["shortest_phase_encounters"] = stats["totals"]["phase_encounters"]
             else:
-                stats["totals"]["shortest_phase_encounters"] = max(stats["totals"]["shortest_phase_encounters"], stats["totals"]["phase_encounters"])
+                stats["totals"]["shortest_phase_encounters"] = min(stats["totals"]["shortest_phase_encounters"], stats["totals"]["phase_encounters"])
 
             stats["pokemon"][pokemon["name"]]["shiny_encounters"] += 1
             stats["totals"]["shiny_encounters"] += 1
@@ -239,7 +242,6 @@ def LogEncounter(pokemon: dict):
             stats["totals"]["phase_encounters"] = 0
             stats["totals"]["phase_lowest_sv"] = "-"
             stats["totals"]["phase_lowest_sv_pokemon"] = ""
-            stats["totals"]["shortest_phase"] = shortest_phase
 
             # Reset phase stats
             for pokemon["name"] in stats["pokemon"]:

@@ -39,6 +39,7 @@ config_schema = {
         "discord": { "type": "object",
             "properties": {
                 "enable": { "type": "boolean"},
+                "webhook_url": { "type": "string"},
                 "iv_format": { "type": "string"}
             }
         },
