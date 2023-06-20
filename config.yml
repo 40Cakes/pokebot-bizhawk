@@ -1,5 +1,5 @@
 # Bot Setup
-bot_mode: spin
+bot_mode: starters
 # spin
 # sweet scent
 # bunny hop
@@ -30,7 +30,7 @@ coords:
 direction: Horizontal
 # Vertical
 # Horizontal
-starter: Mudkip
+starter: Torchic
 # Torchic
 # Mudkip
 # Treecko

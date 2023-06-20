@@ -21,7 +21,6 @@ emu_schema = {
 EmuValidator = fastjsonschema.compile(emu_schema)  # Validate the data from the mmf, sometimes it sends junk
 
 
-@staticmethod
 def LangISO(lang: int):
     match lang:
         case 1:
