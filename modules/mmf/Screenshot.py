@@ -1,17 +1,16 @@
 import io
-import time
+import logging
 import mmap
+
 import cv2
 import numpy
-import array
-import logging
 from PIL import Image
 
 from modules.Config import GetConfig
-from modules.Inputs import WaitFrames
 
 log = logging.getLogger(__name__)
 config = GetConfig()
+
 
 def GetScreenshot():
     i = 0

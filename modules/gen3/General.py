@@ -13,6 +13,7 @@ from modules.mmf.Trainer import GetTrainer
 log = logging.getLogger(__name__)
 config = GetConfig()
 
+
 def ModeBonk():
     direction = config["direction"].lower()
 
@@ -21,18 +22,16 @@ def ModeBonk():
         log.info(f"Pathing {direction} until bonk...")
 
         while not OpponentChanged():
-            if pos1 == None or pos2 == None:
+            if pos1 is None or pos2 is None:
                 if direction == "horizontal":
                     pos1 = Bonk("Left")
                     pos2 = Bonk("Right")
                 else:
                     pos1 = Bonk("Up")
                     pos2 = Bonk("Down")
-            else:
-                if pos1 == pos2:
-                    pos1 = None
-                    pos2 = None
-                    continue
+            elif pos1 == pos2:
+                pos1, pos2 = None, None
+                continue
 
                 FollowPath([(pos1[0], pos1[1]), (pos2[0], pos2[1])])
             OpponentChanged()
@@ -41,6 +40,7 @@ def ModeBonk():
 
         while GetTrainer()["state"] != GameState.OVERWORLD:
             continue
+
 
 def ModeBunnyHop():
     log.info("Bunny hopping...")
@@ -57,19 +57,23 @@ def ModeBunnyHop():
     ReleaseAllInputs()
     EncounterPokemon()
 
+
 def ModeFishing():
     log.info(f"Fishing...")
-    ButtonCombo(["Select", 50]) # Cast rod and wait for fishing animation
-    started_fishing = time.time()
+    ButtonCombo(["Select", 50])  # Cast rod and wait for fishing animation
+    # started_fishing = time.time()
     while not OpponentChanged():
-        if DetectTemplate("oh_a_bite.png") or DetectTemplate("on_the_hook.png"): 
+        if DetectTemplate("oh_a_bite.png") or DetectTemplate("on_the_hook.png"):
             PressButton("A")
             while DetectTemplate("oh_a_bite.png"):
-                pass #This keeps you from getting multiple A presses and failing the catch
-        if DetectTemplate("not_even_a_nibble.png") or DetectTemplate("it_got_away.png"): ButtonCombo(["B", 10, "Select"])
-        if not DetectTemplate("text_period.png"): ButtonCombo(["Select", 50]) # Re-cast rod if the fishing text prompt is not visible
+                pass  # This keeps you from getting multiple A presses and failing the catch
+        if DetectTemplate("not_even_a_nibble.png") or DetectTemplate("it_got_away.png"): ButtonCombo(
+            ["B", 10, "Select"])
+        if not DetectTemplate("text_period.png"): ButtonCombo(
+            ["Select", 50])  # Re-cast rod if the fishing text prompt is not visible
 
     EncounterPokemon()
+
 
 def ModeCoords():
     coords = config["coords"]
@@ -81,7 +85,8 @@ def ModeCoords():
         while GetTrainer()["state"] != GameState.OVERWORLD:
             continue
 
-def ModeSpin(): # TODO check if players direction changes, if not spam B (Pokenav)
+
+def ModeSpin():  # TODO check if players direction changes, if not spam B (Pokenav)
     try:
         trainer = GetTrainer()
         home_coords = (trainer["posX"], trainer["posY"])
@@ -89,30 +94,34 @@ def ModeSpin(): # TODO check if players direction changes, if not spam B (Pokena
         while True:
             trainer = GetTrainer()
             if OpponentChanged(): EncounterPokemon()
-            if home_coords != (trainer["posX"], trainer["posY"]): # Note: this will likely fail if the trainer accidentally changes map bank/ID
+            if home_coords != (trainer["posX"], trainer[
+                "posY"]):  # Note: this will likely fail if the trainer accidentally changes map bank/ID
                 log.info(f"Trainer has moved off home position, pathing back to {home_coords}...")
                 FollowPath([
-                    (home_coords[0], trainer["posY"]), 
+                    (home_coords[0], trainer["posY"]),
                     (trainer["posX"], home_coords[1])
                 ], exit_when_stuck=True)
             directions = ["Up", "Right", "Down", "Left"]
             directions.remove(trainer["facing"])
             PressButton(random.choice(directions))
             WaitFrames(2)
-            if GetTrainer()["facing"] == trainer["facing"]: # Check if the trainer's facing direction actually changed, press B to cancel PokeNav as it prevents all movement
+            if GetTrainer()["facing"] == trainer[
+                "facing"]:  # Check if the trainer's facing direction actually changed, press B to cancel PokeNav as it prevents all movement
                 PressButton("B")
     except Exception as e:
         log.exception(str(e))
 
+
 def ModeSweetScent():
     log.info(f"Using Sweet Scent...")
     StartMenu("pokemon")
-    PressButton("A") # Select first pokemon in party
+    PressButton("A")  # Select first pokemon in party
     # Search for sweet scent in menu
-    while not DetectTemplate("sweet_scent.png"): 
+    while not DetectTemplate("sweet_scent.png"):
         PressButton("Down")
-    ButtonCombo(["A", 300]) # Select sweet scent and wait for animation
+    ButtonCombo(["A", 300])  # Select sweet scent and wait for animation
     EncounterPokemon()
+
 
 def ModePremierBalls():
     while not DetectTemplate("mart/times_01.png"):

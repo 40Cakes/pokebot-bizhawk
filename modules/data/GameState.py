@@ -1,4 +1,5 @@
-from enum import IntEnum # https://docs.python.org/3/library/enum.html
+from enum import IntEnum  # https://docs.python.org/3/library/enum.html
+
 
 class GameState(IntEnum):
     OVERWORLD = 80

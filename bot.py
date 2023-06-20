@@ -1,23 +1,24 @@
+import logging
 import os
 import sys
-import json
-from threading import Thread
-import logging
 from logging.handlers import RotatingFileHandler
+from threading import Thread
 
 from modules.Config import GetConfig
-from modules.Files import ReadFile
 from modules.Inputs import ReleaseAllInputs, PressButton, WaitFrames
 from modules.Stats import EncounterPokemon, OpponentChanged
+from modules.gen3.General import ModeBonk, ModeBunnyHop, ModeFishing, ModeCoords, ModeSpin, ModeSweetScent, \
+    ModePremierBalls
+from modules.gen3.GiftPokemon import ModeCastform, ModeBeldum, ModeFossil, ModeJohtoStarters
+from modules.gen3.Legendaries import ModeGroudon, ModeKyogre, ModeRayquaza, ModeMew, ModeRegis, ModeSouthernIsland, \
+    ModeDeoxysPuzzle, ModeDeoxysResets
+from modules.gen3.Starters import ModeStarters
 from modules.mmf.Emu import GetEmu
 from modules.mmf.Trainer import GetTrainer
-from modules.gen3.General import ModeBonk, ModeBunnyHop, ModeFishing, ModeCoords, ModeSpin, ModeSweetScent, ModePremierBalls
-from modules.gen3.Starters import ModeStarters
-from modules.gen3.Legendaries import ModeGroudon, ModeKyogre, ModeRayquaza, ModeMew, ModeRegis, ModeSouthernIsland, ModeDeoxysPuzzle, ModeDeoxysResets 
-from modules.gen3.GiftPokemon import ModeCastform, ModeBeldum, ModeFossil, ModeJohtoStarters
 
-LogLevel = logging.INFO # use logging.DEBUG while testing
+LogLevel = logging.INFO  # use logging.DEBUG while testing
 config = GetConfig()
+
 
 def MainLoop():
     # This is the main loop that runs in a thread
@@ -25,14 +26,14 @@ def MainLoop():
     # TODO after each pass, read updated config that gets POSTed by the UI
 
     ReleaseAllInputs()
-    PressButton("SaveRAM") # Flush Bizhawk SaveRAM to disk
+    PressButton("SaveRAM")  # Flush Bizhawk SaveRAM to disk
 
     while True:
         try:
-            if GetTrainer() and GetEmu(): # Test that emulator information is accessible and valid
+            if GetTrainer() and GetEmu():  # Test that emulator information is accessible and valid
                 match config["bot_mode"]:
                     case "manual":
-                        while not OpponentChanged(): 
+                        while not OpponentChanged():
                             WaitFrames(20)
                         EncounterPokemon()
                     case "spin":
@@ -82,7 +83,7 @@ def MainLoop():
                         if not purchased:
                             log.info(f"Ran out of money to buy Premier Balls. Script ended.")
                             input("Press enter to continue...")
-                    case other:
+                    case _:
                         log.exception("Couldn't interpret bot mode: " + config["bot_mode"])
                         input("Press enter to continue...")
             else:
@@ -91,16 +92,17 @@ def MainLoop():
         except Exception as e:
             log.exception(str(e))
 
+
 try:
     # Set up log handler
     LogFormatter = logging.Formatter('%(asctime)s %(levelname)s %(funcName)s(line:%(lineno)d) %(message)s')
     ConsoleFormatter = logging.Formatter('%(asctime)s - %(message)s')
     LogPath = "logs"
     LogFile = f"{LogPath}/debug.log"
-    os.makedirs(LogPath, exist_ok=True) # Create logs directory if not exist
+    os.makedirs(LogPath, exist_ok=True)  # Create logs directory if not exist
 
     # Set up log file rotation handler
-    LogHandler = RotatingFileHandler(LogFile, mode='a', maxBytes=20*1024*1024, backupCount=5, encoding=None, delay=0)
+    LogHandler = RotatingFileHandler(LogFile, maxBytes=20 * 1024 * 1024, backupCount=5)
     LogHandler.setFormatter(LogFormatter)
     LogHandler.setLevel(logging.INFO)
 
@@ -127,20 +129,23 @@ try:
     MinorVersion = sys.version_info[1]
 
     if MajorVersion < MinMajorVersion or MinorVersion < MinMinorVersion:
-        log.error(f"\n\nPython version is out of date! (Minimum required version for pokebot is {MinMajorVersion}.{MinMinorVersion})\nPlease install the latest version at https://www.python.org/downloads/\n")
+        log.error(
+            f"\n\nPython version is out of date! (Minimum required version for pokebot is "
+            f"{MinMajorVersion}.{MinMinorVersion})\nPlease install the latest version at "
+            f"https://www.python.org/downloads/\n")
         input("Press enter to continue...")
         os._exit(1)
 
     log.info(f"Running pokebot on Python {MajorVersion}.{MinorVersion}")
 
-    while True:
-        if GetTrainer():
-            break
-        else:
-            log.error("\n\nFailed to get trainer data, unable to initialize pokebot!\nPlease confirm that `pokebot.lua` is running in BizHawk, keep the Lua console open while the bot is active.\nIt can be opened through 'Tools > Lua Console'.\n")
-            input("Press enter to try again...")
+    while not GetTrainer():
+        log.error(
+            "\n\nFailed to get trainer data, unable to initialize pokebot!\nPlease confirm that `pokebot.lua` is "
+            "running in BizHawk, keep the Lua console open while the bot is active.\nIt can be opened through "
+            "'Tools > Lua Console'.\n")
+        input("Press enter to try again...")
 
-    config = GetConfig() # Load config
+    config = GetConfig()  # Load config
     log.info(f"Mode: {config['bot_mode']}")
 
     main = Thread(target=MainLoop)
@@ -154,13 +159,17 @@ try:
 
     if config["ui"]["enable"]:
         import webview
+
+
         def OnWindowClose():
             ReleaseAllInputs()
             log.info("Dashboard closed on user input...")
             os._exit(1)
 
-        url=f"http://{config['server']['ip']}:{config['server']['port']}/dashboard"
-        window = webview.create_window("PokeBot", url=url, width=config["ui"]["width"], height=config["ui"]["height"], resizable=True, hidden=False, frameless=False, easy_drag=True, fullscreen=False, text_select=True, zoomable=True)
+
+        url = f"http://{config['server']['ip']}:{config['server']['port']}/dashboard"
+        window = webview.create_window("PokeBot", url=url, width=config["ui"]["width"], height=config["ui"]["height"],
+                                       text_select=True, zoomable=True)
         window.events.closed += OnWindowClose
         webview.start()
     else:
