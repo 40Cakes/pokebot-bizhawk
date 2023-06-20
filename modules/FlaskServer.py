@@ -113,4 +113,4 @@ def httpServer(): # Run Flask server to make bot data available via HTTP GET
         #    return response
 
         server.run(debug=False, threaded=True, host=config["server"]["ip"], port=config["server"]["port"])
-    except Exception as e: log.exception(str(e))
+    except Exception as e: log.debug(str(e))
