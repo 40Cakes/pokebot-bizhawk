@@ -399,14 +399,14 @@ def EncounterPokemon(
                 PressButton("A")
                 WaitFrames(15)
 
-                for i in range(3):
+                for _ in range(3):
                     PressButton("Up")
                     WaitFrames(15)
 
                 PressButton("A")
                 WaitFrames(15)
 
-                for i in range(lead_idx):
+                for _ in range(lead_idx):
                     PressButton("Down")
                     WaitFrames(15)
 
@@ -416,7 +416,7 @@ def EncounterPokemon(
 
                 log.info("Replaced lead Pokemon!")
 
-                for i in range(5):
+                for _ in range(5):
                     PressButton("B")
                     WaitFrames(15)
         return False

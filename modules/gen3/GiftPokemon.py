@@ -63,7 +63,7 @@ def CollectGiftMon(target: str):
         while not DetectTemplate("start_menu/select.png"):
             PressButton("B")
 
-            for i in range(4):
+            for _ in range(4):
                 if DetectTemplate("start_menu/select.png"):
                     break
                 WaitFrames(1)
@@ -71,7 +71,7 @@ def CollectGiftMon(target: str):
         while DetectTemplate("start_menu/select.png"):
             PressButton("B")
 
-            for i in range(4):
+            for _ in range(4):
                 if not DetectTemplate("start_menu/select.png"):
                     break
                 WaitFrames(1)
