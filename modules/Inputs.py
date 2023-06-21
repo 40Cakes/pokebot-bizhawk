@@ -9,20 +9,25 @@ from modules.mmf.Emu import GetEmu
 log = logging.getLogger(__name__)
 config = GetConfig()
 
-default_input = {"A": False, "B": False, "L": False, "R": False, "Up": False, "Down": False, "Left": False, "Right": False, "Select": False, "Start": False, "Light Sensor": 0, "Power": False, "Tilt X": 0, "Tilt Y": 0, "Tilt Z": 0, "SaveRAM": False}
+default_input = {"A": False, "B": False, "L": False, "R": False, "Up": False, "Down": False, "Left": False,
+                 "Right": False, "Select": False, "Start": False, "Light Sensor": 0, "Power": False, "Tilt X": 0,
+                 "Tilt Y": 0, "Tilt Z": 0, "SaveRAM": False}
 
-input_list_mmap = mmap.mmap(-1, 4096, tagname="bizhawk_input_list-" + config["bot_instance_id"], access=mmap.ACCESS_WRITE)
+input_list_mmap = mmap.mmap(-1, 4096, tagname="bizhawk_input_list-" + config["bot_instance_id"],
+                            access=mmap.ACCESS_WRITE)
 input_list_mmap.seek(0)
 
-hold_input_mmap = mmap.mmap(-1, 4096, tagname="bizhawk_hold_input-" + config["bot_instance_id"], access=mmap.ACCESS_WRITE)
+hold_input_mmap = mmap.mmap(-1, 4096, tagname="bizhawk_hold_input-" + config["bot_instance_id"],
+                            access=mmap.ACCESS_WRITE)
 hold_input = default_input
 
-g_current_index = 1 # Variable that keeps track of what input in the list we are on.
+g_current_index = 1  # Variable that keeps track of what input in the list we are on.
 
-for i in range(100): # Clear any prior inputs from last time script ran in case you haven't refreshed in Lua
+for i in range(100):  # Clear any prior inputs from last time script ran in case you haven't refreshed in Lua
     input_list_mmap.write(bytes('a', encoding="utf-8"))
 
-def HoldButton(button: str): # Function to update the hold_input object
+
+def HoldButton(button: str):  # Function to update the hold_input object
     global hold_input
     log.debug(f"Holding: {button}...")
 
@@ -30,7 +35,8 @@ def HoldButton(button: str): # Function to update the hold_input object
     hold_input_mmap.seek(0)
     hold_input_mmap.write(bytes(json.dumps(hold_input), encoding="utf-8"))
 
-def ReleaseButton(button: str): # Function to update the hold_input object
+
+def ReleaseButton(button: str):  # Function to update the hold_input object
     global hold_input
     log.debug(f"Releasing: {button}...")
 
@@ -38,7 +44,8 @@ def ReleaseButton(button: str): # Function to update the hold_input object
     hold_input_mmap.seek(0)
     hold_input_mmap.write(bytes(json.dumps(hold_input), encoding="utf-8"))
 
-def ReleaseAllInputs(): # Function to release all keys in all input objects
+
+def ReleaseAllInputs():  # Function to release all keys in all input objects
     global hold_input
     log.debug(f"Releasing all inputs...")
 
@@ -46,6 +53,7 @@ def ReleaseAllInputs(): # Function to release all keys in all input objects
         hold_input[button] = False
         hold_input_mmap.seek(0)
         hold_input_mmap.write(bytes(json.dumps(hold_input), encoding="utf-8"))
+
 
 def PressButton(button: str):
     global g_current_index
@@ -69,14 +77,15 @@ def PressButton(button: str):
     index = g_current_index
     input_list_mmap.seek(index)
     input_list_mmap.write(bytes(button, encoding="utf-8"))
-    input_list_mmap.seek(100) #Position 0-99 are inputs, position 100 keeps the value of the current index
-    input_list_mmap.write(bytes([index+1]))
+    input_list_mmap.seek(100)  # Position 0-99 are inputs, position 100 keeps the value of the current index
+    input_list_mmap.write(bytes([index + 1]))
 
-    g_current_index +=1
+    g_current_index += 1
     if g_current_index > 99:
         g_current_index = 0
 
-def ButtonCombo(sequence: list): # Function to send a sequence of inputs and delays to the emulator
+
+def ButtonCombo(sequence: list):  # Function to send a sequence of inputs and delays to the emulator
     for k in sequence:
         if type(k) is int:
             WaitFrames(k)
@@ -84,5 +93,6 @@ def ButtonCombo(sequence: list): # Function to send a sequence of inputs and del
             PressButton(k)
             WaitFrames(1)
 
+
 def WaitFrames(frames: float):
-    time.sleep(max((frames/60.0) / GetEmu()["speed"], 0.02))
+    time.sleep(max((frames / 60.0) / GetEmu()["speed"], 0.02))

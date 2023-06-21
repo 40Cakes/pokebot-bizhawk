@@ -1,6 +1,7 @@
-import json
 import logging
+
 import fastjsonschema
+
 from modules.Config import GetConfig
 from modules.mmf.Common import LoadJsonMmap
 
@@ -10,19 +11,20 @@ config = GetConfig()
 trainer_schema = {
     "type": "object",
     "properties": {
-        "tid": { "type": "number" },
-        "sid": { "type": "number" },
-        "state": { "type": "number" },
-        "mapId": { "type": "number" },
-        "mapBank": { "type": "number" },
-        "posX": { "type": "number" },
-        "posY": { "type": "number" },
-        "facing": { "type": "string" },
-        "roamerMapId": { "type": "number" }
+        "tid": {"type": "number"},
+        "sid": {"type": "number"},
+        "state": {"type": "number"},
+        "mapId": {"type": "number"},
+        "mapBank": {"type": "number"},
+        "posX": {"type": "number"},
+        "posY": {"type": "number"},
+        "facing": {"type": "string"},
+        "roamerMapId": {"type": "number"}
     }
 }
 
-TrainerValidator = fastjsonschema.compile(trainer_schema) # Validate the data from the mmf, sometimes it sends junk
+TrainerValidator = fastjsonschema.compile(trainer_schema)  # Validate the data from the mmf, sometimes it sends junk
+
 
 def GetTrainer():
     while True:

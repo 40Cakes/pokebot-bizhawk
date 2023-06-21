@@ -1,5 +1,6 @@
 import json
 import logging
+import os
 
 from modules.data.GameState import GameState
 from modules.Config import GetConfig
@@ -15,6 +16,7 @@ from modules.mmf.Trainer import GetTrainer
 log = logging.getLogger(__name__)
 config = GetConfig()
 
+
 def ModeStarters():
     try:
         starter_choice = config["starter"].lower()
@@ -22,7 +24,8 @@ def ModeStarters():
         starter_frames = GetRNGState(GetTrainer()['tid'], starter_choice)
 
         if starter_choice not in ["treecko", "torchic", "mudkip"]:
-            log.info(f"Unknown starter \"{config['starter']}\". Please edit the value in config.yml and restart the script.")
+            log.info(
+                f"Unknown starter \"{config['starter']}\". Please edit the value in config.yml and restart the script.")
             input("Press enter to continue...")
             os._exit(1)
 
@@ -31,19 +34,19 @@ def ModeStarters():
         while True:
             ReleaseAllInputs()
 
-            while GetTrainer()["state"] != GameState.OVERWORLD: 
+            while GetTrainer()["state"] != GameState.OVERWORLD:
                 PressButton("A")
 
             # Short delay between A inputs to prevent accidental selection confirmations
-            while GetTrainer()["state"] == GameState.OVERWORLD: 
+            while GetTrainer()["state"] == GameState.OVERWORLD:
                 ButtonCombo(["A", 10])
 
             # Press B to back out of an accidental selection when scrolling to chosen starter
             if starter_choice == "mudkip":
-                while not DetectTemplate("mudkip.png"): 
+                while not DetectTemplate("mudkip.png"):
                     ButtonCombo(["B", "Right"])
             elif starter_choice == "treecko":
-                while not DetectTemplate("treecko.png"): 
+                while not DetectTemplate("treecko.png"):
                     ButtonCombo(["B", "Left"])
 
             while True:
@@ -51,25 +54,28 @@ def ModeStarters():
                 if emu["rngState"] in starter_frames["rngState"]:
                     log.debug(f"Already rolled on RNG state: {emu['rngState']}, waiting...")
                 else:
-                    while GetTrainer()["state"] == GameState.MISC_MENU: 
+                    while GetTrainer()["state"] == GameState.MISC_MENU:
                         PressButton("A")
 
                     starter_frames["rngState"].append(emu["rngState"])
-                    WriteFile(f"stats/{GetTrainer()['tid']}/{starter_choice}.json", json.dumps(starter_frames, indent=4, sort_keys=True))
+                    WriteFile(f"stats/{GetTrainer()['tid']}/{starter_choice}.json",
+                              json.dumps(starter_frames, indent=4, sort_keys=True))
 
                     while not DetectTemplate("battle/fight.png"):
                         PressButton("B")
 
                         if config["mem_hacks"] and GetParty()[0]:
                             if EncounterPokemon(starter=True):
-                                input("Pausing bot for manual intervention. (Don't forget to pause the pokebot.lua script so you can provide inputs). Press Enter to continue...")
+                                input(
+                                    "Pausing bot for manual intervention. (Don't forget to pause the pokebot.lua script so you can provide inputs). Press Enter to continue...")
                             else:
                                 ResetGame()
                                 break
                     else:
                         if GetParty()[0]:
-                            if EncounterPokemon(starter=True): 
-                                input("Pausing bot for manual intervention. (Don't forget to pause the pokebot.lua script so you can provide inputs). Press Enter to continue...")
+                            if EncounterPokemon(starter=True):
+                                input(
+                                    "Pausing bot for manual intervention. (Don't forget to pause the pokebot.lua script so you can provide inputs). Press Enter to continue...")
                             else:
                                 ResetGame()
                                 break

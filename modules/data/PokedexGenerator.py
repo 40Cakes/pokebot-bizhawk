@@ -1,7 +1,7 @@
 # Run this if pokemon.json or routes-emerald.json are modified to regenerate the pokedex data.
 
 import json
-import codecs
+
 
 def GenerateDex():
     # Read the pokemon.json file
@@ -61,6 +61,7 @@ def GenerateDex():
     # Save the pokedex as pokedex.json
     with open('pokedex.json', "w", encoding="utf-8") as f:
         json.dump(pokedex, f, indent=4, ensure_ascii=False)
+
 
 # Call the function to generate the pokedex
 GenerateDex()

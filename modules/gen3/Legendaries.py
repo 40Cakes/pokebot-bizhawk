@@ -1,15 +1,25 @@
+import json
+import logging
+import os
+
+from modules.Config import GetConfig
 from modules.data.GameState import GameState
 from modules.Files import WriteFile
 from modules.Inputs import ButtonCombo, HoldButton, PressButton, WaitFrames
 from modules.Menuing import ResetGame, SaveGame
 from modules.Navigation import Bonk, FollowPath, MapDataEnum, PlayerOnMap
 from modules.Stats import EncounterPokemon, GetRNGState, OpponentChanged
+from modules.mmf.Emu import GetEmu
 from modules.mmf.Trainer import GetTrainer
+
+log = logging.getLogger(__name__)
+config = GetConfig()
+
 
 def ModeGroudon():
     trainer = GetTrainer()
     if (not PlayerOnMap(MapDataEnum.TERRA_CAVE_A.value) or
-        not 11 <= trainer["posX"] <= 20 and 26 <= trainer["posY"] <= 27):
+            not 11 <= trainer["posX"] <= 20 and 26 <= trainer["posY"] <= 27):
         log.info("Please place the player below Groudon in Terra Cave and restart the script.")
         os._exit(1)
 
@@ -20,23 +30,24 @@ def ModeGroudon():
 
         # Exit and re-enter
         FollowPath([
-            (7, 26), 
-            (7, 15), 
-            (9, 15), 
-            (9, 4), 
-            (5, 4), 
-            (5, 99, MapDataEnum.TERRA_CAVE.value), 
-            (14, -99, MapDataEnum.TERRA_CAVE_A.value), 
-            (9, 4), (9, 15), 
-            (7, 15), 
-            (7, 26), 
+            (7, 26),
+            (7, 15),
+            (9, 15),
+            (9, 4),
+            (5, 4),
+            (5, 99, MapDataEnum.TERRA_CAVE.value),
+            (14, -99, MapDataEnum.TERRA_CAVE_A.value),
+            (9, 4), (9, 15),
+            (7, 15),
+            (7, 26),
             (11, 26)
         ])
+
 
 def ModeKyogre():
     trainer = GetTrainer()
     if (not PlayerOnMap(MapDataEnum.MARINE_CAVE_A.value) or
-        not 5 <= trainer["posX"] <= 14 and 26 <= trainer["posY"] <= 27):
+            not 5 <= trainer["posX"] <= 14 and 26 <= trainer["posY"] <= 27):
         log.info("Please place the player below Kyogre in Marine Cave and restart the script.")
         os._exit(1)
 
@@ -47,32 +58,33 @@ def ModeKyogre():
 
         # Exit and re-enter
         FollowPath([
-            (9, 27), 
-            (18, 27), 
-            (18, 14), 
-            (14, 14), 
-            (14, 4), 
-            (20, 4), 
-            (20, 99, MapDataEnum.MARINE_CAVE.value), 
-            (14, -99, MapDataEnum.MARINE_CAVE_A.value), 
-            (14, 4), 
-            (14, 14), 
-            (18, 14), 
-            (18, 27), 
+            (9, 27),
+            (18, 27),
+            (18, 14),
+            (14, 14),
+            (14, 4),
+            (20, 4),
+            (20, 99, MapDataEnum.MARINE_CAVE.value),
+            (14, -99, MapDataEnum.MARINE_CAVE_A.value),
+            (14, 4),
+            (14, 14),
+            (18, 14),
+            (18, 27),
             (14, 27)
         ])
+
 
 def ModeRayquaza():
     trainer = GetTrainer()
     if (not PlayerOnMap(MapDataEnum.SKY_PILLAR_G.value) or
-        not (trainer["posX"] == 14 and trainer["posY"] <= 12)):
+            not (trainer["posX"] == 14 and trainer["posY"] <= 12)):
         log.info("Please place the player below Rayquaza at the Sky Pillar and restart the script.")
         os._exit(1)
 
     while True:
         while not OpponentChanged():
-            ButtonCombo(["A", "Up"]) # Walk up toward Rayquaza while mashing A
-        
+            ButtonCombo(["A", "Up"])  # Walk up toward Rayquaza while mashing A
+
         EncounterPokemon()
 
         # Wait until battle is over
@@ -82,21 +94,23 @@ def ModeRayquaza():
         # Exit and re-enter
         PressButton("B")
         FollowPath([
-            (14, 11), 
-            (12, 11), 
-            (12, 15), 
-            (16, 15), 
+            (14, 11),
+            (12, 11),
+            (12, 15),
+            (16, 15),
             (16, -99, MapDataEnum.SKY_PILLAR_F.value),
             (10, -99, MapDataEnum.SKY_PILLAR_G.value),
-            (12, 15), 
-            (12, 11), 
-            (14, 11), 
+            (12, 15),
+            (12, 11),
+            (14, 11),
             (14, 7)
         ])
 
+
 def ModeMew():
     trainer = GetTrainer()
-    if (not PlayerOnMap(MapDataEnum.FARAWAY_ISLAND.value) or not (22 <= trainer["posX"] <= 23 and 8 <= trainer["posY"] <= 10)):
+    if (not PlayerOnMap(MapDataEnum.FARAWAY_ISLAND.value) or not (
+            22 <= trainer["posX"] <= 23 and 8 <= trainer["posY"] <= 10)):
         log.info("Please place the player below the entrance to Mew's area, then restart the script.")
         os._exit(1)
         return
@@ -108,10 +122,10 @@ def ModeMew():
                 (22, 8),
                 (22, -99, MapDataEnum.FARAWAY_ISLAND_A.value)
             ])
-        
+
         WaitFrames(30)
         HoldButton("B")
-        
+
         FollowPath([
             (GetTrainer()["posX"], 16),
             (16, 16)
@@ -125,7 +139,7 @@ def ModeMew():
 
         EncounterPokemon()
 
-        for i in range(0, 6):
+        for _ in range(6):
             PressButton("B")
             WaitFrames(10)
 
@@ -136,11 +150,13 @@ def ModeMew():
             (12, 99, MapDataEnum.FARAWAY_ISLAND.value)
         ])
 
+
 def ModeRegis():
     if (not PlayerOnMap(MapDataEnum.DESERT_RUINS.value) and
-        not PlayerOnMap(MapDataEnum.ISLAND_CAVE.value) and
-        not PlayerOnMap(MapDataEnum.ANCIENT_TOMB.value)):
-        log.info("Please place the player below the target Regi in Desert Ruins, Island Cave or Ancient Tomb, then restart the script.")
+            not PlayerOnMap(MapDataEnum.ISLAND_CAVE.value) and
+            not PlayerOnMap(MapDataEnum.ANCIENT_TOMB.value)):
+        log.info(
+            "Please place the player below the target Regi in Desert Ruins, Island Cave or Ancient Tomb, then restart the script.")
         os._exit(1)
 
     while True:
@@ -155,14 +171,15 @@ def ModeRegis():
         # Exit and re-enter
         PressButton("B")
         FollowPath([
-            (8, 21), 
+            (8, 21),
             (8, 11)
         ])
+
 
 def ModeSouthernIsland():
     trainer = GetTrainer()
     if (not PlayerOnMap(MapDataEnum.SOUTHERN_ISLAND_A.value) or
-        not 5 <= trainer["posX"] == 13 and trainer["posY"] >= 12):
+            not 5 <= trainer["posX"] == 13 and trainer["posY"] >= 12):
         log.info("Please place the player below the sphere on Southern Island and restart the script.")
         os._exit(1)
 
@@ -179,18 +196,20 @@ def ModeSouthernIsland():
         # Exit and re-enter
         PressButton("B")
         FollowPath([
-            (13, 99, MapDataEnum.SOUTHERN_ISLAND.value), 
+            (13, 99, MapDataEnum.SOUTHERN_ISLAND.value),
             (14, -99, MapDataEnum.SOUTHERN_ISLAND_A.value)
         ])
 
+
 def ModeDeoxysPuzzle(do_encounter: bool = True):
     def StuckRetryPuzzle(success: bool):
-        if not success: 
+        if not success:
             ResetGame()
             return True
 
     if not PlayerOnMap(MapDataEnum.BIRTH_ISLAND.value) or GetTrainer()["posX"] != 15:
-        log.info("Please place the player below the triangle at its starting position on Birth Island, then save before restarting the script.")
+        log.info(
+            "Please place the player below the triangle at its starting position on Birth Island, then save before restarting the script.")
         os._exit(1)
 
     delay = 4
@@ -268,13 +287,15 @@ def ModeDeoxysPuzzle(do_encounter: bool = True):
 
         # Exit and re-enter
         FollowPath([
-            (15, 99, (26, 59)), 
+            (15, 99, (26, 59)),
             (8, -99, MapDataEnum.BIRTH_ISLAND.value)
         ])
 
+
 def ModeDeoxysResets():
     if not PlayerOnMap(MapDataEnum.BIRTH_ISLAND.value) or GetTrainer()["posX"] != 15:
-        log.info("Please place the player below the triangle at its final position on Birth Island, then save before restarting the script.")
+        log.info(
+            "Please place the player below the triangle at its final position on Birth Island, then save before restarting the script.")
         os._exit(1)
 
     deoxys_frames = GetRNGState(GetTrainer()["tid"], "deoxys")
@@ -288,7 +309,8 @@ def ModeDeoxysResets():
         WaitFrames(60)
 
         if not PlayerOnMap(MapDataEnum.BIRTH_ISLAND.value) or GetTrainer()["posX"] != 15:
-            log.info("Please place the player below the triangle at its final position on Birth Island, then save before restarting the script.")
+            log.info(
+                "Please place the player below the triangle at its final position on Birth Island, then save before restarting the script.")
             os._exit(1)
 
         while True:
@@ -300,8 +322,8 @@ def ModeDeoxysResets():
                     ButtonCombo(["A", 8])
 
                 deoxys_frames["rngState"].append(emu["rngState"])
-                WriteFile(f"stats/{GetTrainer()['tid']}/deoxys.json", json.dumps(deoxys_frames, indent=4, sort_keys=True))
+                WriteFile(f"stats/{GetTrainer()['tid']}/deoxys.json",
+                          json.dumps(deoxys_frames, indent=4, sort_keys=True))
                 EncounterPokemon()
             break
         continue
-
