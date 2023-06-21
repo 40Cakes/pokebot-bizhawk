@@ -190,9 +190,9 @@ def CatchPokemon():  # Function to catch pokemon
             elif not can_spore:
                 log.info(f"Can't sleep the opponent! Ability is {ability}")
 
-            while not DetectTemplate("battle/bag.png"):
-                ReleaseAllInputs()
-                ButtonCombo(["B", "Up", "Right"])  # Press B + up + right until BAG menu is visible
+        while not DetectTemplate("battle/bag.png"):
+            ReleaseAllInputs()
+            ButtonCombo(["B", "Up", "Right"])  # Press B + up + right until BAG menu is visible
 
         while True:
             if DetectTemplate("battle/bag.png"): PressButton("A")
