@@ -155,8 +155,8 @@ def ModeRegis():
     if (not PlayerOnMap(MapDataEnum.DESERT_RUINS.value) and
             not PlayerOnMap(MapDataEnum.ISLAND_CAVE.value) and
             not PlayerOnMap(MapDataEnum.ANCIENT_TOMB.value)):
-        log.info(
-            "Please place the player below the target Regi in Desert Ruins, Island Cave or Ancient Tomb, then restart the script.")
+        log.info("Please place the player below the target Regi in Desert Ruins, Island Cave or Ancient Tomb, "
+                 "then restart the script.")
         os._exit(1)
 
     while True:
@@ -208,8 +208,8 @@ def ModeDeoxysPuzzle(do_encounter: bool = True):
             return True
 
     if not PlayerOnMap(MapDataEnum.BIRTH_ISLAND.value) or GetTrainer()["posX"] != 15:
-        log.info(
-            "Please place the player below the triangle at its starting position on Birth Island, then save before restarting the script.")
+        log.info("Please place the player below the triangle at its starting position on Birth Island, then save before"
+                 " restarting the script.")
         os._exit(1)
 
     delay = 4
@@ -294,8 +294,8 @@ def ModeDeoxysPuzzle(do_encounter: bool = True):
 
 def ModeDeoxysResets():
     if not PlayerOnMap(MapDataEnum.BIRTH_ISLAND.value) or GetTrainer()["posX"] != 15:
-        log.info(
-            "Please place the player below the triangle at its final position on Birth Island, then save before restarting the script.")
+        log.info("Please place the player below the triangle at its final position on Birth Island, then save before "
+                 "restarting the script.")
         os._exit(1)
 
     deoxys_frames = GetRNGState(GetTrainer()["tid"], "deoxys")
@@ -309,8 +309,8 @@ def ModeDeoxysResets():
         WaitFrames(60)
 
         if not PlayerOnMap(MapDataEnum.BIRTH_ISLAND.value) or GetTrainer()["posX"] != 15:
-            log.info(
-                "Please place the player below the triangle at its final position on Birth Island, then save before restarting the script.")
+            log.info("Please place the player below the triangle at its final position on Birth Island, then save "
+                     "before restarting the script.")
             os._exit(1)
 
         while True:

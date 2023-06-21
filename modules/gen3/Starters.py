@@ -24,8 +24,8 @@ def ModeStarters():
         starter_frames = GetRNGState(GetTrainer()['tid'], starter_choice)
 
         if starter_choice not in ["treecko", "torchic", "mudkip"]:
-            log.info(
-                f"Unknown starter \"{config['starter']}\". Please edit the value in config.yml and restart the script.")
+            log.info(f"Unknown starter \"{config['starter']}\". Please edit the value in config.yml and restart the "
+                     f"script.")
             input("Press enter to continue...")
             os._exit(1)
 
@@ -66,16 +66,16 @@ def ModeStarters():
 
                         if config["mem_hacks"] and GetParty()[0]:
                             if EncounterPokemon(starter=True):
-                                input(
-                                    "Pausing bot for manual intervention. (Don't forget to pause the pokebot.lua script so you can provide inputs). Press Enter to continue...")
+                                input("Pausing bot for manual intervention. (Don't forget to pause the pokebot.lua "
+                                      "script so you can provide inputs). Press Enter to continue...")
                             else:
                                 ResetGame()
                                 break
                     else:
                         if GetParty()[0]:
                             if EncounterPokemon(starter=True):
-                                input(
-                                    "Pausing bot for manual intervention. (Don't forget to pause the pokebot.lua script so you can provide inputs). Press Enter to continue...")
+                                input("Pausing bot for manual intervention. (Don't forget to pause the pokebot.lua "
+                                      "script so you can provide inputs). Press Enter to continue...")
                             else:
                                 ResetGame()
                                 break

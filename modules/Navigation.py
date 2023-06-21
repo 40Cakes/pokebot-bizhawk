@@ -21,7 +21,13 @@ else:
     os._exit(1)
 
 
-def Bonk(direction: str, run: bool = True):  # Function to run until trainer position stops changing
+def Bonk(direction: str, run: bool = True):
+    """
+    Function to run until trainer position stops changing
+    :param direction: Direction to move
+    :param run: Boolean value of whether to run
+    :return: Last known player coordinates or None if in a battle
+    """
     PressButton("B")  # press and release B in case of a random pokenav call
 
     HoldButton(direction)

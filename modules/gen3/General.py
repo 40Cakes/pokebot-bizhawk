@@ -105,8 +105,9 @@ def ModeSpin():  # TODO check if players direction changes, if not spam B (Poken
             directions.remove(trainer["facing"])
             PressButton(random.choice(directions))
             WaitFrames(2)
-            if GetTrainer()["facing"] == trainer[
-                "facing"]:  # Check if the trainer's facing direction actually changed, press B to cancel PokeNav as it prevents all movement
+            if GetTrainer()["facing"] == trainer["facing"]:
+                # Check if the trainer's facing direction actually changed, press B to cancel PokeNav as it prevents
+                # all movement
                 PressButton("B")
     except Exception as e:
         log.exception(str(e))

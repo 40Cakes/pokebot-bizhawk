@@ -70,7 +70,7 @@
         "name": "Fire Punch",
         "effect": "Has a 10% chance to burn the target.",
         "type": "Fire",
-        "kind": "Physical",
+        "kind": "Special",
         "power": 75,
         "accuracy": 100,
         "pp": 15
@@ -80,7 +80,7 @@
         "name": "Ice Punch",
         "effect": "Has a 10% chance to freeze the target.",
         "type": "Ice",
-        "kind": "Physical",
+        "kind": "Special",
         "power": 75,
         "accuracy": 100,
         "pp": 15
@@ -90,7 +90,7 @@
         "name": "ThunderPunch",
         "effect": "Has a 10% chance to paralyze the target.",
         "type": "Electric",
-        "kind": "Physical",
+        "kind": "Special",
         "power": 75,
         "accuracy": 100,
         "pp": 15
@@ -130,7 +130,7 @@
         "name": "Razor Wind",
         "effect": "The user prepares on turn one becoming uncontrollable and then attacks on turn two. Has a high critical hit ratio.",
         "type": "Normal",
-        "kind": "Special",
+        "kind": "Physical",
         "power": 80,
         "accuracy": 100,
         "pp": 10
@@ -160,7 +160,7 @@
         "name": "Gust",
         "effect": "Power doubles if the target is in mid-air via Fly or Bounce.",
         "type": "Flying",
-        "kind": "Special",
+        "kind": "Physical",
         "power": 40,
         "accuracy": 100,
         "pp": 35
@@ -180,7 +180,7 @@
         "name": "Whirlwind",
         "effect": "Almost always goes last; in trainer battles the target is switched out for a random member of its team. Escapes from wild battles. Has no effect if the target has Suction Cups or used Ingrain.",
         "type": "Normal",
-        "kind": "s+",
+        "kind": "Status",
         "power": 0,
         "accuracy": 100,
         "pp": 20
@@ -191,7 +191,7 @@
         "effect": "On the first turn the user flies into the air becoming uncontrollable and evades most attacks. Gust Twister Thunder and Sky Uppercut have normal accuracy against a mid-air Pokemon with Gust and Twister also gaining doubled power. The user may also be hit in mid-air if it was previously targeted by Lock-On or Mind Reader or if it is attacked by a Pokemon with No Guard. On the second turn the user attacks.",
         "type": "Flying",
         "kind": "Physical",
-        "power": 90,
+        "power": 70,
         "accuracy": 95,
         "pp": 15
     },
@@ -202,7 +202,7 @@
         "type": "Normal",
         "kind": "Physical",
         "power": 15,
-        "accuracy": 85,
+        "accuracy": 75,
         "pp": 20
     },
     {
@@ -220,10 +220,10 @@
         "name": "Vine Whip",
         "effect": "Deals damage with no additional effect.",
         "type": "Grass",
-        "kind": "Physical",
+        "kind": "Special",
         "power": 35,
         "accuracy": 100,
-        "pp": 15
+        "pp": 10
     },
     {
         "id": 23,
@@ -261,9 +261,9 @@
         "effect": "If this attack misses the target the user half of its max health in recoil damage.",
         "type": "Fighting",
         "kind": "Physical",
-        "power": 100,
+        "power": 70,
         "accuracy": 95,
-        "pp": 10
+        "pp": 25
     },
     {
         "id": 27,
@@ -331,8 +331,8 @@
         "effect": "Deals damage with no additional effect.",
         "type": "Normal",
         "kind": "Physical",
-        "power": 50,
-        "accuracy": 100,
+        "power": 35,
+        "accuracy": 95,
         "pp": 35
     },
     {
@@ -352,7 +352,7 @@
         "type": "Normal",
         "kind": "Physical",
         "power": 15,
-        "accuracy": 90,
+        "accuracy": 85,
         "pp": 20
     },
     {
@@ -371,9 +371,9 @@
         "effect": "The user attacks uncontrollably for 2-3 turns and then gets confused.",
         "type": "Normal",
         "kind": "Physical",
-        "power": 120,
+        "power": 90,
         "accuracy": 100,
-        "pp": 10
+        "pp": 20
     },
     {
         "id": 38,
@@ -440,7 +440,7 @@
         "name": "Bite",
         "effect": "Has a 30% chance to make the target flinch.",
         "type": "Dark",
-        "kind": "Physical",
+        "kind": "Special",
         "power": 60,
         "accuracy": 100,
         "pp": 25
@@ -490,7 +490,7 @@
         "name": "SonicBoom",
         "effect": "Always deals 20 points of damage.",
         "type": "Normal",
-        "kind": "Special",
+        "kind": "Physical",
         "power": 20,
         "accuracy": 90,
         "pp": 20
@@ -502,7 +502,7 @@
         "type": "Normal",
         "kind": "d-",
         "power": 0,
-        "accuracy": 100,
+        "accuracy": 55,
         "pp": 20
     },
     {
@@ -510,7 +510,7 @@
         "name": "Acid",
         "effect": "Has a 10% chance to lower the target's Special Defense by 1 stage.",
         "type": "Poison",
-        "kind": "Special",
+        "kind": "Physical",
         "power": 40,
         "accuracy": 100,
         "pp": 30
@@ -630,7 +630,7 @@
         "name": "Hyper Beam",
         "effect": "The user recharges during its next turn; as a result until the end of the next turn the user becomes uncontrollable.",
         "type": "Normal",
-        "kind": "Special",
+        "kind": "Physical",
         "power": 150,
         "accuracy": 90,
         "pp": 5
@@ -713,7 +713,7 @@
         "kind": "Special",
         "power": 20,
         "accuracy": 100,
-        "pp": 25
+        "pp": 20
     },
     {
         "id": 72,
@@ -723,7 +723,7 @@
         "kind": "Special",
         "power": 40,
         "accuracy": 100,
-        "pp": 15
+        "pp": 10
     },
     {
         "id": 73,
@@ -750,7 +750,7 @@
         "name": "Razor Leaf",
         "effect": "Has a high critical hit ratio.",
         "type": "Grass",
-        "kind": "Physical",
+        "kind": "Special",
         "power": 55,
         "accuracy": 95,
         "pp": 25
@@ -801,9 +801,9 @@
         "effect": "The user attacks uncontrollably for 2-3 turns and then gets confused.",
         "type": "Grass",
         "kind": "Special",
-        "power": 120,
+        "power": 70,
         "accuracy": 100,
-        "pp": 10
+        "pp": 20
     },
     {
         "id": 81,
@@ -831,8 +831,8 @@
         "effect": "Traps the target for 5-6 turns causing damage equal to 1/16 of its max HP each turn; this trapped effect can be broken by Rapid Spin. The target can still switch out if it is holding Shed Shell or uses Baton Pass or it uses U-Turn.",
         "type": "Fire",
         "kind": "Special",
-        "power": 35,
-        "accuracy": 85,
+        "power": 15,
+        "accuracy": 70,
         "pp": 15
     },
     {
@@ -911,7 +911,7 @@
         "effect": "On the first turn the user digs underground becoming uncontrollable and evades all attacks. Earthquake and Magnitude can hit underground and gain doubled power. The user may also be hit underground if it was previously targeted by Lock-On or Mind Reader or if it is attacked by a Pokemon with No Guard. On the second turn the user attacks.",
         "type": "Ground",
         "kind": "Physical",
-        "power": 80,
+        "power": 60,
         "accuracy": 100,
         "pp": 10
     },
@@ -922,7 +922,7 @@
         "type": "Poison",
         "kind": "d-",
         "power": 0,
-        "accuracy": 90,
+        "accuracy": 85,
         "pp": 10
     },
     {
@@ -970,7 +970,7 @@
         "name": "Agility",
         "effect": "Raises the user's Speed by 2 stages.",
         "type": "Psychic",
-        "kind": "s+",
+        "kind": "Status",
         "power": 0,
         "accuracy": null,
         "pp": 30
@@ -1010,7 +1010,7 @@
         "name": "Night Shade",
         "effect": "Does damage equal to user's level.",
         "type": "Ghost",
-        "kind": "Special",
+        "kind": "Physical",
         "power": 50,
         "accuracy": 100,
         "pp": 15
@@ -1053,7 +1053,7 @@
         "kind": "d+",
         "power": 0,
         "accuracy": null,
-        "pp": 10
+        "pp": 20
     },
     {
         "id": 106,
@@ -1230,7 +1230,7 @@
         "name": "Smog",
         "effect": "Has a 40% chance to poison the target.",
         "type": "Poison",
-        "kind": "Special",
+        "kind": "Physical",
         "power": 20,
         "accuracy": 70,
         "pp": 20
@@ -1240,7 +1240,7 @@
         "name": "Sludge",
         "effect": "Has a 30% chance to poison the target.",
         "type": "Poison",
-        "kind": "Special",
+        "kind": "Physical",
         "power": 65,
         "accuracy": 100,
         "pp": 20
@@ -1270,7 +1270,7 @@
         "name": "Waterfall",
         "effect": "Has a 20% chance to make the target flinch.",
         "type": "Water",
-        "kind": "Physical",
+        "kind": "Special",
         "power": 80,
         "accuracy": 100,
         "pp": 15
@@ -1280,9 +1280,9 @@
         "name": "Clamp",
         "effect": "Traps the target for 5-6 turns causing damage equal to 1/16 of its max HP each turn; this trapped effect can be broken by Rapid Spin. The target can still switch out if it is holding Shed Shell or uses Baton Pass or U-Turn.",
         "type": "Water",
-        "kind": "Physical",
+        "kind": "Special",
         "power": 35,
-        "accuracy": 85,
+        "accuracy": 75,
         "pp": 10
     },
     {
@@ -1290,7 +1290,7 @@
         "name": "Swift",
         "effect": "Ignores Evasion and Accuracy modifiers and never misses except against Protect Detect or a target in the middle of Dig Fly Dive or Bounce.",
         "type": "Normal",
-        "kind": "Special",
+        "kind": "Physical",
         "power": 60,
         "accuracy": 101,
         "pp": 20
@@ -1361,9 +1361,9 @@
         "effect": "If this attack misses the target the user half of its max health in recoil damage.",
         "type": "Fighting",
         "kind": "Physical",
-        "power": 130,
+        "power": 85,
         "accuracy": 90,
-        "pp": 10
+        "pp": 20
     },
     {
         "id": 137,
@@ -1372,7 +1372,7 @@
         "type": "Normal",
         "kind": "s-",
         "power": 0,
-        "accuracy": 90,
+        "accuracy": 75,
         "pp": 30
     },
     {
@@ -1392,7 +1392,7 @@
         "type": "Poison",
         "kind": "d-",
         "power": 0,
-        "accuracy": 90,
+        "accuracy": 55,
         "pp": 40
     },
     {
@@ -1482,7 +1482,7 @@
         "type": "Normal",
         "kind": "acc-",
         "power": 0,
-        "accuracy": 100,
+        "accuracy": 70,
         "pp": 20
     },
     {
@@ -1520,9 +1520,9 @@
         "name": "Crabhammer",
         "effect": "Has a high critical hit ratio.",
         "type": "Water",
-        "kind": "Physical",
+        "kind": "Special",
         "power": 90,
-        "accuracy": 90,
+        "accuracy": 85,
         "pp": 10
     },
     {
@@ -1610,7 +1610,7 @@
         "name": "Tri Attack",
         "effect": "Has a 20% chance to burn paralyze or freeze the target.",
         "type": "Normal",
-        "kind": "Special",
+        "kind": "Physical",
         "power": 80,
         "accuracy": 100,
         "pp": 10
@@ -1680,7 +1680,7 @@
         "name": "Thief",
         "effect": "Steals the target's held item unless the user is already holding an item or the target has Sticky Hold or Multitype. A stolen item cannot be recovered by using Recycle.",
         "type": "Dark",
-        "kind": "Physical",
+        "kind": "Special",
         "power": 40,
         "accuracy": 100,
         "pp": 10
@@ -1720,7 +1720,7 @@
         "name": "Flame Wheel",
         "effect": "Has a 10% chance to burn the target; can be used while frozen which both attacks the target normally and thaws the user.",
         "type": "Fire",
-        "kind": "Physical",
+        "kind": "Special",
         "power": 60,
         "accuracy": 100,
         "pp": 25
@@ -1730,7 +1730,7 @@
         "name": "Snore",
         "effect": "Has a 30% chance to make the target flinch; fails if user is awake.",
         "type": "Normal",
-        "kind": "Special",
+        "kind": "Physical",
         "power": 40,
         "accuracy": 100,
         "pp": 15
@@ -1770,7 +1770,7 @@
         "name": "Aeroblast",
         "effect": "Has a high critical hit ratio.",
         "type": "Flying",
-        "kind": "Special",
+        "kind": "Physical",
         "power": 100,
         "accuracy": 95,
         "pp": 5
@@ -1782,7 +1782,7 @@
         "type": "Grass",
         "kind": "s-",
         "power": 0,
-        "accuracy": 100,
+        "accuracy": 85,
         "pp": 40
     },
     {
@@ -1850,7 +1850,7 @@
         "name": "Faint Attack",
         "effect": "Ignores Evasion and Accuracy modifiers and never misses except against Protect Detect or a target in the middle of Dig Fly Dive or Bounce.",
         "type": "Dark",
-        "kind": "Physical",
+        "kind": "Special",
         "power": 60,
         "accuracy": 101,
         "pp": 20
@@ -1880,7 +1880,7 @@
         "name": "Sludge Bomb",
         "effect": "Has a 30% chance to poison the target.",
         "type": "Poison",
-        "kind": "Special",
+        "kind": "Physical",
         "power": 90,
         "accuracy": 100,
         "pp": 10
@@ -1890,7 +1890,7 @@
         "name": "Mud-Slap",
         "effect": "Has a 30% chance to lower the target's Accuracy by 1 stage.",
         "type": "Ground",
-        "kind": "Special",
+        "kind": "Physical",
         "power": 20,
         "accuracy": 100,
         "pp": 10
@@ -1921,7 +1921,7 @@
         "effect": "Paralyzes the target.",
         "type": "Electric",
         "kind": "Special",
-        "power": 120,
+        "power": 100,
         "accuracy": 50,
         "pp": 5
     },
@@ -2000,8 +2000,8 @@
         "name": "Outrage",
         "effect": "The user attacks uncontrollably for 2-3 turns and then gets confused.",
         "type": "Dragon",
-        "kind": "Physical",
-        "power": 120,
+        "kind": "Special",
+        "power": 90,
         "accuracy": 100,
         "pp": 15
     },
@@ -2021,9 +2021,9 @@
         "effect": "Restores the user's HP by 1/2 of the damage inflicted on the target.",
         "type": "Grass",
         "kind": "Special",
-        "power": 75,
+        "power": 60,
         "accuracy": 100,
-        "pp": 10
+        "pp": 5
     },
     {
         "id": 203,
@@ -2090,7 +2090,7 @@
         "name": "Spark",
         "effect": "Has a 30% chance to paralyze the target.",
         "type": "Electric",
-        "kind": "Physical",
+        "kind": "Special",
         "power": 65,
         "accuracy": 100,
         "pp": 20
@@ -2101,7 +2101,7 @@
         "effect": "The base power of this move doubles with each consecutive hit; however power is capped at a maximum 160 BP and remains there for any subsequent uses. If this move misses base power will be reset to 10 BP on the next turn. The user can also select other attacks without resetting this move's power; it will continue to double after each use until it either misses or reaches the 160 BP cap.",
         "type": "Bug",
         "kind": "Physical",
-        "power": 20,
+        "power": 10,
         "accuracy": 95,
         "pp": 20
     },
@@ -2210,7 +2210,7 @@
         "name": "Sacred Fire",
         "effect": "Has a 50% chance to burn the target; can be used while frozen which both attacks the target normally and thaws the user.",
         "type": "Fire",
-        "kind": "Physical",
+        "kind": "Special",
         "power": 100,
         "accuracy": 95,
         "pp": 5
@@ -2280,7 +2280,7 @@
         "name": "Pursuit",
         "effect": "If the target switches out on the current turn this move strikes with doubled power before the switch. Baton Passers still escape safely. When a faster Pokemon uses Pursuit against a U-Turner the U-Turner is hit for normal damage; when a slower Pokemon uses Pursuit against a U-Turner the U-Turner makes its attack then is hit by Pursuit for double power and switches out.",
         "type": "Dark",
-        "kind": "Physical",
+        "kind": "Special",
         "power": 80,
         "accuracy": 100,
         "pp": 20
@@ -2370,7 +2370,7 @@
         "name": "Hidden Power",
         "effect": "Varies in power and type depending on the user's IVs; maximum 70 BP.",
         "type": "Normal",
-        "kind": "Special",
+        "kind": "Physical",
         "power": 70,
         "accuracy": 100,
         "pp": 15
@@ -2420,7 +2420,7 @@
         "name": "Crunch",
         "effect": "Has a 20% chance to lower the target's Defense by 1 stage.",
         "type": "Dark",
-        "kind": "Physical",
+        "kind": "Special",
         "power": 80,
         "accuracy": 100,
         "pp": 15
@@ -2470,7 +2470,7 @@
         "name": "Shadow Ball",
         "effect": "Has a 20% chance to lower the target's Special Defense by 1 stage.",
         "type": "Ghost",
-        "kind": "Special",
+        "kind": "Physical",
         "power": 80,
         "accuracy": 100,
         "pp": 15
@@ -2481,9 +2481,9 @@
         "effect": "This move even if the user and/or the target switch out will strike the active target at the end of the second turn after its use. Only one instance of Future Sight or Doom Desire may be active at a time.",
         "type": "Psychic",
         "kind": "Special",
-        "power": 100,
-        "accuracy": 100,
-        "pp": 10
+        "power": 80,
+        "accuracy": 90,
+        "pp": 15
     },
     {
         "id": 249,
@@ -2491,7 +2491,7 @@
         "effect": "Has a 50% chance to lower the target's Defense by 1 stage.",
         "type": "Fighting",
         "kind": "Physical",
-        "power": 40,
+        "power": 20,
         "accuracy": 100,
         "pp": 15
     },
@@ -2501,8 +2501,8 @@
         "effect": "Traps the target for 5-6 turns causing damage equal to 1/16 of its max HP each turn; this trapped effect can be broken by Rapid Spin. The target can still switch out if it is holding Shed Shell or uses Baton Pass or U-Turn. Base power also doubles when performed against a Pokemon in the middle of using Dive.",
         "type": "Water",
         "kind": "Special",
-        "power": 35,
-        "accuracy": 85,
+        "power": 15,
+        "accuracy": 70,
         "pp": 15
     },
     {
@@ -2510,7 +2510,7 @@
         "name": "Beat Up",
         "effect": "Each healthy (i.e. not fainted nor inflicted with a status condition) Pokemon in your party contributes a typeless 10 base power hit determined solely by their base Attack and Defense stats.",
         "type": "Dark",
-        "kind": "Physical",
+        "kind": "Special",
         "power": 50,
         "accuracy": 100,
         "pp": 10
@@ -2530,8 +2530,8 @@
         "name": "Uproar",
         "effect": "The user causes an Uproar and attacks uncontrollably for 3 turns. During the effects of the Uproar active Pokemon cannot fall asleep and sleeping Pokemon sent into battle will wake up.",
         "type": "Normal",
-        "kind": "Special",
-        "power": 90,
+        "kind": "Physical",
+        "power": 50,
         "accuracy": 100,
         "pp": 10
     },
@@ -2543,14 +2543,14 @@
         "kind": "Status",
         "power": 0,
         "accuracy": null,
-        "pp": 20
+        "pp": 10
     },
     {
         "id": 255,
         "name": "Spit Up",
         "effect": "Power increases with user's Stockpile count; fails with zero Stockpiles.",
         "type": "Normal",
-        "kind": "Special",
+        "kind": "Physical",
         "power": 50,
         "accuracy": 100,
         "pp": 10
@@ -2820,7 +2820,7 @@
         "name": "Knock Off",
         "effect": "Disables the target's held item unless it has Sticky Hold or Multitype. Items lost to this move cannot be recovered by using Recycle.",
         "type": "Dark",
-        "kind": "Physical",
+        "kind": "Special",
         "power": 20,
         "accuracy": 100,
         "pp": 20
@@ -2910,8 +2910,8 @@
         "name": "Dive",
         "effect": "On the first turn the user dives underwater becoming uncontrollable and evades all attacks except for Surf and Whirlpool which have doubled power; the user may also be hit underwater if it was previously targeted by Lock-On or Mind Reader or if it is attacked by a Pokemon with No Guard. On the second turn the user attacks.",
         "type": "Water",
-        "kind": "Physical",
-        "power": 80,
+        "kind": "Special",
+        "power": 60,
         "accuracy": 100,
         "pp": 10
     },
@@ -2990,7 +2990,7 @@
         "name": "Blaze Kick",
         "effect": "Has a high critical hit ratio and a 10% chance to burn the target.",
         "type": "Fire",
-        "kind": "Physical",
+        "kind": "Special",
         "power": 85,
         "accuracy": 90,
         "pp": 10
@@ -3010,7 +3010,7 @@
         "name": "Ice Ball",
         "effect": "The user attacks uncontrollably for five turns; this move's power doubles after each turn and also if Defense Curl was used beforehand. Its power resets after five turns have ended or if the attack misses.",
         "type": "Ice",
-        "kind": "Physical",
+        "kind": "Special",
         "power": 30,
         "accuracy": 90,
         "pp": 20
@@ -3020,7 +3020,7 @@
         "name": "Needle Arm",
         "effect": "Has a 30% chance to make the target flinch.",
         "type": "Grass",
-        "kind": "Physical",
+        "kind": "Special",
         "power": 60,
         "accuracy": 100,
         "pp": 15
@@ -3040,7 +3040,7 @@
         "name": "Hyper Voice",
         "effect": "Deals damage with no additional effect.",
         "type": "Normal",
-        "kind": "Special",
+        "kind": "Physical",
         "power": 90,
         "accuracy": 100,
         "pp": 10
@@ -3110,7 +3110,7 @@
         "name": "Weather Ball",
         "effect": "Base power is 50; Base power doubles and move's type changes during weather effects: becomes Fire-type during Sunny Day Water-type during Rain Dance Ice-type during Hail and Rock-type during Sandstorm.",
         "type": "Normal",
-        "kind": "Special",
+        "kind": "Physical",
         "power": 50,
         "accuracy": 100,
         "pp": 10
@@ -3140,7 +3140,7 @@
         "name": "Air Cutter",
         "effect": "Has a high critical hit ratio.",
         "type": "Flying",
-        "kind": "Special",
+        "kind": "Physical",
         "power": 55,
         "accuracy": 95,
         "pp": 25
@@ -3180,7 +3180,7 @@
         "name": "Silver Wind",
         "effect": "Has a 10% chance to raise all of the user's stats by 1 stage.",
         "type": "Bug",
-        "kind": "Special",
+        "kind": "Physical",
         "power": 60,
         "accuracy": 100,
         "pp": 5
@@ -3240,7 +3240,7 @@
         "name": "Signal Beam",
         "effect": "Has a 10% chance to confuse the target.",
         "type": "Bug",
-        "kind": "Special",
+        "kind": "Physical",
         "power": 75,
         "accuracy": 100,
         "pp": 15
@@ -3281,8 +3281,8 @@
         "effect": "Traps the target for 5-6 turns causing damage equal to 1/16 of its max HP each turn; this trapped effect can be broken by Rapid Spin. The target can still switch out if it is holding Shed Shell or uses Baton Pass or U-Turn.",
         "type": "Ground",
         "kind": "Physical",
-        "power": 35,
-        "accuracy": 85,
+        "power": 15,
+        "accuracy": 70,
         "pp": 15
     },
     {
@@ -3310,8 +3310,8 @@
         "name": "Bullet Seed",
         "effect": "Attacks 2-5 times in one turn; if one of these attacks breaks a target's Substitute the target will take damage for the rest of the hits. This move has a 3/8 chance to hit twice a 3/8 chance to hit three times a 1/8 chance to hit four times and a 1/8 chance to hit five times. If the user of this move has Skill Link this move will always strike five times.",
         "type": "Grass",
-        "kind": "Physical",
-        "power": 25,
+        "kind": "Special",
+        "power": 10,
         "accuracy": 100,
         "pp": 30
     },
@@ -3330,8 +3330,8 @@
         "name": "Icicle Spear",
         "effect": "Attacks 2-5 times in one turn; if one of these attacks breaks a target's Substitute the target will take damage for the rest of the hits. This move has a 3/8 chance to hit twice a 3/8 chance to hit three times a 1/8 chance to hit four times and a 1/8 chance to hit five times. If the user of this move has Skill Link this move will always strike five times.",
         "type": "Ice",
-        "kind": "Physical",
-        "power": 25,
+        "kind": "Special",
+        "power": 10,
         "accuracy": 100,
         "pp": 30
     },
@@ -3370,7 +3370,7 @@
         "name": "Dragon Claw",
         "effect": "Deals damage with no additional effect.",
         "type": "Dragon",
-        "kind": "Physical",
+        "kind": "Special",
         "power": 80,
         "accuracy": 100,
         "pp": 15
@@ -3410,7 +3410,7 @@
         "name": "Mud Shot",
         "effect": "Lowers the target's Speed by 1 stage.",
         "type": "Ground",
-        "kind": "Special",
+        "kind": "Physical",
         "power": 55,
         "accuracy": 95,
         "pp": 15
@@ -3431,7 +3431,7 @@
         "effect": "Steals the target's held item unless the user is already holding an item or the target has Sticky Hold or Multitype. Recycle cannot recover the stolen item.",
         "type": "Normal",
         "kind": "Physical",
-        "power": 60,
+        "power": 40,
         "accuracy": 100,
         "pp": 40
     },
@@ -3440,7 +3440,7 @@
         "name": "Volt Tackle",
         "effect": "The user receives 1/3 recoil damage; has a 10% chance to paralyze the target.",
         "type": "Electric",
-        "kind": "Physical",
+        "kind": "Special",
         "power": 120,
         "accuracy": 100,
         "pp": 15
@@ -3480,8 +3480,8 @@
         "name": "Leaf Blade",
         "effect": "Has a high critical hit ratio.",
         "type": "Grass",
-        "kind": "Physical",
-        "power": 90,
+        "kind": "Special",
+        "power": 70,
         "accuracy": 100,
         "pp": 15
     },
@@ -3502,7 +3502,7 @@
         "type": "Rock",
         "kind": "Physical",
         "power": 25,
-        "accuracy": 90,
+        "accuracy": 80,
         "pp": 10
     },
     {
@@ -3530,9 +3530,9 @@
         "name": "Doom Desire",
         "effect": "This move even if the user and/or the target switch out will strike the active target at the end of the second turn after its use.  Only one instance of Doom Desire or Future Sight may be active at a time.",
         "type": "Steel",
-        "kind": "Special",
-        "power": 140,
-        "accuracy": 100,
+        "kind": "Physical",
+        "power": 120,
+        "accuracy": 85,
         "pp": 5
     },
     {
