@@ -48,7 +48,7 @@ config_schema = {
         "save_every_x_encounters": {"type": "number"},
         "manual_catch": {"type": "boolean"},
         "use_spore": {"type": "boolean"},
-        "catch": {"type": "array"},
+        "catch_shinies": {"type": "boolean"},
         "battle_others": {"type": "boolean"},
         "pokeball_override": {"type": "object"},
         "cycle_lead_pokemon": {"type": "boolean"},
