@@ -6,6 +6,7 @@ import pandas as pd
 from datetime import datetime
 from discord_webhook import DiscordWebhook, DiscordEmbed
 
+from CustomCatchConfig import CustomCatchConfig
 from modules.Config import GetConfig
 from modules.data.GameState import GameState
 from modules.Files import ReadFile, WriteFile
@@ -161,8 +162,8 @@ def LogEncounter(pokemon: dict):
                 shiny_log = GetShinyLog()
                 shiny_log["shiny_log"].append(log_obj)
                 WriteFile(files["shiny_log"], json.dumps(shiny_log, indent=4, sort_keys=True))  # Save shiny log file
-        except Exception as ex:
-            log.exception(str(ex))
+        except Exception as e:
+            log.exception(str(e))
 
         encounter_log = GetEncounterLog()
         encounter_log["encounter_log"].append(log_obj)
@@ -334,7 +335,7 @@ def EncounterPokemon(starter: bool = False):
     replace_battler = False
 
     if pokemon["shiny"]:
-        if not starter and not legendary_hunt and "shinies" in config["catch"]:
+        if not starter and not legendary_hunt and config["catch_shinies"]:
             CatchPokemon()
         elif legendary_hunt:
             input("Pausing bot for manual intervention. (Don't forget to pause the pokebot.lua script so you can "
@@ -346,6 +347,9 @@ def EncounterPokemon(starter: bool = False):
                 WaitFrames(100)
         elif starter:
             return False
+
+        if CustomCatchConfig(pokemon):
+            CatchPokemon()
 
         if not legendary_hunt:
             if config["battle_others"]:
