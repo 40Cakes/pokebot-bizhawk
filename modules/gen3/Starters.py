@@ -79,6 +79,7 @@ def ModeStarters():
                             else:
                                 ResetGame()
                                 break
+                    break
                 continue
     except Exception as e:
         log.exception(str(e))
