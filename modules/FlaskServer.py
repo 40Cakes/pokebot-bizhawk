@@ -50,8 +50,9 @@ def httpServer():
 
         @server.route("/encounter", methods=["GET"])
         def Encounter():
-            encounter = GetEncounterLog()["encounter_log"].pop()["pokemon_obj"]
-            if encounter:
+            encounter_logs = GetEncounterLog()["encounter_log"]
+            if len(encounter_logs) > 0 and encounter_logs[-1]["pokemon_obj"]:
+                encounter = encounter_logs.pop()["pokemon_obj"]
                 stats = GetStats()
                 if stats:
                     try:
@@ -59,8 +60,8 @@ def httpServer():
                         return jsonify(encounter)
                     except:
                         abort(503)
-                else:
-                    return jsonify(encounter)
+                return jsonify(encounter)
+
             abort(503)
 
         @server.route("/emu", methods=["GET"])
