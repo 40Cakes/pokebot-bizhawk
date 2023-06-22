@@ -21,9 +21,9 @@ config = GetConfig()
 
 
 def MainLoop():
-    # This is the main loop that runs in a thread
-    # TODO modes should always return True once the trainer is back in the overworld after an encounter, else False - then go into a "recovery" mode
-    # TODO after each pass, read updated config that gets POSTed by the UI
+    """This is the main loop that runs in a thread"""
+    # TODO modes should always return True once the trainer is back in the overworld after an encounter, else False -
+    # TODO then go into a "recovery" mode after each pass, read updated config that gets POSTed by the UI
 
     ReleaseAllInputs()
     PressButton("SaveRAM")  # Flush Bizhawk SaveRAM to disk

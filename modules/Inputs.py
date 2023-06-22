@@ -27,7 +27,11 @@ for i in range(100):  # Clear any prior inputs from last time script ran in case
     input_list_mmap.write(bytes('a', encoding="utf-8"))
 
 
-def HoldButton(button: str):  # Function to update the hold_input object
+def HoldButton(button: str):
+    """
+    Function to update the hold_input object
+    :param button: Button to hold
+    """
     global hold_input
     log.debug(f"Holding: {button}...")
 
@@ -36,7 +40,11 @@ def HoldButton(button: str):  # Function to update the hold_input object
     hold_input_mmap.write(bytes(json.dumps(hold_input), encoding="utf-8"))
 
 
-def ReleaseButton(button: str):  # Function to update the hold_input object
+def ReleaseButton(button: str):
+    """
+    Function to update the hold_input object
+    :param button: Button to release
+    """
     global hold_input
     log.debug(f"Releasing: {button}...")
 
@@ -45,7 +53,8 @@ def ReleaseButton(button: str):  # Function to update the hold_input object
     hold_input_mmap.write(bytes(json.dumps(hold_input), encoding="utf-8"))
 
 
-def ReleaseAllInputs():  # Function to release all keys in all input objects
+def ReleaseAllInputs():
+    """Function to release all keys in all input objects"""
     global hold_input
     log.debug(f"Releasing all inputs...")
 
@@ -85,7 +94,11 @@ def PressButton(button: str):
         g_current_index = 0
 
 
-def ButtonCombo(sequence: list):  # Function to send a sequence of inputs and delays to the emulator
+def ButtonCombo(sequence: list):
+    """
+    Function to send a sequence of inputs and delays to the emulator
+    :param sequence: List of button/wait inputs to execute
+    """
     for k in sequence:
         if type(k) is int:
             WaitFrames(k)

@@ -18,23 +18,19 @@ def ModeBonk():
     direction = config["direction"].lower()
 
     while True:
-        pos1, pos2 = None, None
         log.info(f"Pathing {direction} until bonk...")
 
         while not OpponentChanged():
-            if pos1 is None or pos2 is None:
-                if direction == "horizontal":
-                    pos1 = Bonk("Left")
-                    pos2 = Bonk("Right")
-                else:
-                    pos1 = Bonk("Up")
-                    pos2 = Bonk("Down")
-            elif pos1 == pos2:
-                pos1, pos2 = None, None
+            if direction == "horizontal":
+                pos1 = Bonk("Left")
+                pos2 = Bonk("Right")
+            else:
+                pos1 = Bonk("Up")
+                pos2 = Bonk("Down")
+            if pos1 == pos2:
                 continue
 
-                FollowPath([(pos1[0], pos1[1]), (pos2[0], pos2[1])])
-            OpponentChanged()
+            FollowPath([pos1, pos2])
 
         EncounterPokemon()
 
@@ -105,8 +101,9 @@ def ModeSpin():  # TODO check if players direction changes, if not spam B (Poken
             directions.remove(trainer["facing"])
             PressButton(random.choice(directions))
             WaitFrames(2)
-            if GetTrainer()["facing"] == trainer[
-                "facing"]:  # Check if the trainer's facing direction actually changed, press B to cancel PokeNav as it prevents all movement
+            if GetTrainer()["facing"] == trainer["facing"]:
+                # Check if the trainer's facing direction actually changed, press B to cancel PokeNav as it prevents
+                # all movement
                 PressButton("B")
     except Exception as e:
         log.exception(str(e))
