@@ -191,13 +191,12 @@ def EnrichMonData(pokemon: dict):
                 pokemon["pokerusStatus"] = "none"
 
             # Hidden power type
-            pokemon["hiddenPowerType"] = HiddenPowers[int(numpy.floor((((pokemon["hpIV"] % 2) + (
-                        2 * (pokemon["attackIV"] % 2)) + (4 * (pokemon["defenseIV"] % 2)) + (
-                                                                                    8 * (pokemon["speedIV"] % 2)) + (
-                                                                                    16 * (
-                                                                                        pokemon["spAttackIV"] % 2)) + (
-                                                                                    32 * (pokemon[
-                                                                                              "spDefenseIV"] % 2))) * 15) / 63))]
+            pokemon["hiddenPowerType"] = HiddenPowers[int(numpy.floor((((pokemon["hpIV"] % 2) +
+                                            (2 * (pokemon["attackIV"] % 2)) + 
+                                            (4 * (pokemon["defenseIV"] % 2)) + 
+                                            (8 * (pokemon["speedIV"] % 2)) + 
+                                            (16 * (pokemon["spAttackIV"] % 2)) + 
+                                            (32 * (pokemon["spDefenseIV"] % 2))) * 15) / 63))]
 
             # Log encounter time
             now = datetime.now()
