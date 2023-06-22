@@ -18,23 +18,19 @@ def ModeBonk():
     direction = config["direction"].lower()
 
     while True:
-        pos1, pos2 = None, None
         log.info(f"Pathing {direction} until bonk...")
 
         while not OpponentChanged():
-            if pos1 is None or pos2 is None:
-                if direction == "horizontal":
-                    pos1 = Bonk("Left")
-                    pos2 = Bonk("Right")
-                else:
-                    pos1 = Bonk("Up")
-                    pos2 = Bonk("Down")
-            elif pos1 == pos2:
-                pos1, pos2 = None, None
+            if direction == "horizontal":
+                pos1 = Bonk("Left")
+                pos2 = Bonk("Right")
+            else:
+                pos1 = Bonk("Up")
+                pos2 = Bonk("Down")
+            if pos1 == pos2:
                 continue
 
-                FollowPath([(pos1[0], pos1[1]), (pos2[0], pos2[1])])
-            OpponentChanged()
+            FollowPath([pos1, pos2])
 
         EncounterPokemon()
 
