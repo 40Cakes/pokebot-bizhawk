@@ -53,21 +53,16 @@ def httpServer():  # Run Flask server to make bot data available via HTTP GET
         @server.route("/encounter", methods=["GET"])
         def Encounter():
             encounter_logs = GetEncounterLog()["encounter_log"]
-            if len(encounter_logs) > 0:
+            if len(encounter_logs) > 0 and encounter_logs[-1]["pokemon_obj"]:
                 encounter = encounter_logs.pop()["pokemon_obj"]
-                if encounter:
-                    stats = GetStats()
-                    response = json.loads("{}")
-                    if stats:
-                        try:
-                            encounter["stats"] = stats["pokemon"][encounter["name"]]
-                            response = jsonify(encounter)
-                            return response
-                        except:
-                            abort(503)
-                    else:
-                        response = jsonify(encounter)
-                    return response
+                stats = GetStats()
+                if stats:
+                    try:
+                        encounter["stats"] = stats["pokemon"][encounter["name"]]
+                        return jsonify(encounter)
+                    except:
+                        abort(503)
+                return jsonify(encounter)
             abort(503)
 
         @server.route("/emu", methods=["GET"])
