@@ -19,7 +19,12 @@ pickup_pokemon = ["Meowth", "Aipom", "Phanpy", "Teddiursa", "Zigzagoon", "Linoon
 type_list = json.loads(ReadFile("./modules/data/types.json"))
 
 
-def StartMenu(entry: str):  # Function to open any start menu item - presses START, finds the menu entry and opens it
+def StartMenu(entry: str):
+    """
+    Function to open any start menu item - presses START, finds the menu entry and opens it
+    :param entry: String of menu option to select
+    :return: Boolean value of whether menu item was selected
+    """
     if entry not in ["bag", "bot", "exit", "option", "pokedex", "pokemon", "pokenav", "save"]:
         return False
 
@@ -43,9 +48,16 @@ def StartMenu(entry: str):  # Function to open any start menu item - presses STA
 
     while DetectTemplate(filename):  # Press menu entry
         ButtonCombo(["A", 10])
+    return True
 
 
-def BagMenu(category: str, item: str):  # Function to find an item in the bag and use item in battle such as a pokeball
+def BagMenu(category: str, item: str):
+    """
+    Function to find an item in the bag and use item in battle such as a pokeball
+    :param category: String value of bag section selection
+    :param item: String value of item
+    :return: Boolean value of whether item was found
+    """
     if category not in ["berries", "items", "key_items", "pokeballs", "tms&hms"]:
         return False
 
@@ -74,7 +86,11 @@ def BagMenu(category: str, item: str):  # Function to find an item in the bag an
     return False
 
 
-def PickupItems():  # If using a team of Pokemon with the ability "pickup", this function will take the items from the pokemon in your party if 3 or more Pokemon have an item
+def PickupItems():
+    """
+    If using a team of Pokemon with the ability "pickup", this function will take the items from the pokemon in
+    your party if 3 or more Pokemon have an item
+    """
     if GetTrainer()["state"] != GameState.OVERWORLD:
         return
 
@@ -115,7 +131,8 @@ def PickupItems():  # If using a team of Pokemon with the ability "pickup", this
         WaitFrames(20)
 
 
-def SaveGame():  # Function to save the game via the save option in the start menu
+def SaveGame():
+    """Function to save the game via the save option in the start menu"""
     try:
         log.info("Saving the game...")
 
@@ -141,7 +158,11 @@ def ResetGame():
     WaitFrames(60)
 
 
-def CatchPokemon():  # Function to catch pokemon
+def CatchPokemon():
+    """
+    Function to catch pokemon
+    :return: Boolean value of whether Pokemon was successfully captured
+    """
     try:
         while not DetectTemplate("battle/fight.png"):
             ReleaseAllInputs()
@@ -195,7 +216,8 @@ def CatchPokemon():  # Function to catch pokemon
                 ButtonCombo(["B", "Up", "Right"])  # Press B + up + right until BAG menu is visible
 
         while True:
-            if DetectTemplate("battle/bag.png"): PressButton("A")
+            if DetectTemplate("battle/bag.png"):
+                PressButton("A")
 
             # Preferred ball order to catch wild mons + exceptions 
             # TODO read this data from memory instead
@@ -242,8 +264,12 @@ def CatchPokemon():  # Function to catch pokemon
         return False
 
 
-def battle():  # Function to battle wild pokemon
-    # This will only battle with the lead pokemon of the party, and will run if it dies or runs out of PP
+def battle():
+    """
+    Function to battle wild pokemon.
+    This will only battle with the lead pokemon of the party, and will run if it dies or runs out of PP
+    :return: Boolean value of whether battle was won
+    """
     ally_fainted = False
     foe_fainted = False
 
@@ -269,16 +295,15 @@ def battle():  # Function to battle wild pokemon
 
         log.info(f"Best move against foe is {best_move['name']} (Effective power is {best_move['power']})")
 
-        i = int(best_move["index"])
-
-        if i == 0:
-            ButtonCombo(["Up", "Left"])
-        elif i == 1:
-            ButtonCombo(["Up", "Right"])
-        elif i == 2:
-            ButtonCombo(["Down", "Left"])
-        elif i == 3:
-            ButtonCombo(["Down", "Right"])
+        match int(best_move["index"]):
+            case 0:
+                ButtonCombo(["Up", "Left"])
+            case 1:
+                ButtonCombo(["Up", "Right"])
+            case 2:
+                ButtonCombo(["Down", "Left"])
+            case 3:
+                ButtonCombo(["Down", "Right"])
 
         PressButton("A")
 
@@ -297,7 +322,6 @@ def battle():  # Function to battle wild pokemon
         return False
     elif foe_fainted:
         log.info("Battle won!")
-        return True
     return True
 
 
@@ -343,7 +367,8 @@ def FindEffectiveMove(ally: dict, foe: dict):
     }
 
 
-def FleeBattle():  # Function to run from wild pokemon
+def FleeBattle():
+    """Function to run from wild pokemon"""
     try:
         log.info("Running from battle...")
         while GetTrainer()["state"] != GameState.OVERWORLD:

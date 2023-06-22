@@ -13,8 +13,9 @@ config = GetConfig()
 
 
 def GetScreenshot():
-    i = 0
+    retry = 0
     while True:
+        screenshot = None
         try:
             screenshot = Image.open(io.BytesIO(mmap.mmap(0, 24576, "bizhawk_screenshot-" + config["bot_instance_id"])))
             screenshot = cv2.cvtColor(numpy.array(screenshot), cv2.COLOR_BGR2RGB)
@@ -24,6 +25,6 @@ def GetScreenshot():
             log.exception(str(e))
             if screenshot is not None:
                 screenshot.close()
-            if i >= 5:
+            if retry >= 5:
                 return None
-            i += 1
+            retry += 1

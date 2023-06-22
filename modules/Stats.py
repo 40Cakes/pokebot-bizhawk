@@ -10,7 +10,7 @@ from modules.Config import GetConfig
 from modules.data.GameState import GameState
 from modules.Files import ReadFile, WriteFile
 from modules.Inputs import ReleaseAllInputs, PressButton, WaitFrames
-from modules.Menuing import CatchPokemon, FleeBattle, PickupItems, ResetGame, SaveGame, StartMenu, battle
+from modules.Menuing import CatchPokemon, FleeBattle, PickupItems, ResetGame, SaveGame, StartMenu, battle, IsValidMove
 from modules.mmf.Pokemon import GetOpponent, GetParty
 from modules.mmf.Trainer import GetTrainer
 
@@ -79,7 +79,12 @@ def GetRNGState(tid: str, mon: str):
 last_opponent_personality = None
 
 
-def OpponentChanged():  # This function checks if there is a different opponent since last check, indicating the game state is probably now in a battle
+def OpponentChanged():
+    """
+    This function checks if there is a different opponent since last check, indicating the game state is probably
+    now in a battle
+    :return: Boolean value of whether in a battle
+    """
     global last_opponent_personality
     try:
         # Fixes a bug where the bot checks the opponent for up to 20 seconds if it was last closed in a battle
@@ -170,7 +175,8 @@ def LogEncounter(pokemon: dict):
                   json.dumps(encounter_log, indent=4, sort_keys=True))  # Save encounter log file
 
         # now = datetime.now()
-        # year, month, day, hour, minute, second = f"{now.year}", f"{(now.month):02}", f"{(now.day):02}", f"{(now.hour):02}", f"{(now.minute):02}", f"{(now.second):02}"
+        # year, month, day, hour, minute, second = f"{now.year}", f"{(now.month):02}",
+        # f"{(now.day):02}", f"{(now.hour):02}", f"{(now.minute):02}", f"{(now.second):02}"
 
         if config["log"]:
             # Log all encounters to a CSV file per phase
@@ -217,8 +223,9 @@ def LogEncounter(pokemon: dict):
             if config["discord"]["enable"]:
                 try:
                     log.info("Sending Discord ping...")
-                    if config["discord"]["shiny_ping"] and config["discord"][
-                        "ping_mode"] == "role":  # Thanks Discord for making role and user IDs use the same format, but have different syntaxes for pinging them by ID, really cool.
+                    if config["discord"]["shiny_ping"] and config["discord"]["ping_mode"] == "role":
+                        # Thanks Discord for making role and user IDs use the same format, but have different
+                        # syntaxes for pinging them by ID, really cool.
                         content = f"<@&{config['discord']['shiny_ping']}>"
                     elif config["discord"]["ping_mode"] == "user":
                         content = f"<@{config['discord']['shiny_ping']}>"
@@ -299,8 +306,12 @@ def LogEncounter(pokemon: dict):
         return False
 
 
-def EncounterPokemon(
-        starter: bool = False):  # New Pokemon encountered, record stats + decide whether to catch/battle/flee
+def EncounterPokemon(starter: bool = False):
+    """
+    New Pokemon encountered, record stats + decide whether to catch/battle/flee
+    :param starter: Boolean value of whether in starter mode
+    :return: Boolean value of whether in battle
+    """
     legendary_hunt = config["bot_mode"] in ["manual", "rayquaza", "kyogre", "groudon", "southern island", "regis",
                                             "deoxys resets", "deoxys runaways", "mew"]
 
@@ -310,9 +321,9 @@ def EncounterPokemon(
     if starter:
         WaitFrames(30)
     else:
-        i = 0
-        while GetTrainer()["state"] not in [3, 255] and i < 250:
-            i += 1
+        for _ in range(250):
+            if GetTrainer()["state"] in [3, 255]:
+                break
 
     if GetTrainer()["state"] == GameState.OVERWORLD:
         return False
@@ -326,8 +337,8 @@ def EncounterPokemon(
         if not starter and not legendary_hunt and "shinies" in config["catch"]:
             CatchPokemon()
         elif legendary_hunt:
-            input(
-                "Pausing bot for manual intervention. (Don't forget to pause the pokebot.lua script so you can provide inputs). Press Enter to continue...")
+            input("Pausing bot for manual intervention. (Don't forget to pause the pokebot.lua script so you can "
+                  "provide inputs). Press Enter to continue...")
         return True
     else:
         if config["bot_mode"] == "manual":
@@ -366,7 +377,7 @@ def EncounterPokemon(
             if not config["cycle_lead_pokemon"]:
                 log.info("Lead Pokemon can no longer battle. Ending the script!")
                 FleeBattle()
-                return
+                return False
             else:
                 StartMenu("pokemon")
 
@@ -378,9 +389,7 @@ def EncounterPokemon(
 
                     if mon["hp"] > 0 and i != 0:
                         for j, move in enumerate(mon["enrichedMoves"]):
-                            # TODO is_valid_move(move) does not exist
-                            # if is_valid_move(move) and mon["pp"][j] > 0:
-                            if mon["pp"][j] > 0:
+                            if IsValidMove(move) and mon["pp"][j] > 0:
                                 party_pp[i] += move["pp"]
 
                 highest_pp = max(party_pp)

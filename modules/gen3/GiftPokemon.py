@@ -92,8 +92,8 @@ def CollectGiftMon(target: str):
             WaitFrames(60)
             ReleaseButton("Power")
         else:
-            input(
-                "Pausing bot for manual intervention. (Don't forget to pause the pokebot.lua script so you can provide inputs). Press Enter to continue...")
+            input("Pausing bot for manual intervention. (Don't forget to pause the pokebot.lua script so you can "
+                  "provide inputs). Press Enter to continue...")
 
 
 def ModeBeldum():
@@ -101,8 +101,8 @@ def ModeBeldum():
     x, y = trainer["posX"], trainer["posY"]
 
     if not PlayerOnMap(MapDataEnum.MOSSDEEP_CITY_H.value) or not ((x == 3 and y == 3) or (x == 4 and y == 2)):
-        log.info(
-            "Please face the player toward the Pokeball in Steven's house after saving the game, then restart the script.")
+        log.info("Please face the player toward the Pokeball in Steven's house after saving the game, then restart the "
+                 "script.")
         os._exit(1)
 
     CollectGiftMon("Beldum")
@@ -125,8 +125,8 @@ def ModeFossil():
     x, y = trainer["posX"], trainer["posY"]
 
     if not PlayerOnMap(MapDataEnum.RUSTBORO_CITY_B.value) or y != 8 and not (x == 13 or x == 15):
-        log.info(
-            "Please face the player toward the Fossil researcher after handing it over, re-entering the room, and saving the game. Then restart the script.")
+        log.info("Please face the player toward the Fossil researcher after handing it over, re-entering the room, "
+                 "and saving the game. Then restart the script.")
         os._exit(1)
 
     CollectGiftMon(config["fossil"])
@@ -137,8 +137,8 @@ def ModeJohtoStarters():
     x, y = trainer["posX"], trainer["posY"]
 
     if not PlayerOnMap(MapDataEnum.LITTLEROOT_TOWN_E.value) or not (y == 5 and 8 <= x <= 10):
-        log.info(
-            "Please face the player toward a Pokeball in Birch's Lab after saving the game, then restart the script.")
+        log.info("Please face the player toward a Pokeball in Birch's Lab after saving the game, then restart the "
+                 "script.")
         os._exit(1)
 
     CollectGiftMon(config["johto_starter"])
