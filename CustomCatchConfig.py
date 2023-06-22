@@ -23,7 +23,12 @@ def CustomCatchConfig(pokemon: object):
             return True
 
         # Catch Pokemon with 6 identical IVs of any value
-        ivs = [pokemon["hpIV"], pokemon["attackIV"], pokemon["defenseIV"], pokemon["speedIV"], pokemon["spAttackIV"], pokemon["spDefenseIV"]]
+        ivs = [pokemon["hpIV"],
+               pokemon["attackIV"],
+               pokemon["defenseIV"],
+               pokemon["speedIV"],
+               pokemon["spAttackIV"],
+               pokemon["spDefenseIV"]]
         if all(v == ivs[0] for v in ivs):
             return True
 
