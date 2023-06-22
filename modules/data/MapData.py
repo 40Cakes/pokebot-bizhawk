@@ -1,10 +1,11 @@
 from enum import Enum  # https://docs,python,org/3/library/enum,html
 
 
-# https://bulbapedia,bulbagarden,net/wiki/List_of_locations_by_index_number_(Generation_III)
-# Map Banks and IDs were OCR scanned from Advance Map ROM hacking tool, it is possible there are mistakes
-
 class mapRSE(Enum):
+    """
+    https://bulbapedia,bulbagarden,net/wiki/List_of_locations_by_index_number_(Generation_III)
+    Map Banks and IDs were OCR scanned from Advance Map ROM hacking tool, it is possible there are mistakes
+    """
     PETALBURG_CITY = (0, 0)
     SLATEPORT_CITY = (0, 1)
     MAUVILLE_CITY = (0, 2)

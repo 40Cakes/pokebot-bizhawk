@@ -120,7 +120,12 @@ HiddenPowers = [
 ]
 
 
-def EnrichMonData(pokemon: dict):  # Function to add information to the pokemon data extracted from Bizhawk
+def EnrichMonData(pokemon: dict):
+    """
+    Function to add information to the pokemon data extracted from Bizhawk
+    :param pokemon: Pokemon data to enrich
+    :return: Enriched Pokemon data or None if failed
+    """
     try:
         if pokemon["speciesName"].isalpha():
             trainer = GetTrainer()

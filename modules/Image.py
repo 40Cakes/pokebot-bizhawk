@@ -11,11 +11,16 @@ log = logging.getLogger(__name__)
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 
-def DetectTemplate(file: str):  # Return true if template (image) is found anywhere on-screen
+def DetectTemplate(file: str):
+    """
+    Return true if template (image) is found anywhere on-screen
+    :param file: File location of image to search
+    :return: Boolean value of whether image was found
+    """
     try:
         threshold = 0.999
         template = cv2.imread(f"./modules/data/templates/{GetEmu()['language']}/" + file, cv2.IMREAD_UNCHANGED)
-        hh, ww = template.shape[:2]
+        # hh, ww = template.shape[:2]
 
         screenshot = GetScreenshot()
         correlation = cv2.matchTemplate(screenshot, template[:, :, 0:3],

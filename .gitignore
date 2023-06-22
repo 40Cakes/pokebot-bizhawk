@@ -6,7 +6,6 @@ logs/
 stats/
 reports/
 roms/
-testing/
 .venv
 .idea
 bot.spec
