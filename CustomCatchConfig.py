@@ -7,12 +7,11 @@ log = logging.getLogger(__name__)
 # return True to command the bot to catch the Pokemon
 # TODO add option for a Discord webhook when a custom is caught
 def CustomCatchConfig(pokemon: object):
+    """
+    Catch the current encounter if it matches any of the following criteria
+    :param pokemon: Pokemon object of the current encounter
+    """
     try:
-        """
-        Catch the current encounter if it matches any of the following criteria
-        :param pokemon: Pokemon object of the current encounter
-        """
-
         ### Edit below this line ###
 
         # Catch perfect IV Pokemon
