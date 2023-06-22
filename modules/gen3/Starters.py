@@ -6,7 +6,7 @@ from modules.data.GameState import GameState
 from modules.Config import GetConfig
 from modules.Files import WriteFile
 from modules.Image import DetectTemplate
-from modules.Inputs import ButtonCombo, ReleaseAllInputs, PressButton
+from modules.Inputs import ButtonCombo, ReleaseAllInputs, PressButton, WaitFrames
 from modules.Menuing import ResetGame
 from modules.Stats import GetRNGState, EncounterPokemon
 from modules.mmf.Emu import GetEmu
@@ -71,6 +71,7 @@ def ModeStarters():
                             else:
                                 ResetGame()
                                 break
+
                     else:
                         if GetParty()[0]:
                             if EncounterPokemon(starter=True):
@@ -79,6 +80,8 @@ def ModeStarters():
                             else:
                                 ResetGame()
                                 break
+                    break
+                    
                 continue
     except Exception as e:
         log.exception(str(e))
