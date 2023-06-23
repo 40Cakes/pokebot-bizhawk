@@ -180,7 +180,7 @@ function stats() {
         crossDomain: true,
         dataType: "json",
         format: "json",
-        timeout: 50,
+        timeout: 2500,
     }).done(function(stats) {
         $("#nav_stat_phase").text(
             stats["totals"]["phase_encounters"].toLocaleString()
@@ -200,7 +200,7 @@ function emu() {
         crossDomain: true,
         dataType: "json",
         format: "json",
-        timeout: 50,
+        timeout: 2500,
     }).done(function(emu) {
         $("#nav_emu").text(
             emu["detectedGame"] + " | " + emu["fps"] + "fps"
@@ -216,7 +216,7 @@ function encounter_log() {
         crossDomain: true,
         dataType: "json",
         format: "json",
-        timeout: 50,
+        timeout: 2500,
     }).done(function(encounter_log) {
         reverse_encounter_log = encounter_log["encounter_log"].reverse();
         if (encounter_log["encounter_log"][50]) {
@@ -237,7 +237,11 @@ window.setInterval(function() {
     encounter_log();
     stats();
     emu();
-}, 1000);
+}, 2500);
+
+encounter_log();
+stats();
+emu();
 
 // logic for search bar filtering on route/pokemon name
 function filter() {

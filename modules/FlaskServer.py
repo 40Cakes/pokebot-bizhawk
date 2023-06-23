@@ -1,8 +1,10 @@
+import cv2
 import json
 import logging
+from datetime import datetime
 
 import flask
-from flask import Flask, abort, jsonify
+from flask import Flask, abort, jsonify, make_response
 from flask_cors import CORS
 
 from modules.Config import GetConfig
@@ -10,6 +12,7 @@ from modules.Files import ReadFile
 from modules.Stats import GetEncounterLog, GetShinyLog, GetStats
 from modules.mmf.Emu import GetEmu
 from modules.mmf.Pokemon import GetParty
+from modules.mmf.Screenshot import GetScreenshot
 from modules.mmf.Trainer import GetTrainer
 
 config = GetConfig()
@@ -33,6 +36,10 @@ def httpServer():
         @server.route("/dashboard/pokedex", methods=["GET"])
         def DashboardPokedex():
             return flask.render_template("pokedex.html")
+
+        @server.route("/dashboard/debug", methods=["GET"])
+        def DashboardDebug():
+            return flask.render_template("debug.html")
 
         @server.route("/trainer", methods=["GET"])
         def Trainer():
@@ -62,6 +69,22 @@ def httpServer():
                         abort(503)
                 return jsonify(encounter)
 
+            abort(503)
+
+        fmt = "%Y-%m-%d %H:%M:%S.%f"
+        @server.route("/encounter_rate", methods=["GET"])
+        def EncounterRate():
+            default = {"encounter_rate": "-"}
+            encounter_logs = GetEncounterLog()["encounter_log"]
+            if len(encounter_logs) > 10:
+                encounter_rate = int(
+                    (3600 /
+                    (datetime.strptime(encounter_logs[-1]["time_encountered"], fmt) -
+                    datetime.strptime(encounter_logs[-10]["time_encountered"], fmt)
+                    ).total_seconds()) * 10)
+                return jsonify({"encounter_rate": encounter_rate})
+            else:
+                return jsonify(default)
             abort(503)
 
         @server.route("/emu", methods=["GET"])
@@ -110,6 +133,16 @@ def httpServer():
         # def Config():
         #    response = jsonify({})
         #    return response
+
+        @server.route("/screenshot.png", methods=["GET"])
+        def Screenshot():
+            screenshot = GetScreenshot()
+            if screenshot.any():
+                buffer = cv2.imencode('.png', screenshot)[1]
+                response = make_response(buffer.tobytes())
+                response.headers['Content-Type'] = 'image/png'
+                return response
+            abort(503)
 
         server.run(debug=False, threaded=True, host=config["server"]["ip"], port=config["server"]["port"])
     except Exception as e:

@@ -15,17 +15,19 @@
     <link href="{{ url_for('static',filename='css/pokebot.css') }}" rel="stylesheet" />
     <!-- Font Awesome CSS -->
     <link href="{{ url_for('static',filename='font-awesome-4.7.0/css/font-awesome.min.css') }}" rel="stylesheet" />
-    <script src="{{ url_for('static',filename='js/jquery-3.2.1.min.js') }}"> </script>
+    <script src="{{ url_for('static',filename='js/jquery-3.2.1.min.js') }}">
     </script>
-    <script src="{{ url_for('static',filename='js/moment.min.js') }}"> </script>
     </script>
-    <script src="{{ url_for('static',filename='js/pokedex.js') }}"> </script>
+    <script src="{{ url_for('static',filename='js/moment.min.js') }}">
+    </script>
+    <script src="{{ url_for('static',filename='js/pokedex.js') }}">
     </script>
 </head>
 <style>
     .tooltip-item[data-content]:after {
-    white-space: pre-wrap;
-  }</style>
+        white-space: pre-wrap;
+    }
+</style>
 
 <body class="with-custom-webkit-scrollbars with-custom-css-scrollbars" data-dm-shortcut-enabled="true" data-sidebar-shortcut-enabled="true" data-set-preferred-theme-onload="true">
     <!-- Modals go here -->
@@ -53,42 +55,44 @@
             <div class="content-wrapper">
                 <!-- Container-fluid -->
                 <div class="container-fluid">
-                  <div class="row">
-                    <div class="col-12">                        
-                        <div class="card overflow-y-lg-auto p-5" style="position:fixed; top:1.4em; z-index:50; width:93%; margin: var(--content-and-card-spacing)">
-                            <h1 class="content-title">
-                                Emerald Pokédex
-                            </h1>
-                            <p>
-                                <input id="searchBar" type="text" class="form-control" placeholder="Search..." onkeyup="filter()" />
-                            </p> 
-                        </div>
-                        <div class="card overflow-y-lg-auto p-5" style="top: 6em; height: 80vh;">
-                            <div class="content">
-                                <table class="table table-no-outer-padding">
-                                    <thead>
-                                        <tr>
-                                            <th class="text-center"><i class="fa fa-hashtag" aria-hidden="true"></i> </th>
-                                            <th class="text-center"><i class="fa fa-angle-double-down" aria-hidden="true"></i> </th>
-                                            <th class="text-left">Pokemon</th>
-                                            <th class="text-left">Locations</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="pokedex">
-                                        <!-- the rows are set in interface/js/pokedex.js -->
-                                    </tbody>
-                                </table>
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="card overflow-y-lg-auto p-5" style="position:fixed; top:1.4em; z-index:50; width:93%; margin: var(--content-and-card-spacing)">
+                                <h1 class="content-title">
+                                    Emerald Pokédex
+                                </h1>
+                                <p>
+                                    <input id="searchBar" type="text" class="form-control" placeholder="Search..." onkeyup="filter()" />
+                                </p>
+                            </div>
+                            <div class="card overflow-y-lg-auto p-5" style="top: 6em; height: 80vh;">
+                                <div class="content">
+                                    <table class="table table-no-outer-padding">
+                                        <thead>
+                                            <tr>
+                                                <th class="text-center"><i class="fa fa-hashtag" aria-hidden="true"></i> </th>
+                                                <th class="text-center"><i class="fa fa-angle-double-down" aria-hidden="true"></i> </th>
+                                                <th class="text-left">Pokemon</th>
+                                                <th class="text-left">Locations</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="pokedex">
+                                            <!-- the rows are set in interface/js/pokedex.js -->
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
-        <!-- Page wrapper end -->
+            <!-- Page wrapper end -->
 
-        <!-- Halfmoon JS -->
-         <script src="{{ url_for('static',filename='js/halfmoon.min.js') }}"> </script>
-        <script src="{{ url_for('static',filename='js/icon.js') }}"> </script>
+            <!-- Halfmoon JS -->
+            <script src="{{ url_for('static',filename='js/halfmoon.min.js') }}">
+            </script>
+            <script src="{{ url_for('static',filename='js/icon.js') }}">
+            </script>
 </body>
 
 </html>

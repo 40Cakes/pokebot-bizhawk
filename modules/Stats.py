@@ -11,7 +11,7 @@ from modules.Config import GetConfig
 from modules.data.GameState import GameState
 from modules.Files import ReadFile, WriteFile
 from modules.Inputs import ReleaseAllInputs, PressButton, WaitFrames
-from modules.Menuing import CatchPokemon, FleeBattle, PickupItems, ResetGame, SaveGame, StartMenu, battle, IsValidMove
+from modules.Menuing import CatchPokemon, FleeBattle, PickupItems, ResetGame, SaveGame, StartMenu, BattleOpponent, IsValidMove
 from modules.mmf.Pokemon import GetOpponent, GetParty
 from modules.mmf.Trainer import GetTrainer
 
@@ -353,7 +353,7 @@ def EncounterPokemon(starter: bool = False):
 
         if not legendary_hunt:
             if config["battle_others"]:
-                battle_won = battle()
+                battle_won = BattleOpponent()
                 replace_battler = not battle_won
             else:
                 FleeBattle()

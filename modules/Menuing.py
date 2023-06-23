@@ -264,7 +264,7 @@ def CatchPokemon():
         return False
 
 
-def battle():
+def BattleOpponent():
     """
     Function to battle wild pokemon.
     This will only battle with the lead pokemon of the party, and will run if it dies or runs out of PP

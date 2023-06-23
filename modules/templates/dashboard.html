@@ -15,11 +15,11 @@
     <link href="{{ url_for('static',filename='css/pokebot.css') }}" rel="stylesheet" />
     <!-- Font Awesome CSS -->
     <link href="{{ url_for('static',filename='font-awesome-4.7.0/css/font-awesome.min.css') }}" rel="stylesheet" />
-    <script src="{{ url_for('static',filename='js/jquery-3.2.1.min.js') }}"> </script>
+    <script src="{{ url_for('static',filename='js/jquery-3.2.1.min.js') }}">
     </script>
-    <script src="{{ url_for('static',filename='js/moment.min.js') }}"> </script>
+    <script src="{{ url_for('static',filename='js/moment.min.js') }}">
     </script>
-    <script src="{{ url_for('static',filename='js/dashboard.js') }}"> </script>
+    <script src="{{ url_for('static',filename='js/dashboard.js') }}">
     </script>
 </head>
 
@@ -69,7 +69,8 @@
                                             <th class="text-center">
                                                 <img class="sprite64" id="opponent_sprite" src="{{ url_for('static',filename='sprites/items/None.png') }}"></br>
                                                 Lv. <span id="opponent_level">0</span></br>
-                                                <div class="text-center health-bar"><span id="health-bar-fill" class="health-bar-fill"></span></div></th>
+                                                <div class="text-center health-bar"><span id="health-bar-fill" class="health-bar-fill"></span></div>
+                                            </th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -118,173 +119,175 @@
                                         </tr>
                                     </tbody>
                                 </table>
-                                </div>
-                            </div>
-                            <div class="col-6 col-xl-3">
-                                <div class="card p-5">
-                                    <h2 class="card-title text-center">Stats</h2>
-                                    <!-- Inner bordered table -->
-                                    <table class="table table-inner-bordered">
-                                        <tbody>
-                                            <tr>
-                                                <th><i class="fa fa-angle-double-right" aria-hidden="true"></i> <span class="opponent_name"></span> Stats</th>
-                                                <th></th>
-                                            </tr>
-                                            <tr>
-                                                <th>
-                                                    Phase Encounters</br>
-                                                    Total Encounters</br>
-                                                    Shiny Encounters</br>
-                                                    Shiny Average</br>
-                                                    Lowest Phase SV</th>
-                                                <td class="text-right">
-                                                    <span id="opponent_phase_encounters">-</span></br>
-                                                    <span id="opponent_encounters">-</span></br>
-                                                    <span id="opponent_shiny_encounters">-</span></br>
-                                                    <span id="opponent_shiny_average">-</span></br>
-                                                    <span id="opponent_phase_lowest_sv">-</span>
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <th><i class="fa fa-angle-double-right" aria-hidden="true"></i> Total Stats</th>
-                                                <th></th>
-                                            </tr>
-                                            <tr>
-                                                <th><i class="fa fa-dot-circle-o" aria-hidden="true"></i> Phase Encounters</br>
-                                                    <i class="fa fa-circle" aria-hidden="true"></i> Total Encounters</br>
-                                                    <i class="fa fa-star" aria-hidden="true"></i> Shiny Encounters</br>
-                                                    Shiny Average</br>
-                                                    Shortest Phase</br>
-                                                    Longest Phase</th>
-                                                </br>
-                                                <td class="text-right"><span id="stats_phase_encounters">-</span></br>
-                                                    <span id="stats_total_encounters">-</span></br>
-                                                    <span id="stats_shiny_encounters">-</span></br>
-                                                    <span id="stats_shiny_average">-</span></br>
-                                                    <span id="stats_shortest_phase">-</span></br>
-                                                    <span id="stats_longest_phase">-</span>
-                                                </td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
-                                <div class="card p-5">
-                                    <h2 class="card-title text-center">Bot Details</h2>
-                                    <!-- Inner bordered table -->
-                                    <table class="table table-inner-bordered">
-                                        <tbody>
-                                            <tr>
-                                                <th>Trainer ID</br>
-                                                    Secret ID</br>
-                                                    Map Bank:ID</br>
-                                                    Coordinates</br>
-                                                    State ID</th>
-                                                <td class="text-right">
-                                                    <code class="code"><span id="trainer_id"></span></code></br>
-                                                    <code class="code"><span id="trainer_id"><span id="trainer_secret"></span></code></br>
-                                                    <code class="code"><span id="trainer_id"><span id="trainer_map_bank_id"></span></code></br>
-                                                    <code class="code"><span id="trainer_id"><span id="trainer_coords"></span></code></br>
-                                                    <code class="code"><span id="trainer_id"><span id="trainer_state"></span></code></td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                            <!-- Overflow occurs here on large screens (and down) -->
-                            <!-- Therefore, a v-spacer is added at this point -->
-                            <div class="v-spacer d-xl-none"></div>
-                            <div class="col-12 col-xl-6">
-                                <h2 class="card-title text-center">Recent Encounters</h2>
-                                <div class="card h-lg-600 overflow-y-lg-auto p-5">
-                                    <!-- No outer padding -->
-                                    <table class="table table-no-outer-padding">
-                                        <thead>
-                                            <tr>
-                                                <th class="text-center"><i class="fa fa-angle-double-down" aria-hidden="true"></i> </th>
-                                                <th class="text-center">Pokemon</th>
-                                                <th class="text-center">Level</th>
-                                                <th class="text-center">Nature</th>
-                                                <th class="text-center">Item</th>
-                                                <th class="text-center">PID</th>
-                                                <th class="text-center">Shiny Value (SV)</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody id="encounter_log">
-                                        </tbody>
-                                    </table>
-                                </div>
                             </div>
                         </div>
-                        <!-- Second row (equally spaced on large screens and up) -->
-                        <div class="row row-eq-spacing-lg">
-                            <div class="col-lg-8">
-                                <h2 class="card-title text-center">Recent Shiny</h2>
-                                <div class="card h-lg-350 overflow-y-lg-auto p-5">
-                                    <!-- h-lg-250 = height = 25rem (250px) only on large screens and up (> 992px), overflow-y-lg-auto = overflow-y: auto only on large screens and up (> 992px) -->
-                                    <!-- No outer padding -->
-                                    <table class="table table-no-outer-padding">
-                                        <thead>
-                                            <tr>
-                                                <th class="text-center"><i class="fa fa-angle-double-down" aria-hidden="true"></i> </th>
-                                                <th class="text-center">Pokemon</th>
-                                                <th class="text-center">Level</th>
-                                                <th class="text-center">Nature</th>
-                                                <th class="text-center">Item</th>
-                                                <th class="text-center">PID</th>
-                                                <th class="text-center">Shiny Value (SV)</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody id="shiny_log">
-                                        </tbody>
-                                    </table>
-                                </div>
+                        <div class="col-6 col-xl-3">
+                            <div class="card p-5">
+                                <h2 class="card-title text-center">Stats</h2>
+                                <!-- Inner bordered table -->
+                                <table class="table table-inner-bordered">
+                                    <tbody>
+                                        <tr>
+                                            <th><i class="fa fa-angle-double-right" aria-hidden="true"></i> <span class="opponent_name"></span> Stats</th>
+                                            <th></th>
+                                        </tr>
+                                        <tr>
+                                            <th>
+                                                Phase Encounters</br>
+                                                Total Encounters</br>
+                                                Shiny Encounters</br>
+                                                Shiny Average</br>
+                                                Lowest Phase SV</th>
+                                            <td class="text-right">
+                                                <span id="opponent_phase_encounters">-</span></br>
+                                                <span id="opponent_encounters">-</span></br>
+                                                <span id="opponent_shiny_encounters">-</span></br>
+                                                <span id="opponent_shiny_average">-</span></br>
+                                                <span id="opponent_phase_lowest_sv">-</span>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <th><i class="fa fa-angle-double-right" aria-hidden="true"></i> Total Stats</th>
+                                            <th></th>
+                                        </tr>
+                                        <tr>
+                                            <th><i class="fa fa-dot-circle-o" aria-hidden="true"></i> Phase Encounters</br>
+                                                <i class="fa fa-circle" aria-hidden="true"></i> Total Encounters</br>
+                                                <i class="fa fa-star" aria-hidden="true"></i> Shiny Encounters</br>
+                                                Shiny Average</br>
+                                                Shortest Phase</br>
+                                                Longest Phase</th>
+                                            </br>
+                                            <td class="text-right"><span id="stats_phase_encounters">-</span></br>
+                                                <span id="stats_total_encounters">-</span></br>
+                                                <span id="stats_shiny_encounters">-</span></br>
+                                                <span id="stats_shiny_average">-</span></br>
+                                                <span id="stats_shortest_phase">-</span></br>
+                                                <span id="stats_longest_phase">-</span>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
                             </div>
-                            <div class="col-lg-4">
-                                <div class="card h-lg-250 overflow-y-lg-auto p-5">
-                                    <!-- h-lg-250 = height = 25rem (250px) only on large screens and up (> 992px), overflow-y-lg-auto = overflow-y: auto only on large screens and up (> 992px) -->
-                                    <h2 class="card-title">Coming soon</h2>
-                                    Coming soon
-                                </div>
+                            <div class="card p-5">
+                                <h2 class="card-title text-center">Bot Details</h2>
+                                <!-- Inner bordered table -->
+                                <table class="table table-inner-bordered">
+                                    <tbody>
+                                        <tr>
+                                            <th>Trainer ID</br>
+                                                Secret ID</br>
+                                                Map Bank:ID</br>
+                                                Coordinates</br>
+                                                State ID</th>
+                                            <td class="text-right">
+                                                <code class="code"><span id="trainer_id"></span></code></br>
+                                                <code class="code"><span id="trainer_id"><span id="trainer_secret"></span></code></br>
+                                                <code class="code"><span id="trainer_id"><span id="trainer_map_bank_id"></span></code></br>
+                                                <code class="code"><span id="trainer_id"><span id="trainer_coords"></span></code></br>
+                                                <code class="code"><span id="trainer_id"><span id="trainer_state"></span></code></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
-                        <!-- Third row (equally spaced on large screens and up) -->
-                        <div class="row row-eq-spacing-lg">
-                            <div class="col-lg-8">
-                                <div class="content">
-                                    <h2 class="content-title">Coming soon</h2>
-                                    Coming soon
-                                </div>
-                                <div class="card p-5">
-                                    <h2 class="card-title">Coming soon</h2>
-                                    Coming soon
-                                </div>
-                                <div class="content">
-                                    Coming soon
-                                </div>
+                        <!-- Overflow occurs here on large screens (and down) -->
+                        <!-- Therefore, a v-spacer is added at this point -->
+                        <div class="v-spacer d-xl-none"></div>
+                        <div class="col-12 col-xl-6">
+                            <h2 class="card-title text-center">Recent Encounters</h2>
+                            <div class="card h-lg-600 overflow-y-lg-auto p-5">
+                                <!-- No outer padding -->
+                                <table class="table table-no-outer-padding">
+                                    <thead>
+                                        <tr>
+                                            <th class="text-center"><i class="fa fa-angle-double-down" aria-hidden="true"></i> </th>
+                                            <th class="text-center">Pokemon</th>
+                                            <th class="text-center">Level</th>
+                                            <th class="text-center">Nature</th>
+                                            <th class="text-center">Item</th>
+                                            <th class="text-center">PID</th>
+                                            <th class="text-center">Shiny Value (SV)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="encounter_log">
+                                    </tbody>
+                                </table>
                             </div>
-                            <div class="col-lg-4">
-                                <div class="content">
-                                    <h2 class="content-title">Coming soon</h2>
-                                    Coming soon
-                                </div>
+                        </div>
+                    </div>
+                    <!-- Second row (equally spaced on large screens and up) -->
+                    <div class="row row-eq-spacing-lg">
+                        <div class="col-lg-8">
+                            <h2 class="card-title text-center">Recent Shinies</h2>
+                            <div class="card h-lg-350 overflow-y-lg-auto p-5">
+                                <!-- h-lg-250 = height = 25rem (250px) only on large screens and up (> 992px), overflow-y-lg-auto = overflow-y: auto only on large screens and up (> 992px) -->
+                                <!-- No outer padding -->
+                                <table class="table table-no-outer-padding">
+                                    <thead>
+                                        <tr>
+                                            <th class="text-center"><i class="fa fa-angle-double-down" aria-hidden="true"></i> </th>
+                                            <th class="text-center">Pokemon</th>
+                                            <th class="text-center">Level</th>
+                                            <th class="text-center">Nature</th>
+                                            <th class="text-center">Item</th>
+                                            <th class="text-center">PID</th>
+                                            <th class="text-center">Shiny Value (SV)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="shiny_log">
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="col-lg-4">
+                            <div class="card h-lg-250 overflow-y-lg-auto p-5">
+                                <!-- h-lg-250 = height = 25rem (250px) only on large screens and up (> 992px), overflow-y-lg-auto = overflow-y: auto only on large screens and up (> 992px) -->
+                                <h2 class="card-title">Coming soon</h2>
+                                Coming soon
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Third row (equally spaced on large screens and up) -->
+                    <div class="row row-eq-spacing-lg">
+                        <div class="col-lg-8">
+                            <div class="content">
+                                <h2 class="content-title">Coming soon</h2>
+                                Coming soon
+                            </div>
+                            <div class="card p-5">
+                                <h2 class="card-title">Coming soon</h2>
+                                Coming soon
+                            </div>
+                            <div class="content">
+                                Coming soon
+                            </div>
+                        </div>
+                        <div class="col-lg-4">
+                            <div class="content">
+                                <h2 class="content-title">Coming soon</h2>
+                                Coming soon
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-            <!-- Content wrapper end -->
-
-            <!-- Navbar fixed bottom start -->
-            <nav class="navbar navbar-fixed-bottom">
-                <!-- Reference: https://www.gethalfmoon.com/docs/navbar#navbar-fixed-bottom -->
-            </nav>
-            <!-- Navbar fixed bottom end -->
         </div>
-        <!-- Page wrapper end -->
+        <!-- Content wrapper end -->
 
-        <!-- Halfmoon JS -->
-        <script src="{{ url_for('static',filename='js/halfmoon.min.js') }}"> </script>
-        <script src="{{ url_for('static',filename='js/icon.js') }}"> </script>
+        <!-- Navbar fixed bottom start -->
+        <nav class="navbar navbar-fixed-bottom">
+            <!-- Reference: https://www.gethalfmoon.com/docs/navbar#navbar-fixed-bottom -->
+        </nav>
+        <!-- Navbar fixed bottom end -->
+    </div>
+    <!-- Page wrapper end -->
+
+    <!-- Halfmoon JS -->
+    <script src="{{ url_for('static',filename='js/halfmoon.min.js') }}">
+    </script>
+    <script src="{{ url_for('static',filename='js/icon.js') }}">
+    </script>
 </body>
 
 </html>
