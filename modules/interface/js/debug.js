@@ -9,7 +9,7 @@ function trainer() {
         format: "json",
         timeout: 500,
     }).done(function(trainer) {
-        $("#trainer").text(JSON.stringify(trainer, null, 4));
+        document.getElementById("trainer").innerHTML = JSONTree.create(trainer)
     });
 }
 
@@ -22,7 +22,7 @@ function encounter() {
         format: "json",
         timeout: 1000,
     }).done(function(encounter) {
-        $("#encounter").text(JSON.stringify(encounter, null, 4));
+        document.getElementById("encounter").innerHTML = JSONTree.create(encounter)
     });
 }
 
@@ -35,7 +35,7 @@ function encounter_log() {
         format: "json",
         timeout: 1000,
     }).done(function(encounter_log) {
-        $("#encounter_log").text(JSON.stringify(encounter_log, null, 4));
+        document.getElementById("encounter_log").innerHTML = JSONTree.create(encounter_log)
     });
 }
 
@@ -48,7 +48,7 @@ function shiny_log() {
         format: "json",
         timeout: 1000,
     }).done(function(shiny_log) {
-        $("#shiny_log").text(JSON.stringify(shiny_log, null, 4));
+        document.getElementById("shiny_log").innerHTML = JSONTree.create(shiny_log)
     });
 }
 
@@ -61,7 +61,7 @@ function stats() {
         format: "json",
         timeout: 1000,
     }).done(function(stats) {
-        $("#stats").text(JSON.stringify(stats, null, 4));
+        document.getElementById("stats").innerHTML = JSONTree.create(stats)
     });
 }
 
@@ -74,7 +74,7 @@ function emulator() {
         format: "json",
         timeout: 1000,
     }).done(function(emu) {
-        $("#emu").text(JSON.stringify(emu, null, 4));
+        document.getElementById("emu").innerHTML = JSONTree.create(emu)
     });
 }
 
@@ -87,7 +87,7 @@ function party() {
         format: "json",
         timeout: 1000,
     }).done(function(party) {
-        $("#party").text(JSON.stringify(party, null, 4));
+        document.getElementById("party").innerHTML = JSONTree.create(party)
     });
 }
 
