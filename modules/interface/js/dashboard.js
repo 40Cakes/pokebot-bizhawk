@@ -7,7 +7,7 @@ function trainer() {
         crossDomain: true,
         dataType: "json",
         format: "json",
-        timeout: 50,
+        timeout: 500,
     }).done(function(trainer) {
         $("#trainer_id").text(trainer["tid"]);
         $("#trainer_secret").text(trainer["sid"]);
@@ -32,7 +32,7 @@ function encounter() {
         crossDomain: true,
         dataType: "json",
         format: "json",
-        timeout: 50,
+        timeout: 1000,
     }).done(function(encounter) {
         $(".opponent_name").text(encounter["name"]);
         $("#health-bar-fill").css(
@@ -194,7 +194,7 @@ function encounter_log() {
         crossDomain: true,
         dataType: "json",
         format: "json",
-        timeout: 50,
+        timeout: 2500,
     }).done(function(encounter_log) {
         var tr = "";
 
@@ -249,7 +249,7 @@ function shiny_log() {
         crossDomain: true,
         dataType: "json",
         format: "json",
-        timeout: 50,
+        timeout: 2500,
     }).done(function(shiny_log) {
         var tr = "";
         var wrapper = document.getElementById("shiny_log");
@@ -300,7 +300,7 @@ function stats() {
         crossDomain: true,
         dataType: "json",
         format: "json",
-        timeout: 50,
+        timeout: 2500,
     }).done(function(stats) {
         $("#stats_phase_encounters").text(
             stats["totals"]["phase_encounters"].toLocaleString()
@@ -323,25 +323,25 @@ function stats() {
 
 window.setInterval(function() {
     shiny_log();
-}, 1000);
+}, 2500);
 
-shiny_log();
 window.setInterval(function() {
     encounter_log();
-}, 1000);
+}, 2500);
 
 window.setInterval(function() {
     encounter();
-}, 250);
+}, 1000);
 
 window.setInterval(function() {
     trainer();
-}, 50);
+}, 500);
 
 window.setInterval(function() {
     stats();
-}, 500);
+}, 1000);
 
+shiny_log();
+encounter_log();
 trainer();
 encounter();
-encounter_log();

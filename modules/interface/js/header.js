@@ -7,7 +7,7 @@ function header_stats() {
         crossDomain: true,
         dataType: "json",
         format: "json",
-        timeout: 50,
+        timeout: 2500,
     }).done(function(stats) {
         $("#nav_stat_phase").text(
             stats["totals"]["phase_encounters"].toLocaleString()
@@ -27,7 +27,7 @@ function header_emu() {
         crossDomain: true,
         dataType: "json",
         format: "json",
-        timeout: 50,
+        timeout: 2500,
     }).done(function(emu) {
         $("#nav_emu").text(
             emu["detectedGame"] + " | " + emu["fps"] + "fps"
@@ -36,36 +36,26 @@ function header_emu() {
 }
 
 // encounter log for encounters/hr
-function header_encounter_log() {
+function header_encounter_rate() {
     $.ajax({
         method: "GET",
-        url: host + "/encounter_log",
+        url: host + "/encounter_rate",
         crossDomain: true,
         dataType: "json",
         format: "json",
-        timeout: 50,
-    }).done(function(encounter_log) {
-        reverse_encounter_log = encounter_log["encounter_log"].reverse();
-        if (encounter_log["encounter_log"][50]) {
-            var range = moment(reverse_encounter_log[0]["time_encountered"])
-                .subtract(moment(reverse_encounter_log[10]["time_encountered"]))
-                .format("x");
-            $("#encounters_hour").text(
-                Math.round((60 / (range / 1000 / 60)) * 10).toLocaleString() + "/h"
-            );
-        } else {
-            $("#encounters_hour").text("-");
-        }
+        timeout: 2500,
+    }).done(function(encounter_rate) {
+        $("#encounters_hour").text(encounter_rate["encounter_rate"].toLocaleString() + "/h");
     });
 }
 
 // needed for encounters/hr calculation,
 // phase encounters/total encounters/shinys
 window.setInterval(function() {
-    header_encounter_log();
+    header_encounter_rate();
     header_stats();
     header_emu();
-}, 1000);
-header_encounter_log();
+}, 2500);
+header_encounter_rate();
 header_stats();
 header_emu();
