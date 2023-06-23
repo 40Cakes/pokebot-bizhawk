@@ -4,10 +4,11 @@ import logging
 from datetime import datetime
 
 import flask
-from flask import Flask, abort, jsonify, make_response
+from flask import Flask, abort, jsonify, make_response, request
 from flask_cors import CORS
 
 from modules.Config import GetConfig
+from modules.CatchBlockList import GetBlockList, BlockListManagement
 from modules.Files import ReadFile
 from modules.Stats import GetEncounterLog, GetShinyLog, GetStats
 from modules.mmf.Emu import GetEmu
@@ -133,6 +134,23 @@ def httpServer():
         # def Config():
         #    response = jsonify({})
         #    return response
+
+        @server.route("/updateblocklist", methods=["POST"])
+        def UpdateBlockList():
+           data = request.json
+           pkmName = data.get('pokemonName')
+           sprite = data.get('spriteLoaded')
+           catch = True
+           if '-disabled' in sprite:
+             catch = False
+           else: catch = True
+           BlockListManagement(pkmName, catch)
+           return "OK", 200
+
+        @server.route("/blocked", methods=["GET"])
+        def Blocked():
+            block_list = GetBlockList()
+            return block_list
 
         @server.route("/screenshot.png", methods=["GET"])
         def Screenshot():

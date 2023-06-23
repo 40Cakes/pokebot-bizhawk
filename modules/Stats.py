@@ -7,6 +7,7 @@ from datetime import datetime
 from discord_webhook import DiscordWebhook, DiscordEmbed
 
 from CustomCatchConfig import CustomCatchConfig
+from modules.CatchBlockList import GetBlockList
 from modules.Config import GetConfig
 from modules.data.GameState import GameState
 from modules.Files import ReadFile, WriteFile
@@ -219,7 +220,12 @@ def LogEncounter(pokemon: dict):
 
         if pokemon["shiny"]:
             log.info("Shiny Pokemon detected!")
-
+            blocked = GetBlockList()
+            opponent = GetOpponent()
+            if opponent["speciesName"] in blocked["block_list"]:
+                log.info("---- Pokemon is in list of non-catpures. Fleeing battle ----")
+                FleeBattle()
+            
             # Send webhook message, if enabled.
             if config["discord"]["enable"]:
                 try:
@@ -227,9 +233,9 @@ def LogEncounter(pokemon: dict):
                     if config["discord"]["shiny_ping"] and config["discord"]["ping_mode"] == "role":
                         # Thanks Discord for making role and user IDs use the same format, but have different
                         # syntaxes for pinging them by ID, really cool.
-                        content = f"<@&{config['discord']['shiny_ping']}>"
+                        content = f"<@&{config['discord']['shiny_ping']}> ~ Encountered shiny {pokemon['name']}!" 
                     elif config["discord"]["ping_mode"] == "user":
-                        content = f"<@{config['discord']['shiny_ping']}>"
+                        content = f"<@{config['discord']['shiny_ping']}> ~ Encountered shiny {pokemon['name']}!" 
                     else:
                         content = ""  # It breaks if I don't do this, sorry.
                     webhook = DiscordWebhook(url=config["discord"]["webhook_url"], content=content)
@@ -247,12 +253,8 @@ def LogEncounter(pokemon: dict):
                                               inline=False)
                     # Formatted IV list
                     if config["discord"]["iv_format"] == "formatted":
-                        embed.add_embed_field(name='IVs', value=f"""
-                        `╔═══╤═══╤═══╤═══╤═══╤═══╗`
-                        `║HP │ATK│DEF│SPA│SPD│SPE║`
-                        `╠═══╪═══╪═══╪═══╪═══╪═══╣`
-                        `║{pokemon['hpIV']:^3}│{pokemon['attackIV']:^3}│{pokemon['defenseIV']:^3}│{pokemon['spAttackIV']:^3}│{pokemon['spDefenseIV']:^3}│{pokemon['speedIV']:^3}║`
-                        `╚═══╧═══╧═══╧═══╧═══╧═══╝`""", inline=False)
+                        embed.add_embed_field(name='IVs', value=f"""`╔═══╤═══╤═══╤═══╤═══╤═══╗`\n`║HP │ATK│DEF│SPA│SPD│SPE║`\n`╠═══╪═══╪═══╪═══╪═══╪═══╣`\n`║{pokemon['hpIV']:^3}│{pokemon['attackIV']:^3}│{pokemon['defenseIV']:^3}│{pokemon['spAttackIV']:^3}│{pokemon['spDefenseIV']:^3}│{pokemon['speedIV']:^3}║`\n`╚═══╧═══╧═══╧═══╧═══╧═══╝`""", inline=False)
+
                     embed.add_embed_field(name='Species Phase Encounters',
                                           value=f"{stats['pokemon'][pokemon['name']]['phase_encounters']}")
                     embed.add_embed_field(name='All Phase Encounters', value=f"{stats['totals']['phase_encounters']}")

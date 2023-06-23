@@ -3,6 +3,7 @@ import logging
 import os
 
 from modules.Config import GetConfig
+from modules.CatchBlockList import GetBlockList
 from modules.data.GameState import GameState
 from modules.Files import ReadFile
 from modules.Image import DetectTemplate
@@ -163,6 +164,13 @@ def CatchPokemon():
     Function to catch pokemon
     :return: Boolean value of whether Pokemon was successfully captured
     """
+    
+    #blocked = GetBlockList()
+    opponent = GetOpponent()
+    #log.info(opponent)
+    #if opponent["speciesName"] in blocked:
+    #    log.info("---- Pokemon is in list of non-catpures. Fleeing battle ----")
+    #    FleeBattle()
     try:
         while not DetectTemplate("battle/fight.png"):
             ReleaseAllInputs()
@@ -176,7 +184,6 @@ def CatchPokemon():
         else:
             log.info("Attempting to catch Pokemon...")
 
-        opponent = GetOpponent()
 
         if config["use_spore"]:  # Use Spore to put opponent to sleep to make catches much easier
             log.info("Attempting to sleep the opponent...")
