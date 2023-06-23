@@ -164,13 +164,7 @@ def CatchPokemon():
     Function to catch pokemon
     :return: Boolean value of whether Pokemon was successfully captured
     """
-    
-    #blocked = GetBlockList()
     opponent = GetOpponent()
-    #log.info(opponent)
-    #if opponent["speciesName"] in blocked:
-    #    log.info("---- Pokemon is in list of non-catpures. Fleeing battle ----")
-    #    FleeBattle()
     try:
         while not DetectTemplate("battle/fight.png"):
             ReleaseAllInputs()
