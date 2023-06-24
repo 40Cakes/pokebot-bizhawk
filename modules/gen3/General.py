@@ -15,7 +15,7 @@ config = GetConfig()
 
 
 def ModeBonk():
-    direction = config["direction"].lower()
+    direction = config["bonk_direction"].lower()
 
     while True:
         log.info(f"Pathing {direction} until bonk...")

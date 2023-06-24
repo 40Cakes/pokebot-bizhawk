@@ -41,11 +41,17 @@ config_schema = {
                     "properties": {
                         "enable": {"type": "boolean"},
                         "webhook_url": {"type": "string"},
-                        "iv_format": {"type": "string"}
+                        "iv_format": {"type": "string"},
+                        "shiny_ping": {"type": "boolean"},
+                        "periodic_updates": {"type": "number"},
+                        "periodic_updates_ping": {"type": "boolean"},
+                        "pokemon_encounter_milestones": {"type": "number"},
+                        "pokemon_encounter_milestones_ping": {"type": "boolean"},
+                        "total_encounter_milestones": {"type": "number"},
+                        "total_encounter_milestones_ping": {"type": "boolean"},
                     }
                     },
-        "periodic_save": {"type": "boolean"},
-        "save_every_x_encounters": {"type": "number"},
+        "autosave_encounters": {"type": "number"},
         "manual_catch": {"type": "boolean"},
         "use_spore": {"type": "boolean"},
         "catch_shinies": {"type": "boolean"},

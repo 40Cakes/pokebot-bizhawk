@@ -1,19 +1,19 @@
 import io
-import logging
 import mmap
+import logging
 
 import cv2
 import numpy
-from PIL import Image
+from PIL import Image, ImageFile
 
 from modules.Config import GetConfig
 
+ImageFile.LOAD_TRUNCATED_IMAGES = True
 log = logging.getLogger(__name__)
 config = GetConfig()
 
 
 def GetScreenshot():
-    retry = 0
     while True:
         screenshot = None
         try:
@@ -25,6 +25,5 @@ def GetScreenshot():
             log.exception(str(e))
             if screenshot is not None:
                 screenshot.close()
-            if retry >= 5:
-                return None
-            retry += 1
+            # TODO return a black 240x160 image instead of None
+            return None

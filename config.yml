@@ -1,25 +1,13 @@
-# Bot Setup
+# Bot config
+
+# Bot mode
+# spin, sweet scent, bunny hop, coords, bonk, fishing, starters
+# rayquaza, groudon, kyogre, southern island, mew, regis, deoxys runaways
+# deoxys reset, fossil, castform, beldum, johto starters, buy premier balls
 bot_mode: spin
-# spin
-# sweet scent
-# bunny hop
-# coords
-# bonk
-# fishing
-# starters
-# rayquaza
-# groudon
-# kyogre
-# southern island
-# mew
-# regis
-# deoxys runaways
-# deoxys reset
-# fossil
-# castform
-# beldum
-# johto starters
-# buy premier balls
+
+# Coords - this config is used if `bot_mode` is set to `coords`
+# Runs between 2 different x,y coordinates (use `view_coords.lua` in Bizhawk to view coords)
 coords:
   pos1:
     - 38
@@ -27,51 +15,51 @@ coords:
   pos2:
     - 39
     - 6
-direction: Horizontal
-# Vertical
-# Horizontal
-starter: Mudkip
-# Torchic
-# Mudkip
-# Treecko
-johto_starter: Totodile
-# Cyndaquil
-# Totodile
-# Chikorita
-fossil: Anorith
+
+# Bonk direction - this config is used if `bot_mode` is set to `bonk`
+# Bonk mode will run left/right or up/down repeatedly until the trainer hits a wall
+# horizontal, vertical
+bonk_direction: horizontal
+
+# Starters - this config is used if `bot_mode` is set to `starters`
+# Choose a Pokemon to soft reset for, save the game with trainer facing the bag
+# mudkip, treecko, torchic
+starter: mudkip
+
+# Johto starters - this config is used if `bot_mode` is set to `johto starters`
+# Choose a Pokemon to soft reset for, save the game with trainer facing the desired Pokeball in Birch's lab
+# totodile, cyndaquil, chikorita
+johto_starter: totodile
+
+# Fossils - this config is used if `bot_mode` is set to `fossil`
+# Save with trainer facing the Fossil Scientist in Devon after handing over the fossil and re-entering the room
+# anorith,lileep
+fossil: anorith
+
+# Set true if the Deoxys puzzle is solved already and the last save is on the tile in front of the red triangle
 deoxys_puzzle_solved: false
 
-# User Interface
+# User Interface config
 ui:
   enable: true
   width: 1280
   height: 720
 
-# Web Server (this must be enabled for the UI to work)
+# Web Server config (server must be enabled for the UI to work)
 server:
   enable: true
   ip: 127.0.0.1
   port: 8888 # The server port must be unique for each instance of the bot you run
 
+# Bot instance ID
+# If running multiple instances of the bot
+# Set this to the same `bot_instance_id` string at the top of pokebot.lua (use a unique string per bot instance)
 bot_instance_id: pokebot_1
-# If running multiple instances of the bot, set this to the same `bot_instance_id` string at the top of pokebot.lua (use a unique string per bot instance)
 
 # Autosaves
-periodic_save: true
-save_every_x_encounters: 1000
-
-# Discord Webhook settings (optional)
-discord:
-  # Toggle webhooks on/off
-  enable: true
-  # Your raw webhook URL here, WARNING: this webhook is SENSITIVE! Do not share this value with anyone! If you leak your webhook, anyone will be able to post in your channel
-  webhook_url: https://discord.com/api/webhooks/XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-  # Choose how the IVs will display, either basic layout on one line or formatted for readability
-  iv_format: basic
-  # "user" or "role", if left empty/invalid: pings are disabled.
-  ping_mode: role
-  # Discord User/Role ID to ping. Does nothing if "discord_ping_mode" isn't set. Currently supports only one at a time.
-  shiny_ping:
+# Auto save every x encounters
+# Set to 0 to disable
+autosave_encounters: 1000
 
 # Wild Battles
 manual_catch: false
@@ -92,11 +80,43 @@ save_game_after_catch: true
 
 # Pickup
 pickup: true
-pickup_threshold: 3 # Number of pickup items to find before collection
+# Number of pickup items to find before collection
+pickup_threshold: 3
 
-# Pokemon encounter data logging (logs to stats/encounters/)
+# Pokemon encounter .csv data logging (logs to stats/encounters/)
 log: true
 
+# Discord Webhook settings
+discord:
+  # Toggle all webhooks on/off
+  enable: true
+  # Your raw webhook URL here, WARNING: this webhook is SENSITIVE! Do not share this value with anyone! If you leak your webhook, anyone will be able to post in your channel
+  webhook_url:
+  # Choose how the IVs will display, either basic layout on one line or formatted for readability
+  iv_format: basic
+  # "user" or "role", if left empty/invalid: pings are disabled.
+  ping_mode:
+  # Discord User/Role ID to ping. Does nothing if "discord_ping_mode" isn't set. Currently supports only one at a time.
+  ping_id:
+  # Ping the User/Role ID above when a shiny is encountered
+  shiny_ping: true
+  # Send periodic updates, including phase and total stats every x encounters
+  # Set to 0 to disable
+  periodic_updates: 1000
+  periodic_updates_ping: false
+  # Pokemon encounter milestones messages every x encounters
+  # Example: "Passed 10,000 total Poochyena encounters!", "Passed 20,000 total Poochyena encounters!" etc.
+  # Set to 0 to disable
+  pokemon_encounter_milestones: 10000
+  pokemon_encounter_milestones_ping: false
+  # Total encounter milestones messages every x encounters
+  # Example: "Passed 25,000 total encounters!", "Passed 50,000 total encounters!" etc.
+  # Set to 0 to disable
+  total_encounter_milestones: 25000
+  total_encounter_milestones_ping: false
+
+# Banned moves
+# Any moves in this list will not be used in battle
 banned_moves:
 - None
   # 2-turn
@@ -141,4 +161,5 @@ banned_moves:
 - Memento
 
 # Cheats
-mem_hacks: false # Perform "cheaty" actions such as peeking into eggs to check shininess, knowing instantly which route a roamer is on, instantly locate Feebas tiles etc.
+# Perform "cheaty" actions such as peeking into eggs to check shininess, knowing instantly which route a roamer is on, instantly locate Feebas tiles etc.
+mem_hacks: false
