@@ -224,6 +224,21 @@ def LogEncounter(pokemon: dict):
             opponent = GetOpponent()
             if opponent["speciesName"] in blocked["block_list"]:
                 log.info("---- Pokemon is in list of non-catpures. Fleeing battle ----")
+                if config["discord"]["enable"]:
+                    try:
+                        log.info("Sending Discord ping...")
+                        if config["discord"]["shiny_ping"] and config["discord"]["ping_mode"] == "role":
+                            content = f"Encountered shiny {pokemon['name']}... but catching this species is disabled. Fleeing battle!" 
+                        elif config["discord"]["ping_mode"] == "user":
+                            content = f"Encountered shiny {pokemon['name']}... but catching this species is disabled. Fleeing battle!" 
+                        else:
+                            content = ""  # It breaks if I don't do this, sorry.
+                        webhook = DiscordWebhook(url=config["discord"]["webhook_url"], content=content)
+                        webhook.add_embed(embed)
+                        webhook.execute()
+                    except Exception as e:
+                        log.exception(str(e))
+                        pass
                 FleeBattle()
             
             # Send webhook message, if enabled.
