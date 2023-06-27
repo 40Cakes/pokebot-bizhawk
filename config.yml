@@ -63,7 +63,7 @@ save_every_x_encounters: 1000
 # Discord Webhook settings (optional)
 discord:
   # Toggle webhooks on/off
-  enable: true
+  enable: false
   # Your raw webhook URL here, WARNING: this webhook is SENSITIVE! Do not share this value with anyone! If you leak your webhook, anyone will be able to post in your channel
   webhook_url: https://discord.com/api/webhooks/XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
   # Choose how the IVs will display, either basic layout on one line or formatted for readability
