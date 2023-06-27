@@ -136,7 +136,7 @@ def EnrichMonData(pokemon: dict):
             # Human readable pokemon types
             pokemon["type"] = pokemon_list[pokemon["name"]]["type"]
             # Human readable abilities
-            pokemon["ability"] = pokemon_list[pokemon["name"]]["ability"][0]
+            pokemon["ability"] = pokemon_list[pokemon["name"]]["ability"][pokemon["altAbility"]]
             # Get pokemon nature
             pokemon["nature"] = Natures[pokemon["personality"] % 25]
             # Get zero pad number - e.g.: #5 becomes #005
