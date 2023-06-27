@@ -234,7 +234,6 @@ def LogEncounter(pokemon: dict):
                         else:
                             content = ""  # It breaks if I don't do this, sorry.
                         webhook = DiscordWebhook(url=config["discord"]["webhook_url"], content=content)
-                        webhook.add_embed(embed)
                         webhook.execute()
                     except Exception as e:
                         log.exception(str(e))
