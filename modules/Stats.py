@@ -339,12 +339,7 @@ def EncounterPokemon(starter: bool = False):
                 if config["discord"]["enable"]:
                     try:
                         log.info("Sending Discord ping...")
-                        if config["discord"]["shiny_ping"] and config["discord"]["ping_mode"] == "role":
-                            content = f"Encountered shiny {opponent['speciesName']}... but catching this species is disabled. Fleeing battle!" 
-                        elif config["discord"]["ping_mode"] == "user":
-                            content = f"Encountered shiny {opponent['speciesName']}... but catching this species is disabled. Fleeing battle!" 
-                        else:
-                            content = ""  # It breaks if I don't do this, sorry.
+                        content = f"Encountered shiny {opponent['speciesName']}... but catching this species is disabled. Fleeing battle!"
                         webhook = DiscordWebhook(url=config["discord"]["webhook_url"], content=content)
                         webhook.execute()
                     except Exception as e:
