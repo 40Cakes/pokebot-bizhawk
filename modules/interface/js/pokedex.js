@@ -146,7 +146,6 @@ function dexEntries() {
         catchPkmImg.src.includes("-disabled")
           ? (catchPkmImg.src = catchImg)
           : (catchPkmImg.src = noCatchImg);
-        catchPkmImg.style.display = "none";
         //pass pkmname and current sprite to bot
         var data = {
           pokemonName: pokemon.name,
@@ -309,10 +308,8 @@ function checkBlocklist() {
     var pokemonName = pokeballs[i].getAttribute("pokemon-name");
     if (blocked["block_list"].includes(pokemonName)) {
       pokeballs[i].src = "/interface/sprites/items/Poké Ball-disabled.png";
-      pokeballs[i].style.display = "block";
     } else {
       pokeballs[i].src = "/interface/sprites/items/Poké Ball.png";
-      pokeballs[i].style.display = "block";
     }
   }
 }
