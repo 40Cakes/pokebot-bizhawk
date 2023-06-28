@@ -128,6 +128,8 @@ function dexEntries() {
       var catchImg = "/interface/sprites/items/Poké Ball.png";
       var noCatchImg = "/interface/sprites/items/Poké Ball-disabled.png";
       var catchPkmImg = document.createElement("img");
+      catchPkmImg.classList.add("pokeball-sprite");
+      catchPkmImg.setAttribute("pokemon-name", pokemon.name);
 
       //check if pokemon is on the no-catch list, if so, disable the pokeball
       if (blocked["block_list"].includes(pokemon.name)) {
@@ -144,6 +146,7 @@ function dexEntries() {
         catchPkmImg.src.includes("-disabled")
           ? (catchPkmImg.src = catchImg)
           : (catchPkmImg.src = noCatchImg);
+        catchPkmImg.style.display = "none";
         //pass pkmname and current sprite to bot
         var data = {
           pokemonName: pokemon.name,
@@ -289,6 +292,30 @@ window.setInterval(function () {
   stats();
   emu();
 }, 2500);
+
+window.setInterval(function () {
+  $.ajax({
+    method: "GET",
+    url: host + "/blocked",
+  }).done(function (blocklist) {
+    blocked = blocklist;
+    checkBlocklist();
+  });
+}, 1000);
+
+function checkBlocklist() {
+  var pokeballs = document.getElementsByClassName("pokeball-sprite");
+  for (var i = 0; i < pokeballs.length; i++) {
+    var pokemonName = pokeballs[i].getAttribute("pokemon-name");
+    if (blocked["block_list"].includes(pokemonName)) {
+      pokeballs[i].src = "/interface/sprites/items/Poké Ball-disabled.png";
+      pokeballs[i].style.display = "block";
+    } else {
+      pokeballs[i].src = "/interface/sprites/items/Poké Ball.png";
+      pokeballs[i].style.display = "block";
+    }
+  }
+}
 
 // logic for search bar filtering on route/pokemon name
 function filter() {
