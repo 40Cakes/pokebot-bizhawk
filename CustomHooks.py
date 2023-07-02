@@ -161,7 +161,8 @@ def CustomHooks(pokemon: object, stats: object):
                     embed_footer=f"PokéBot ID: {config['bot_instance_id']}")
 
             # Discord phase encounter notifications
-            if config["discord"]["phase_notification"] and \
+            if not pokemon["shiny"] and \
+            config["discord"]["phase_notification"] and \
             (stats["totals"].get("phase_encounters", -1) == config["discord"]["first_phase_notification"] or
             (stats["totals"].get("phase_encounters", -1) > config["discord"]["first_phase_notification"] and
             stats["totals"].get("phase_encounters", -1) % config["discord"]["consequent_phase_notifications"] == 0)):
