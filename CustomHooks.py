@@ -170,7 +170,7 @@ def CustomHooks(pokemon: object, stats: object):
                     discord_ping = ""
                 DiscordMessage(
                     webhook_url=config["discord"].get("phase_notification_webhook_url", None),
-                    content="💀 The current phase has reached {} encounters!\n\n{}".format(
+                    content="💀 The current phase has reached {:,} encounters!\n\n{}".format(
                             stats["totals"].get("phase_encounters", 0),
                             discord_ping),
                     embed=True,

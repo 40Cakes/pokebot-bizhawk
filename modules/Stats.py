@@ -278,7 +278,7 @@ def LogEncounter(pokemon: dict):
             stats["totals"].get("shiny_average", 0)))
 
         # Run custom code in CustomHooks in a thread
-        custom_hooks = Thread(target=CustomHooks(pokemon, stats))
+        custom_hooks = Thread(target=CustomHooks, args=(pokemon, stats))
         custom_hooks.start()
 
         # Save stats file
