@@ -9,6 +9,7 @@ from datetime import datetime
 
 from CustomCatchConfig import CustomCatchConfig
 from CustomHooks import CustomHooks
+from modules.CatchBlockList import GetBlockList
 from modules.Config import GetConfig
 from modules.Files import BackupFolder, ReadFile, WriteFile
 from modules.Inputs import ReleaseAllInputs, PressButton, WaitFrames
@@ -373,7 +374,22 @@ def EncounterPokemon(starter: bool = False):
 
     if pokemon["shiny"]:
         if not starter and not legendary_hunt and config["catch_shinies"]:
-            CatchPokemon()
+            blocked = GetBlockList()
+            opponent = GetOpponent()
+            if opponent["speciesName"] in blocked["block_list"]:
+                log.info("---- Pokemon is in list of non-catpures. Fleeing battle ----")
+                if config["discord"]["enable"]:
+                    try:
+                        log.info("Sending Discord ping...")
+                        content = f"Encountered shiny {opponent['speciesName']}... but catching this species is disabled. Fleeing battle!"
+                        webhook = DiscordWebhook(url=config["discord"]["webhook_url"], content=content)
+                        webhook.execute()
+                    except Exception as e:
+                        log.exception(str(e))
+                        pass
+                FleeBattle()
+            else: 
+                CatchPokemon()
         elif legendary_hunt:
             input("Pausing bot for manual intervention. (Don't forget to pause the pokebot.lua script so you can "
                   "provide inputs). Press Enter to continue...")
