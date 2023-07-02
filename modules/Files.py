@@ -1,4 +1,5 @@
 import os
+import shutil
 import logging
 
 log = logging.getLogger(__name__)
@@ -39,3 +40,13 @@ def WriteFile(file: str, value: str, mode: str = "w"):
     except Exception as e:
         log.exception(str(e))
         return False
+
+def BackupFolder(source, destination):
+    basename = os.path.basename(destination)
+    dst_dir = os.path.dirname(destination)
+    if not os.path.exists(dst_dir):
+        os.makedirs(dst_dir)
+    name = basename.split('.')[0]
+    format = basename.split('.')[1]
+    shutil.make_archive(name, format, os.path.dirname(source), os.path.basename(source.strip(os.sep)))
+    shutil.move('%s.%s' % (name, format), destination)

@@ -22,12 +22,12 @@ coords:
 bonk_direction: horizontal
 
 # Starters - this config is used if `bot_mode` is set to `starters`
-# Choose a Pokemon to soft reset for, save the game with trainer facing the bag
+# Choose a Pokémon to soft reset for, save the game with trainer facing the bag
 # mudkip, treecko, torchic
 starter: mudkip
 
 # Johto starters - this config is used if `bot_mode` is set to `johto starters`
-# Choose a Pokemon to soft reset for, save the game with trainer facing the desired Pokeball in Birch's lab
+# Choose a Pokémon to soft reset for, save the game with trainer facing the desired Pokeball in Birch's lab
 # totodile, cyndaquil, chikorita
 johto_starter: totodile
 
@@ -57,63 +57,116 @@ server:
 bot_instance_id: pokebot_1
 
 # Autosaves
-# Auto save every x encounters
+# Auto save every n encounters
 # Set to 0 to disable
 autosave_encounters: 1000
 
-# Wild Battles
-manual_catch: false
+# Backups
+# Backup pokebot stats/ folder every n encounters
+# HIGHLY recommended to backup stats/ folder regularly, totals.json is known to get corrupted during power outages
+# Make sure you regularly delete old backups (especially if your stats folder is large!)
+# Set to 0 to disable
+backup_stats: 5000
+
+# Auto catch
+# (if disabled the bot will pause and wait for you to manually catch)
+# You will note to pause pokebot.lua in the Lua console to control your character
+auto_catch: true
+
+# Enable party leader to use Spore to sleep the wild Pokémon
 use_spore: true
+
+# Toggle catching shinies on/off
+# CustomCatchConfig.py allows you to add filters to catch specific non-shiny Pokémon
 catch_shinies: true
-battle_others: false
+
+# Toggle battling all other wild Pokémon
+# Catching shinies and Pokémon in CustomCatchConfig.py always takes priority over battling
+battle: false
+
+# Pokeball preferences (if no overrides are specified below)
+# Top of the list is priority, bottom is least
+# dive_ball, great_ball, luxury_ball, master_ball, nest_ball,
+# poke_ball, premier_ball, repeat_ball, timer_ball, ultra_ball
 pokeball_priority:
 - premier_ball
 - ultra_ball
 - great_ball
 - poke_ball
-pokeball_override: # Per-species exceptions to pokeball_priority. Falls back to pokeball_priority if it has no Pokeballs in the list
-  Abra: 
+
+# Pokeball overrides to catch specific Pokémon with specific balls
+# Falls back to pokeball_priority if it has no Pokeballs in the list
+pokeball_override:
+  Abra:
   - ultra_ball
   - great_ball
+
+# Cycle to next Pokémon if the lead Pokémon faints
 cycle_lead_pokemon: true
+
+# Save the game and flush save RAM after any catch
 save_game_after_catch: true
 
-# Pickup
+# Enable pickup - https://bulbapedia.bulbagarden.net/wiki/Pickup_(Ability)#Generations_III_and_IV
 pickup: true
 # Number of pickup items to find before collection
 pickup_threshold: 3
 
-# Pokemon encounter .csv data logging (logs to stats/encounters/)
+# Pokémon encounter .csv data logging (logs to stats/encounters/ folder)
 log: true
 
 # Discord Webhook settings
 discord:
   # Toggle all webhooks on/off
   enable: true
-  # Your raw webhook URL here, WARNING: this webhook is SENSITIVE! Do not share this value with anyone! If you leak your webhook, anyone will be able to post in your channel
-  webhook_url:
+  # Your main Discord webhook URL, WARNING: this webhook is SENSITIVE! Do not share this value with anyone!
+  # If you leak your webhook, anyone will be able to post in your channel!
+  webhook_url: https://discord.com/api/webhooks/XXXXXXXXXXXXXXXXXXXXXXXXXX
   # Choose how the IVs will display, either basic layout on one line or formatted for readability
-  iv_format: basic
+  iv_format: formatted
   # "user" or "role", if left empty/invalid: pings are disabled.
   ping_mode:
   # Discord User/Role ID to ping. Does nothing if "discord_ping_mode" isn't set. Currently supports only one at a time.
   ping_id:
-  # Ping the User/Role ID above when a shiny is encountered
-  shiny_ping: true
-  # Send periodic updates, including phase and total stats every x encounters
-  # Set to 0 to disable
-  periodic_updates: 1000
-  periodic_updates_ping: false
-  # Pokemon encounter milestones messages every x encounters
-  # Example: "Passed 10,000 total Poochyena encounters!", "Passed 20,000 total Poochyena encounters!" etc.
+
+  # Shiny Pokémon encounter
+  # Example: "Shiny Seedot encountered at Route 102! (+ summary of phase stats)"
+  shiny_pokemon_encounter: true
+  shiny_pokemon_encounter_ping: false
+
+  # Pokémon encounter milestones messages every n encounters
+  # Example: "Achieved 10,000 total Seedot encounters!", "Achieved 20,000 total Seedot encounters!" etc.
   # Set to 0 to disable
   pokemon_encounter_milestones: 10000
   pokemon_encounter_milestones_ping: false
-  # Total encounter milestones messages every x encounters
-  # Example: "Passed 25,000 total encounters!", "Passed 50,000 total encounters!" etc.
+  # Optional webhook (uncomment) to post to a different channel (defaults to main `webhook_url` if not set)
+  #pokemon_encounter_milestones_webhook_url:
+
+  # Shiny Pokémon encounter milestones messages every n encounters
+  # Example: "Achieved 10 total shiny ✨Seedot✨ encounters!", "Achieved 20 total ✨Seedot✨ encounters!" etc.
+  # Set to 0 to disable
+  shiny_pokemon_encounter_milestones: 10
+  shiny_pokemon_encounter_milestones_ping: false
+  # Optional webhook (uncomment) to post to a different channel (defaults to main `webhook_url` if not set)
+  #shiny_pokemon_encounter_milestones_webhook_url:
+
+  # Total encounter milestones messages every n encounters
+  # Example: "Achieved 25,000 total encounters!", "Achieved 50,000 total encounters!" etc.
   # Set to 0 to disable
   total_encounter_milestones: 25000
   total_encounter_milestones_ping: false
+  # Optional webhook (uncomment) to post to a different channel (defaults to main `webhook_url` if not set)
+  #total_encounter_milestones_webhook_url:
+
+  # Phase encounter notifications
+  # Enable phase encounter notifications
+  phase_notification: true
+  # Example (default config): first notification will be at 8,192 encounters, then at 10,000, 15,000, 20,000, 25,000 etc.
+  first_phase_notification: 8192
+  consequent_phase_notifications: 5000
+  phase_notification_ping: false
+  # Optional webhook (uncomment) to post to a different channel (defaults to main `webhook_url` if not set)
+  #phase_notification_webhook_url:
 
 # Banned moves
 # Any moves in this list will not be used in battle

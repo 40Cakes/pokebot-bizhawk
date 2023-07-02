@@ -1,6 +1,6 @@
-import logging
 import os
 import sys
+import logging
 from logging.handlers import RotatingFileHandler
 from threading import Thread
 
@@ -15,6 +15,7 @@ from modules.gen3.Legendaries import ModeGroudon, ModeKyogre, ModeRayquaza, Mode
 from modules.gen3.Starters import ModeStarters
 from modules.mmf.Emu import GetEmu
 from modules.mmf.Trainer import GetTrainer
+
 
 LogLevel = logging.INFO  # use logging.DEBUG while testing
 config = GetConfig()

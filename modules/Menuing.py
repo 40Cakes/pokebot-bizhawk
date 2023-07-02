@@ -168,10 +168,10 @@ def CatchPokemon():
             ReleaseAllInputs()
             ButtonCombo(["B", "Up", "Left"])  # Press B + up + left until FIGHT menu is visible
 
-        if config["manual_catch"]:
+        if not config["auto_catch"]:
             input(
-                "Pausing bot for manual catch (don't forget to pause pokebot.lua script so you can provide inputs). "
-                "Press Enter to continue...")
+                "Pausing bot for manual catch (pause pokebot.lua script so you can control your character). "
+                "Press Enter to continue once pokebot.lua is running again...")
             return True
         else:
             log.info("Attempting to catch Pokemon...")

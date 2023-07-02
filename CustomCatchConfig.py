@@ -2,8 +2,8 @@ import logging
 
 log = logging.getLogger(__name__)
 
-# Check your recent encounters .csv files in the stats/encounters/ folder
-# to see all available Pokemon fields to filter on
+# Check your recent encounters .csv files in the stats/encounters/
+# folder to see all available Pokemon fields to filter on
 # return True to command the bot to catch the Pokemon
 # TODO add option for a Discord webhook when a custom is caught
 def CustomCatchConfig(pokemon: object):
@@ -53,6 +53,5 @@ def CustomCatchConfig(pokemon: object):
         return False
     except Exception as e:
         log.exception(str(e))
-        log.error(
-            "Failed to check Pokemon, due to invalid custom catch settings...")
+        log.error("Failed to check Pokemon, due to invalid custom catch settings...")
         return False
