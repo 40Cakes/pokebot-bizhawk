@@ -37,7 +37,7 @@ def CustomHooks(pokemon: object, stats: object):
                            "║HP │ATK│DEF│SPA│SPD│SPE║\n" \
                            "╠═══╪═══╪═══╪═══╪═══╪═══╣\n" \
                            "║{:^3}│{:^3}│{:^3}│{:^3}│{:^3}│{:^3}║\n" \
-                           "╚═══╧═══╧═══╧═══╧═══╧═══╝"\
+                           "╚═══╧═══╧═══╧═══╧═══╧═══╝" \
                            "```".format(
                             pokemon['hpIV'],
                             pokemon['attackIV'],
@@ -115,7 +115,8 @@ def CustomHooks(pokemon: object, stats: object):
                     embed_footer=f"PokéBot ID: {config['bot_instance_id']}")
 
             # Discord shiny Pokémon encounter milestones
-            if config["discord"]["shiny_pokemon_encounter_milestones"] > 0 and \
+            if pokemon["shiny"] and \
+            config["discord"]["shiny_pokemon_encounter_milestones"] > 0 and \
             stats["pokemon"][pokemon["name"]].get("shiny_encounters", -1) % config["discord"]["shiny_pokemon_encounter_milestones"] == 0:
                 if not config["discord"]["shiny_pokemon_encounter_milestones_ping"]:
                     discord_ping = ""
@@ -124,7 +125,7 @@ def CustomHooks(pokemon: object, stats: object):
                     content=f"🎉 New milestone achieved!\n\n{discord_ping}",
                     embed=True,
                     embed_description="{:,} shiny ✨{}✨ encounters!".format(
-                                    stats["pokemon"][pokemon["name"]].get("encounters", 0),
+                                    stats["pokemon"][pokemon["name"]].get("shiny_encounters", 0),
                                     pokemon["name"]),
                     embed_thumbnail="./modules/interface/sprites/pokemon/shiny/{}.png".format(
                                     pokemon["name"].lower()),
