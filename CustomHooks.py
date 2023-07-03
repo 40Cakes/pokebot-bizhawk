@@ -7,6 +7,7 @@ from modules.Discord import DiscordMessage
 log = logging.getLogger(__name__)
 config = GetConfig()
 
+
 def CustomHooks(pokemon: object, stats: object):
     """
     This function is called every time an encounter is logged, but before phase stats are reset (if shiny)
@@ -15,8 +16,6 @@ def CustomHooks(pokemon: object, stats: object):
     Note: this function runs in a thread and will not hold up the bot if you need to run any slow hooks
     """
     try:
-        #log.info(json.dumps(pokemon, indent=4))
-        #log.info(json.dumps(stats, indent=4))
 
         ### Your custom code goes here ###
 
@@ -25,7 +24,10 @@ def CustomHooks(pokemon: object, stats: object):
         log.exception(str(e))
         log.error("Failed to run custom hooks...")
 
+    # Discord messages
     if config["discord"]["enable"]:
+        # Import this module here to avoid circular import error
+        from modules.Stats import GetEncounterRate
         # Formatted IV table
         if config["discord"]["iv_format"] == "formatted":
             iv_field = "```" \
@@ -63,7 +65,7 @@ def CustomHooks(pokemon: object, stats: object):
                         discord_ping = "📢 <@{}>".format(config["discord"]["shiny_pokemon_encounter"]["ping_id"])
                 DiscordMessage(
                     webhook_url=config["discord"]["shiny_pokemon_encounter"].get("webhook_url", None),
-                    content="Encountered a shiny {}!\n\n{}".format(
+                    content="Encountered a shiny {}!\n{}".format(
                             pokemon["name"],
                             discord_ping
                     ),
@@ -81,6 +83,7 @@ def CustomHooks(pokemon: object, stats: object):
                         "Shiny {} Encounters".format(pokemon["name"]): "{:,}".format(stats["pokemon"][pokemon["name"]].get("shiny_encounters", 0)),
                         "{} Phase Encounters".format(pokemon["name"]): "{:,}".format(stats["pokemon"][pokemon["name"]].get("phase_encounters", 0)),
                         "Phase Encounters": "{:,}".format(stats["totals"].get("phase_encounters", 0)),
+                        "Encounter Rate": "{:,} encounters/h".format(GetEncounterRate),
                         "Phase IV Sum Records": "{:,} IV {} :arrow_up:|:arrow_down: {:,} IV {}".format(
                                                 stats["totals"].get("phase_highest_iv_sum", 0),
                                                 stats["totals"].get("phase_highest_iv_sum_pokemon", "N/A"),
@@ -116,7 +119,7 @@ def CustomHooks(pokemon: object, stats: object):
                         discord_ping = "📢 <@{}>".format(config["discord"]["pokemon_encounter_milestones"]["ping_id"])
                 DiscordMessage(
                     webhook_url=config["discord"]["pokemon_encounter_milestones"].get("webhook_url", None),
-                    content=f"🎉 New milestone achieved!\n\n{discord_ping}",
+                    content=f"🎉 New milestone achieved!\n{discord_ping}",
                     embed=True,
                     embed_description="{:,} {} encounters!".format(
                                     stats["pokemon"][pokemon["name"]].get("encounters", 0),
@@ -142,7 +145,7 @@ def CustomHooks(pokemon: object, stats: object):
                         discord_ping = "📢 <@{}>".format(config["discord"]["shiny_pokemon_encounter_milestones"]["ping_id"])
                 DiscordMessage(
                     webhook_url=config["discord"]["shiny_pokemon_encounter_milestones"].get("webhook_url", None),
-                    content=f"🎉 New milestone achieved!\n\n{discord_ping}",
+                    content=f"🎉 New milestone achieved!\n{discord_ping}",
                     embed=True,
                     embed_description="{:,} shiny ✨{}✨ encounters!".format(
                                     stats["pokemon"][pokemon["name"]].get("shiny_encounters", 0),
@@ -167,7 +170,7 @@ def CustomHooks(pokemon: object, stats: object):
                         discord_ping = "📢 <@{}>".format(config["discord"]["total_encounter_milestones"]["ping_id"])
                 DiscordMessage(
                     webhook_url=config["discord"]["total_encounter_milestones"].get("webhook_url", None),
-                    content=f"🎉 New milestone achieved!\n\n{discord_ping}",
+                    content=f"🎉 New milestone achieved!\n{discord_ping}",
                     embed=True,
                     embed_description="{:,} total encounters!".format(
                                       stats["totals"].get("encounters", 0)),
@@ -208,13 +211,14 @@ def CustomHooks(pokemon: object, stats: object):
                         discord_ping = "📢 <@{}>".format(config["discord"]["phase_summary"]["ping_id"])
                 DiscordMessage(
                     webhook_url=config["discord"]["phase_summary"].get("webhook_url", None),
-                    content="💀 The current phase has reached {:,} encounters!\n\n{}".format(
+                    content="💀 The current phase has reached {:,} encounters!\n{}".format(
                             stats["totals"].get("phase_encounters", 0),
                             discord_ping),
                     embed=True,
                     embed_description="Phase Summary",
                     embed_fields={
                         "Phase Encounters": "{:,}".format(stats["totals"].get("phase_encounters", 0)),
+                        "Encounter Rate": "{:,} encounters/h".format(GetEncounterRate()),
                         "Phase IV Sum Records": "{:,} IV {} :arrow_up:|:arrow_down: {:,} IV {}".format(
                                                 stats["totals"].get("phase_highest_iv_sum", 0),
                                                 stats["totals"].get("phase_highest_iv_sum_pokemon", "N/A"),
@@ -234,4 +238,3 @@ def CustomHooks(pokemon: object, stats: object):
                     embed_color="D70040")
         except Exception as e:
             log.exception(str(e))
-            log.error("Failed to run custom hooks...")

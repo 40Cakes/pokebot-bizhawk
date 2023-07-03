@@ -77,6 +77,24 @@ def GetRNGState(tid: str, mon: str):
         return default
 
 
+def GetEncounterRate():
+    try:
+        fmt = "%Y-%m-%d %H:%M:%S.%f"
+        encounter_logs = GetEncounterLog()["encounter_log"]
+        len_encounter_logs = len(encounter_logs)
+        if len_encounter_logs > 1:
+            encounter_rate = int(
+                (3600 /
+                 (datetime.strptime(encounter_logs[-1]["time_encountered"], fmt) -
+                  datetime.strptime(encounter_logs[-len_encounter_logs]["time_encountered"], fmt)
+                  ).total_seconds()) * len_encounter_logs)
+            return encounter_rate
+    except Exception as e:
+        log.exception(str(e))
+        return 0
+
+
+
 last_opponent_personality = None
 
 
