@@ -7,6 +7,7 @@ import pandas as pd
 from threading import Thread
 from datetime import datetime
 
+from discord_webhook import DiscordWebhook
 from CustomCatchConfig import CustomCatchConfig
 from CustomHooks import CustomHooks
 from modules.CatchBlockList import GetBlockList
@@ -396,9 +397,8 @@ def EncounterPokemon(starter: bool = False):
             opponent = GetOpponent()
             if opponent["speciesName"] in blocked["block_list"]:
                 log.info("---- Pokemon is in list of non-catpures. Fleeing battle ----")
-                if config["discord"]["enable"]:
+                if config["discord"]["messages"]:
                     try:
-                        log.info("Sending Discord ping...")
                         content = f"Encountered shiny {opponent['speciesName']}... but catching this species is disabled. Fleeing battle!"
                         webhook = DiscordWebhook(url=config["discord"]["webhook_url"], content=content)
                         webhook.execute()

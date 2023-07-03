@@ -25,7 +25,7 @@ def CustomHooks(pokemon: object, stats: object):
         log.error("Failed to run custom hooks...")
 
     # Discord messages
-    if config["discord"]["enable"]:
+    if config["discord"]["messages"]:
         # Import this module here to avoid circular import error
         from modules.Stats import GetEncounterRate
         # Formatted IV table

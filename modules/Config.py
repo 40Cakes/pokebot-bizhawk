@@ -40,7 +40,8 @@ config_schema = {
                    },
         "discord": {"type": "object",
                     "properties": {
-                        "enable": {"type": "boolean"},
+                        "rich_presence": {"type": "boolean"},
+                        "messages": {"type": "boolean"},
                         "webhook_url": {"type": "string"},
                         "iv_format": {"type": "string"},
                         "shiny_pokemon_encounter": {"type": "object",

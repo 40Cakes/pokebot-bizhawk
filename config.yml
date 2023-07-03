@@ -117,8 +117,11 @@ log: true
 
 # Discord Webhook settings
 discord:
-  # Toggle ALL webhooks on/off
-  enable: false
+  # Discord rich presence
+  # Display current location + phase stats on your Discord profile
+  rich_presence: true
+  # Toggle ALL webhook messages on/off
+  messages: true
   # Your default Discord webhook URL, WARNING: this webhook is SENSITIVE! Do not share this value with anyone!
   # If you leak your webhook, anyone will be able to post in your channel!
   webhook_url: https://discord.com/api/webhooks/XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX

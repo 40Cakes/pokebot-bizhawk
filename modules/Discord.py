@@ -1,6 +1,7 @@
-import cv2
+import time
 import logging
 
+from pypresence import Presence
 from discord_webhook import DiscordWebhook, DiscordEmbed
 from modules.Config import GetConfig
 
@@ -44,4 +45,35 @@ def DiscordMessage(webhook_url: str = None,
         webhook.execute()
     except Exception as e:
         log.exception(str(e))
+        pass
+
+
+def DiscordRichPresence():
+    try:
+        from modules.Stats import GetEncounterLog, GetEncounterRate, GetStats
+        from modules.mmf.Emu import GetEmu
+        from asyncio import (
+            new_event_loop as new_loop,
+            set_event_loop as set_loop)
+        set_loop(new_loop())
+        RPC = Presence("1125400717054713866")
+        RPC.connect()
+        start = time.time()
+        # TODO look at setting image to last encounter (limit of 300 art assets on Discord developer portal)
+        # Hard code to Rayquaza since only Emerald is supported for now
+        while True:
+            RPC.update(
+                state="At {}".format(GetEncounterLog()["encounter_log"][-1]["pokemon_obj"]["metLocationName"]),
+                details="{:,}/{:,}✨ | {:,}/h".format(
+                        GetStats()["totals"].get("encounters", 0),
+                        GetStats()["totals"].get("shiny_encounters", 0),
+                        GetEncounterRate()),
+                large_image="rayquaza",
+                start=start,
+                party_id="test",
+                buttons = [{"label": "⏬ Download Pokébot", "url": "https://github.com/40Cakes/pokebot-bizhawk"}])
+            time.sleep(15)
+    except Exception as e:
+        log.exception(str(e))
+        time.sleep(15)
         pass

@@ -152,21 +152,22 @@ try:
     main = Thread(target=MainLoop)
     main.start()
 
+    if config["discord"]["rich_presence"]:
+        from modules.Discord import DiscordRichPresence
+        discord_rich_presence = Thread(target=DiscordRichPresence)
+        discord_rich_presence.start()
+
     if config["server"]["enable"]:
         from modules.FlaskServer import httpServer
-
         server = Thread(target=httpServer)
         server.start()
 
     if config["ui"]["enable"]:
         import webview
-
-
         def OnWindowClose():
             ReleaseAllInputs()
             log.info("Dashboard closed on user input...")
             os._exit(1)
-
 
         url = f"http://{config['server']['ip']}:{config['server']['port']}/dashboard"
         window = webview.create_window("PokeBot", url=url, width=config["ui"]["width"], height=config["ui"]["height"],
