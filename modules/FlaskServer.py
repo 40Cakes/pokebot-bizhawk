@@ -77,12 +77,13 @@ def httpServer():
         def EncounterRate():
             default = {"encounter_rate": "-"}
             encounter_logs = GetEncounterLog()["encounter_log"]
-            if len(encounter_logs) > 10:
+            len_encounter_logs = len(encounter_logs)
+            if len_encounter_logs > 1:
                 encounter_rate = int(
                     (3600 /
                     (datetime.strptime(encounter_logs[-1]["time_encountered"], fmt) -
-                    datetime.strptime(encounter_logs[-10]["time_encountered"], fmt)
-                    ).total_seconds()) * 10)
+                    datetime.strptime(encounter_logs[-len_encounter_logs]["time_encountered"], fmt)
+                    ).total_seconds()) * len_encounter_logs)
                 return jsonify({"encounter_rate": encounter_rate})
             else:
                 return jsonify(default)
@@ -104,8 +105,9 @@ def httpServer():
 
         @server.route("/encounter_log", methods=["GET"])
         def EncounterLog():
-            encounter_log = GetEncounterLog()
-            if encounter_log:
+            recent_encounter_log = GetEncounterLog()["encounter_log"][-25:]
+            if recent_encounter_log:
+                encounter_log = {"encounter_log": recent_encounter_log}
                 return jsonify(encounter_log)
             abort(503)
 

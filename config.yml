@@ -10,11 +10,11 @@ bot_mode: spin
 # Runs between 2 different x,y coordinates (use `view_coords.lua` in Bizhawk to view coords)
 coords:
   pos1:
-    - 38
-    - 6
+    - 13
+    - 94
   pos2:
-    - 39
-    - 6
+    - 9
+    - 94
 
 # Bonk direction - this config is used if `bot_mode` is set to `bonk`
 # Bonk mode will run left/right or up/down repeatedly until the trainer hits a wall
@@ -117,56 +117,69 @@ log: true
 
 # Discord Webhook settings
 discord:
-  # Toggle all webhooks on/off
-  enable: true
-  # Your main Discord webhook URL, WARNING: this webhook is SENSITIVE! Do not share this value with anyone!
+  # Toggle ALL webhooks on/off
+  enable: false
+  # Your default Discord webhook URL, WARNING: this webhook is SENSITIVE! Do not share this value with anyone!
   # If you leak your webhook, anyone will be able to post in your channel!
-  webhook_url: https://discord.com/api/webhooks/XXXXXXXXXXXXXXXXXXXXXXXXXX
+  webhook_url: https://discord.com/api/webhooks/XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
   # Choose how the IVs will display, either basic layout on one line or formatted for readability
   iv_format: formatted
-  # "user" or "role", if left empty/invalid: pings are disabled.
-  ping_mode:
-  # Discord User/Role ID to ping. Does nothing if "discord_ping_mode" isn't set. Currently supports only one at a time.
-  ping_id:
 
-  # Shiny Pokémon encounter
+  # Ping mode (a ping is a @<ping_id> in Discord, it adds a +1 badge to the channel)
+  # Leave ping_mode empty for messages you don't want to be @ pinged for
+  # Valid options: "user" or "role"
+
+  # Discord messages: Shiny Pokémon encounter
   # Example: "Shiny Seedot encountered at Route 102! (+ summary of phase stats)"
-  shiny_pokemon_encounter: true
-  shiny_pokemon_encounter_ping: false
+  shiny_pokemon_encounter:
+    enable: true
+    ping_mode:
+    ping_id:
+    # Optional webhook (uncomment) to post this notification to a different channel (defaults to `webhook_url` if not set)
+    #webhook_url:
 
-  # Pokémon encounter milestones messages every n encounters
+  # Discord messages: Pokémon encounter milestones messages every n encounters
   # Example: "Achieved 10,000 total Seedot encounters!", "Achieved 20,000 total Seedot encounters!" etc.
-  # Set to 0 to disable
-  pokemon_encounter_milestones: 10000
-  pokemon_encounter_milestones_ping: false
-  # Optional webhook (uncomment) to post to a different channel (defaults to main `webhook_url` if not set)
-  #pokemon_encounter_milestones_webhook_url:
+  pokemon_encounter_milestones:
+    enable: true
+    interval: 5000
+    ping_mode:
+    ping_id:
+    # Optional webhook (uncomment) to post this notification to a different channel (defaults to `webhook_url` if not set)
+    #webhook_url:
 
-  # Shiny Pokémon encounter milestones messages every n encounters
-  # Example: "Achieved 10 total shiny ✨Seedot✨ encounters!", "Achieved 20 total ✨Seedot✨ encounters!" etc.
-  # Set to 0 to disable
-  shiny_pokemon_encounter_milestones: 10
-  shiny_pokemon_encounter_milestones_ping: false
-  # Optional webhook (uncomment) to post to a different channel (defaults to main `webhook_url` if not set)
-  #shiny_pokemon_encounter_milestones_webhook_url:
+  # Discord messages: Shiny Pokémon encounter milestones every n encounters
+  # Example: "Achieved 5 total shiny ✨Seedot✨ encounters!", "Achieved 10 total ✨Seedot✨ encounters!" etc.
+  shiny_pokemon_encounter_milestones:
+    enable: true
+    interval: 5
+    ping_mode:
+    ping_id:
+    # Optional webhook (uncomment) to post this notification to a different channel (defaults to `webhook_url` if not set)
+    #webhook_url:
 
-  # Total encounter milestones messages every n encounters
+  # Discord messages: Total encounter milestones every n encounters
   # Example: "Achieved 25,000 total encounters!", "Achieved 50,000 total encounters!" etc.
-  # Set to 0 to disable
-  total_encounter_milestones: 25000
-  total_encounter_milestones_ping: false
-  # Optional webhook (uncomment) to post to a different channel (defaults to main `webhook_url` if not set)
-  #total_encounter_milestones_webhook_url:
+  total_encounter_milestones:
+    enable: true
+    interval: 25000
+    ping_mode:
+    ping_id:
+    # Optional webhook (uncomment) to post this notification to a different channel (defaults to `webhook_url` if not set)
+    #webhook_url:
 
-  # Phase encounter notifications
-  # Enable phase encounter notifications
-  phase_notification: true
-  # Example (default config): first notification will be at 8,192 encounters, then at 10,000, 15,000, 20,000, 25,000 etc.
-  first_phase_notification: 8192
-  consequent_phase_notifications: 5000
-  phase_notification_ping: false
-  # Optional webhook (uncomment) to post to a different channel (defaults to main `webhook_url` if not set)
-  #phase_notification_webhook_url:
+  # Discord messages: Phase summary
+  # Example: "Current phase has reached 8,192 encounters!" + a bunch of stats about the current phase
+  # Stats include phase IV sum records, phase SV records, same Pokemon streak, current total encounters and shinies
+  phase_summary:
+    enable: true
+    # Example (default config): first notification will be at 8,192 encounters, then at 10,000, 15,000, 20,000, 25,000 etc.
+    first_interval: 8192
+    consequent_interval: 5000
+    ping_mode:
+    ping_id:
+    # Optional webhook (uncomment) to post this notification to a different channel (defaults to `webhook_url` if not set)
+    #webhook_url:
 
 # Banned moves
 # Any moves in this list will not be used in battle

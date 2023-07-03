@@ -226,7 +226,7 @@ def LogEncounter(pokemon: dict):
         }
         encounter_log = GetEncounterLog()
         encounter_log["encounter_log"].append(log_obj)
-        encounter_log["encounter_log"] = encounter_log["encounter_log"][-50:]
+        encounter_log["encounter_log"] = encounter_log["encounter_log"][-250:]
         WriteFile(files["encounter_log"], json.dumps(encounter_log, indent=4, sort_keys=True))
         if pokemon["shiny"]:
             shiny_log = GetShinyLog()

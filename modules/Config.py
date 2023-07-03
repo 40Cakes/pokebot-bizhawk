@@ -43,19 +43,33 @@ config_schema = {
                         "enable": {"type": "boolean"},
                         "webhook_url": {"type": "string"},
                         "iv_format": {"type": "string"},
-                        "shiny_pokemon_encounter": {"type": "boolean"},
-                        "shiny_pokemon_encounter_ping": {"type": "boolean"},
-                        "pokemon_encounter_milestones": {"type": "number"},
-                        "pokemon_encounter_milestones_ping": {"type": "boolean"},
-                        "shiny_pokemon_encounter_milestones": {"type": "number"},
-                        "shiny_pokemon_encounter_milestones_ping": {"type": "boolean"},
-                        "total_encounter_milestones": {"type": "number"},
-                        "total_encounter_milestones_ping": {"type": "boolean"},
-                        "first_phase_notification": {"type": "number"},
-                        "consequent_phase_notifications": {"type": "number"},
-                        "phase_notification_ping": {"type": "boolean"},
-                    }
-                    },
+                        "shiny_pokemon_encounter": {"type": "object",
+                            "properties": {
+                                "enable": {"type": "boolean"},
+                                "interval": {"type": "number"}
+                            }},
+                        "pokemon_encounter_milestones": {"type": "object",
+                            "properties": {
+                                "enable": {"type": "boolean"},
+                                "interval": {"type": "number"}
+                            }},
+                        "shiny_pokemon_encounter_milestones": {"type": "object",
+                            "properties": {
+                                "enable": {"type": "boolean"},
+                                "interval": {"type": "number"}
+                            }},
+                        "total_encounter_milestones": {"type": "object",
+                            "properties": {
+                                "enable": {"type": "boolean"},
+                                "interval": {"type": "number"}
+                            }},
+                        "phase_summary": {"type": "object",
+                            "properties": {
+                                "enable": {"type": "boolean"},
+                                "first_interval": {"type": "number"},
+                                "consequent_interval": {"type": "number"}
+                            }}
+                    }},
         "autosave_encounters": {"type": "number"},
         "auto_catch": {"type": "boolean"},
         "use_spore": {"type": "boolean"},

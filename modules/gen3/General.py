@@ -76,7 +76,7 @@ def ModeCoords():
     pos1, pos2 = coords["pos1"], coords["pos2"]
     while True:
         while not OpponentChanged():
-            FollowPath([(pos1[0], pos1[1]), (pos2[0], pos2[1])])
+            FollowPath([(pos1[0], pos1[1]), (pos2[0], pos2[1])], exit_when_stuck=True)
         EncounterPokemon()
         while GetTrainer()["state"] != GameState.OVERWORLD:
             continue
