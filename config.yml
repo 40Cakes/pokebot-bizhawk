@@ -118,10 +118,10 @@ log: true
 # Discord Webhook settings
 discord:
   # Discord rich presence
-  # Display current location + phase stats on your Discord profile
-  rich_presence: true
+  # Display current location + total stats and encounters/h
+  rich_presence: false
   # Toggle ALL webhook messages on/off
-  messages: true
+  messages: false
   # Your default Discord webhook URL, WARNING: this webhook is SENSITIVE! Do not share this value with anyone!
   # If you leak your webhook, anyone will be able to post in your channel!
   webhook_url: https://discord.com/api/webhooks/XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -145,7 +145,7 @@ discord:
   # Example: "Achieved 10,000 total Seedot encounters!", "Achieved 20,000 total Seedot encounters!" etc.
   pokemon_encounter_milestones:
     enable: true
-    interval: 5000
+    interval: 10000
     ping_mode:
     ping_id:
     # Optional webhook (uncomment) to post this notification to a different channel (defaults to `webhook_url` if not set)
