@@ -4,6 +4,7 @@ import math
 import time
 import logging
 import pandas as pd
+import pydirectinput
 from threading import Thread
 from datetime import datetime
 
@@ -90,6 +91,7 @@ def GetEncounterRate():
                   datetime.strptime(encounter_logs[-len_encounter_logs]["time_encountered"], fmt)
                   ).total_seconds()) * len_encounter_logs)
             return encounter_rate
+        return 0
     except Exception as e:
         log.exception(str(e))
         return 0
@@ -146,25 +148,25 @@ def LogEncounter(pokemon: dict):
         stats["totals"]["encounters"] = stats["totals"].get("encounters", 0) + 1
         stats["totals"]["phase_encounters"] = stats["totals"].get("phase_encounters", 0) + 1
 
-        # Update Pokemon stats
+        # Update Pokémon stats
         stats["pokemon"][pokemon["name"]]["encounters"] = stats["pokemon"][pokemon["name"]].get("encounters", 0) + 1
         stats["pokemon"][pokemon["name"]]["phase_encounters"] = stats["pokemon"][pokemon["name"]].get("phase_encounters", 0) + 1
         stats["pokemon"][pokemon["name"]]["last_encounter_time_unix"] = time.time()
         stats["pokemon"][pokemon["name"]]["last_encounter_time_str"] = str(datetime.now())
 
-        # Pokemon phase highest shiny value
+        # Pokémon phase highest shiny value
         if not stats["pokemon"][pokemon["name"]].get("phase_highest_sv", None):
             stats["pokemon"][pokemon["name"]]["phase_highest_sv"] = pokemon["shinyValue"]
         else:
             stats["pokemon"][pokemon["name"]]["phase_highest_sv"] = max(pokemon["shinyValue"], stats["pokemon"][pokemon["name"]].get("phase_highest_sv", -1))
 
-        # Pokemon phase lowest shiny value
+        # Pokémon phase lowest shiny value
         if not stats["pokemon"][pokemon["name"]].get("phase_lowest_sv", None):
             stats["pokemon"][pokemon["name"]]["phase_lowest_sv"] = pokemon["shinyValue"]
         else:
             stats["pokemon"][pokemon["name"]]["phase_lowest_sv"] = min(pokemon["shinyValue"], stats["pokemon"][pokemon["name"]].get("phase_lowest_sv", 65536))
 
-        # Pokemon total lowest shiny value
+        # Pokémon total lowest shiny value
         if not stats["pokemon"][pokemon["name"]].get("total_lowest_sv", None):
             stats["pokemon"][pokemon["name"]]["total_lowest_sv"] = pokemon["shinyValue"]
         else:
@@ -186,19 +188,19 @@ def LogEncounter(pokemon: dict):
             stats["totals"]["phase_lowest_sv"] = pokemon["shinyValue"]
             stats["totals"]["phase_lowest_sv_pokemon"] = pokemon["name"]
 
-        # Pokemon highest phase IV record
+        # Pokémon highest phase IV record
         if not stats["pokemon"][pokemon["name"]].get("phase_highest_iv_sum") or pokemon["IVSum"] >= stats["pokemon"][pokemon["name"]].get("phase_highest_iv_sum", -1):
             stats["pokemon"][pokemon["name"]]["phase_highest_iv_sum"] = pokemon["IVSum"]
 
-        # Pokemon highest total IV record
+        # Pokémon highest total IV record
         if pokemon["IVSum"] >= stats["pokemon"][pokemon["name"]].get("total_highest_iv_sum", -1):
             stats["pokemon"][pokemon["name"]]["total_highest_iv_sum"] = pokemon["IVSum"]
 
-        # Pokemon lowest phase IV record
+        # Pokémon lowest phase IV record
         if not stats["pokemon"][pokemon["name"]].get("phase_lowest_iv_sum") or pokemon["IVSum"] <= stats["pokemon"][pokemon["name"]].get("phase_lowest_iv_sum", 999):
             stats["pokemon"][pokemon["name"]]["phase_lowest_iv_sum"] = pokemon["IVSum"]
 
-        # Pokemon lowest total IV record
+        # Pokémon lowest total IV record
         if pokemon["IVSum"] <= stats["pokemon"][pokemon["name"]].get("total_lowest_iv_sum", 999):
             stats["pokemon"][pokemon["name"]]["total_lowest_iv_sum"] = pokemon["IVSum"]
 
@@ -252,7 +254,7 @@ def LogEncounter(pokemon: dict):
             shiny_log["shiny_log"].append(log_obj)
             WriteFile(files["shiny_log"], json.dumps(shiny_log, indent=4, sort_keys=True))
 
-        # Same Pokemon encounter streak records
+        # Same Pokémon encounter streak records
         if len(encounter_log["encounter_log"]) > 1 and encounter_log["encounter_log"][-2]["pokemon_obj"]["name"] == pokemon["name"]:
             stats["totals"]["current_streak"] = stats["totals"].get("current_streak", 0) + 1
         else:
@@ -265,7 +267,7 @@ def LogEncounter(pokemon: dict):
             stats["pokemon"][pokemon["name"]]["shiny_encounters"] = stats["pokemon"][pokemon["name"]].get("shiny_encounters", 0) + 1
             stats["totals"]["shiny_encounters"] = stats["totals"].get("shiny_encounters", 0) + 1
 
-        # Pokemon shiny average
+        # Pokémon shiny average
         if stats["pokemon"][pokemon["name"]].get("shiny_encounters"):
             avg = int(math.floor(stats["pokemon"][pokemon["name"]]["encounters"] / stats["pokemon"][pokemon["name"]]["shiny_encounters"]))
             stats["pokemon"][pokemon["name"]]["shiny_average"] = f"1/{avg:,}"
@@ -297,12 +299,17 @@ def LogEncounter(pokemon: dict):
             stats["totals"].get("shiny_encounters", 0),
             stats["totals"].get("shiny_average", 0)))
 
+        if config["misc"]["obs"].get("enable_screenshot", None) and \
+        pokemon["shiny"]:
+            time.sleep(config["misc"].get("shiny_delay", 0))
+            for key in config["misc"]["obs"]["hotkey_screenshot"]:
+                pydirectinput.keyDown(key)
+            for key in reversed(config["misc"]["obs"]["hotkey_screenshot"]):
+                pydirectinput.keyUp(key)
+
         # Run custom code in CustomHooks in a thread
         custom_hooks = Thread(target=CustomHooks, args=(pokemon, stats))
         custom_hooks.start()
-
-        # Save stats file
-        WriteFile(files["totals"], json.dumps(stats, indent=4, sort_keys=True))
 
         if pokemon["shiny"]:
             # Total longest phase
@@ -330,7 +337,7 @@ def LogEncounter(pokemon: dict):
             stats["totals"].pop("phase_streak", None)
             stats["totals"].pop("phase_streak_pokemon", None)
 
-            # Reset Pokemon phase stats
+            # Reset Pokémon phase stats
             for pokemon["name"] in stats["pokemon"]:
                 stats["pokemon"][pokemon["name"]].pop("phase_encounters", None)
                 stats["pokemon"][pokemon["name"]].pop("phase_highest_sv", None)
@@ -338,8 +345,8 @@ def LogEncounter(pokemon: dict):
                 stats["pokemon"][pokemon["name"]].pop("phase_highest_iv_sum", None)
                 stats["pokemon"][pokemon["name"]].pop("phase_lowest_iv_sum", None)
 
-            # Save stats file
-            WriteFile(files["totals"], json.dumps(stats, indent=4, sort_keys=True))
+        # Save stats file
+        WriteFile(files["totals"], json.dumps(stats, indent=4, sort_keys=True))
 
         # Backup stats folder every n encounters
         if config["backup_stats"] > 0 and \
@@ -354,7 +361,7 @@ def LogEncounter(pokemon: dict):
 
 def EncounterPokemon(starter: bool = False):
     """
-    New Pokemon encountered, record stats + decide whether to catch/battle/flee
+    New Pokémon encountered, record stats + decide whether to catch/battle/flee
     :param starter: Boolean value of whether in starter mode
     :return: Boolean value of whether in battle
     """
@@ -376,7 +383,7 @@ def EncounterPokemon(starter: bool = False):
 
     pokemon = GetParty()[0] if starter else GetOpponent()
 
-    # Use the correct article when describing the Pokemon
+    # Use the correct article when describing the Pokémon
     # e.g. "A Poochyena", "An Anorith"
     article = "an" if pokemon["name"].lower()[0] in {"a", "e", "i", "o", "u"} else "a"
 
@@ -495,7 +502,7 @@ def EncounterPokemon(starter: bool = False):
                     PressButton("Down")
                     WaitFrames(15)
 
-                # Select target Pokemon and close out menu
+                # Select target Pokémon and close out menu
                 PressButton("A")
                 WaitFrames(60)
 

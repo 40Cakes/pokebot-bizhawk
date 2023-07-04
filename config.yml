@@ -136,7 +136,7 @@ discord:
   # Example: "Shiny Seedot encountered at Route 102! (+ summary of phase stats)"
   shiny_pokemon_encounter:
     enable: true
-    ping_mode:
+    ping_mode:  # user or role
     ping_id:
     # Optional webhook (uncomment) to post this notification to a different channel (defaults to `webhook_url` if not set)
     #webhook_url:
@@ -146,7 +146,7 @@ discord:
   pokemon_encounter_milestones:
     enable: true
     interval: 10000
-    ping_mode:
+    ping_mode:  # user or role
     ping_id:
     # Optional webhook (uncomment) to post this notification to a different channel (defaults to `webhook_url` if not set)
     #webhook_url:
@@ -156,7 +156,7 @@ discord:
   shiny_pokemon_encounter_milestones:
     enable: true
     interval: 5
-    ping_mode:
+    ping_mode:  # user or role
     ping_id:
     # Optional webhook (uncomment) to post this notification to a different channel (defaults to `webhook_url` if not set)
     #webhook_url:
@@ -166,20 +166,20 @@ discord:
   total_encounter_milestones:
     enable: true
     interval: 25000
-    ping_mode:
+    ping_mode:  # user or role
     ping_id:
     # Optional webhook (uncomment) to post this notification to a different channel (defaults to `webhook_url` if not set)
     #webhook_url:
 
   # Discord messages: Phase summary
   # Example: "Current phase has reached 8,192 encounters!" + a bunch of stats about the current phase
-  # Stats include phase IV sum records, phase SV records, same Pokemon streak, current total encounters and shinies
+  # Stats include phase IV sum records, phase SV records, same Pokémon streak, current total encounters and shinies
   phase_summary:
     enable: true
     # Example (default config): first notification will be at 8,192 encounters, then at 10,000, 15,000, 20,000, 25,000 etc.
     first_interval: 8192
     consequent_interval: 5000
-    ping_mode:
+    ping_mode:  # user or role
     ping_id:
     # Optional webhook (uncomment) to post this notification to a different channel (defaults to `webhook_url` if not set)
     #webhook_url:
@@ -232,3 +232,31 @@ banned_moves:
 # Cheats
 # Perform "cheaty" actions such as peeking into eggs to check shininess, knowing instantly which route a roamer is on, instantly locate Feebas tiles etc.
 mem_hacks: false
+
+# Misc. settings
+# Only use these if you know what you're doing
+misc:
+  # Shiny Pokémon delay (delay catching a shiny encounter by n seconds)
+  shiny_delay: 0
+
+  # OBS settings
+  obs:
+    # When enabled, the bot will !!! emulate the hotkey keystrokes !!! so only use this on dedicated stream PCs
+    # Take stream screenshot after the `shiny_delay` to allow overlays to update
+    enable_screenshot: false
+    # Save the stream replay buffer after `replay_buffer_delay`
+    enable_replay_buffer: false
+
+    # Hotkey to save a screenshot of a stream (bot expects .png format if posting to Discord)
+    hotkey_screenshot: ["ctrl", "f11"]
+    # Hotkey to save the replay buffer of a stream
+    hotkey_replay_buffer: ["ctrl", "f12"]
+
+    # Wait n seconds after a shiny encounter is logged, before saving the replay buffer
+    # (runs in a separate thread and doesn't pause the bot itself)
+    replay_buffer_delay: 0
+    # OBS replays save directory (used to post stream screenshot to Discord)
+    replay_dir: "./stream/replays/"
+    # Webhook to post the shiny stream screenshot to Discord
+    # Leave empty to disable posting
+    webhook_url:

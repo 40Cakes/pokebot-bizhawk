@@ -123,8 +123,8 @@ HiddenPowers = [
 def EnrichMonData(pokemon: dict):
     """
     Function to add information to the pokemon data extracted from Bizhawk
-    :param pokemon: Pokemon data to enrich
-    :return: Enriched Pokemon data or None if failed
+    :param pokemon: Pokémon data to enrich
+    :return: Enriched Pokémon data or None if failed
     """
     try:
         if pokemon["speciesName"].isalpha():
@@ -175,7 +175,7 @@ def EnrichMonData(pokemon: dict):
             if len(pokemon["type"]) == 2:
                 pokemon["type_2"] = pokemon["type"][1]
 
-            # Add move data to Pokemon (includes move type, power, PP etc.)
+            # Add move data to Pokémon (includes move type, power, PP etc.)
             pokemon["enrichedMoves"] = []
             for move in pokemon["moves"]:
                 pokemon["enrichedMoves"].append(move_list[move])

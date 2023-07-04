@@ -89,8 +89,8 @@ def BagMenu(category: str, item: str):
 
 def PickupItems():
     """
-    If using a team of Pokemon with the ability "pickup", this function will take the items from the pokemon in
-    your party if 3 or more Pokemon have an item
+    If using a team of Pokémon with the ability "pickup", this function will take the items from the pokemon in
+    your party if 3 or more Pokémon have an item
     """
     if GetTrainer()["state"] != GameState.OVERWORLD:
         return
@@ -112,12 +112,12 @@ def PickupItems():
         return
 
     WaitFrames(60)  # Wait for animations
-    StartMenu("pokemon")  # Open Pokemon menu
+    StartMenu("pokemon")  # Open Pokémon menu
     WaitFrames(65)
 
     for pokemon in GetParty():
         if pokemon["speciesName"] in pickup_pokemon and pokemon["heldItem"] != 0:
-            # Take the item from the pokemon
+            # Take the item from the Pokémon
             ButtonCombo(["A", 15, "Up", 15, "Up", 15, "A", 15, "Down", 15, "A", 75, "B"])
             item_count -= 1
 
@@ -162,7 +162,7 @@ def ResetGame():
 def CatchPokemon():
     """
     Function to catch pokemon
-    :return: Boolean value of whether Pokemon was successfully captured
+    :return: Boolean value of whether Pokémon was successfully captured
     """
     opponent = GetOpponent()
     try:

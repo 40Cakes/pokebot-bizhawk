@@ -1,5 +1,10 @@
+import os
+import glob
+import time
 import random
 import logging
+import pydirectinput
+from threading import Thread
 
 from modules.Config import GetConfig
 from modules.Discord import DiscordMessage
@@ -83,7 +88,7 @@ def CustomHooks(pokemon: object, stats: object):
                         "Shiny {} Encounters".format(pokemon["name"]): "{:,}".format(stats["pokemon"][pokemon["name"]].get("shiny_encounters", 0)),
                         "{} Phase Encounters".format(pokemon["name"]): "{:,}".format(stats["pokemon"][pokemon["name"]].get("phase_encounters", 0)),
                         "Phase Encounters": "{:,}".format(stats["totals"].get("phase_encounters", 0)),
-                        "Encounter Rate": "{:,} encounters/h".format(GetEncounterRate),
+                        "Encounter Rate": "{:,} encounters/h".format(GetEncounterRate()),
                         "Phase IV Sum Records": "{:,} IV {} :arrow_up:|:arrow_down: {:,} IV {}".format(
                                                 stats["totals"].get("phase_highest_iv_sum", 0),
                                                 stats["totals"].get("phase_highest_iv_sum_pokemon", "N/A"),
@@ -236,5 +241,37 @@ def CustomHooks(pokemon: object, stats: object):
                         "Total Shiny Encounters": "{:,}".format(stats["totals"].get("shiny_encounters", 0))},
                     embed_footer=f"PokéBot ID: {config['bot_instance_id']}",
                     embed_color="D70040")
+        except Exception as e:
+            log.exception(str(e))
+
+        try:
+            # Post the most recent OBS stream screenshot to Discord
+            # (screenshot is taken in Stats.py before phase resets)
+            if config["misc"]["obs"].get("webhook_url", None) and pokemon["shiny"]:
+                def DiscordScreenshot():
+                    time.sleep(3) # Give the screenshot some time to save to disk
+                    images = glob.glob("{}*.png".format(config["misc"]["obs"]["replay_dir"]))
+                    image = max(images, key=os.path.getctime)
+                    DiscordMessage(
+                        webhook_url=config["misc"]["obs"].get("webhook_url", None),
+                        image=image)
+                # Run in a thread to not hold up other messages
+                discord_screenshot = Thread(target=DiscordScreenshot)
+                discord_screenshot.start()
+        except Exception as e:
+            log.exception(str(e))
+
+        try:
+            # Save OBS replay buffer n seconds after encountering a shiny
+            if config["misc"]["obs"]["enable_replay_buffer"] and pokemon["shiny"]:
+                def ReplayBuffer():
+                    time.sleep(config["misc"]["obs"].get("replay_buffer_delay", 0))
+                    for key in config["misc"]["obs"]["hotkey_replay_buffer"]:
+                        pydirectinput.keyDown(key)
+                    for key in reversed(config["misc"]["obs"]["hotkey_replay_buffer"]):
+                        pydirectinput.keyUp(key)
+                # Run in a thread to not hold up other messages
+                replay_buffer = Thread(target=ReplayBuffer)
+                replay_buffer.start()
         except Exception as e:
             log.exception(str(e))
