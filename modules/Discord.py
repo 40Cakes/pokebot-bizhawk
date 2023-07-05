@@ -36,8 +36,8 @@ def DiscordMessage(webhook_url: str = None,
                     embed_obj.add_embed_field(name=key, value=value, inline=False)
             if embed_thumbnail:
                 with open(embed_thumbnail, "rb") as f:
-                    webhook.add_file(file=f.read(), filename='embed_thumb.png')
-                embed_obj.set_thumbnail(url='attachment://embed_thumb.png')
+                    webhook.add_file(file=f.read(), filename='thumb.png')
+                embed_obj.set_thumbnail(url='attachment://thumb.png')
             if embed_image:
                 with open(embed_image, "rb") as f:
                     webhook.add_file(file=f.read(), filename='embed.png')
@@ -68,8 +68,10 @@ def DiscordRichPresence():
         while True:
             try:
                 RPC.update(
-                    state="At {}".format(GetEncounterLog()["encounter_log"][-1]["pokemon_obj"]["metLocationName"]),
-                    details="{:,}/{:,}✨ | {:,}/h".format(
+                    state="{} | {}".format(
+                            GetEncounterLog()["encounter_log"][-1]["pokemon_obj"]["metLocationName"],
+                            GetEmu()["detectedGame"]),
+                    details="{:,} ({:,}✨) | {:,}/h".format(
                             GetStats()["totals"].get("encounters", 0),
                             GetStats()["totals"].get("shiny_encounters", 0),
                             GetEncounterRate()),

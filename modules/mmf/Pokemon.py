@@ -127,10 +127,8 @@ def EnrichMonData(pokemon: dict):
     :return: Enriched Pokémon data or None if failed
     """
     try:
-        if pokemon["speciesName"].isalpha():
+        if pokemon["name"].isalpha():
             trainer = GetTrainer()
-            # Capitalise name
-            pokemon["name"] = pokemon["speciesName"].capitalize()
             # Human readable location name
             pokemon["metLocationName"] = location_list[pokemon["metLocation"]]
             # Human readable pokemon types

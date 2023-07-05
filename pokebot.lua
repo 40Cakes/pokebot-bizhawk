@@ -134,7 +134,7 @@ function readMonData(address)
 	end
 	
 	mon.species = (ss0[0] & 0xFFFF) + 1
-	mon.speciesName = PokemonNames[mon.species]
+	mon.name = PokemonNames[mon.species]
 	mon.heldItem = ss0[0] >> 16
 	mon.experience = ss0[1]
 	mon.ppBonuses = ss0[2] & 0xFF

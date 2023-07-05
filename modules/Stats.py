@@ -1,3 +1,4 @@
+import copy
 import os
 import json
 import math
@@ -26,6 +27,7 @@ config = GetConfig()
 
 os.makedirs("stats", exist_ok=True)
 
+session_encounters = 0
 files = {
     "encounter_log": "stats/encounter_log.json",
     "shiny_log": "stats/shiny_log.json",
@@ -83,13 +85,12 @@ def GetEncounterRate():
     try:
         fmt = "%Y-%m-%d %H:%M:%S.%f"
         encounter_logs = GetEncounterLog()["encounter_log"]
-        len_encounter_logs = len(encounter_logs)
-        if len_encounter_logs > 1:
+        if len(encounter_logs) > 1 and session_encounters > 1:
             encounter_rate = int(
                 (3600 /
                  (datetime.strptime(encounter_logs[-1]["time_encountered"], fmt) -
-                  datetime.strptime(encounter_logs[-len_encounter_logs]["time_encountered"], fmt)
-                  ).total_seconds()) * len_encounter_logs)
+                  datetime.strptime(encounter_logs[-min(session_encounters, 250)]["time_encountered"], fmt)
+                  ).total_seconds()) * (min(session_encounters, 250)))
             return encounter_rate
         return 0
     except Exception as e:
@@ -129,6 +130,8 @@ def OpponentChanged():
 
 
 def LogEncounter(pokemon: dict):
+    global session_encounters
+
     try:
         # Load stats from totals.json file
         stats = GetStats()
@@ -299,17 +302,17 @@ def LogEncounter(pokemon: dict):
             stats["totals"].get("shiny_encounters", 0),
             stats["totals"].get("shiny_average", 0)))
 
+        time.sleep(config["misc"].get("shiny_delay", 0))
         if config["misc"]["obs"].get("enable_screenshot", None) and \
         pokemon["shiny"]:
-            time.sleep(config["misc"].get("shiny_delay", 0))
             for key in config["misc"]["obs"]["hotkey_screenshot"]:
                 pydirectinput.keyDown(key)
             for key in reversed(config["misc"]["obs"]["hotkey_screenshot"]):
                 pydirectinput.keyUp(key)
 
         # Run custom code in CustomHooks in a thread
-        custom_hooks = Thread(target=CustomHooks, args=(pokemon, stats))
-        custom_hooks.start()
+        hook = (copy.deepcopy(pokemon), copy.deepcopy(stats))
+        Thread(target=CustomHooks, args=(hook,)).start()
 
         if pokemon["shiny"]:
             # Total longest phase
@@ -347,6 +350,7 @@ def LogEncounter(pokemon: dict):
 
         # Save stats file
         WriteFile(files["totals"], json.dumps(stats, indent=4, sort_keys=True))
+        session_encounters += 1
 
         # Backup stats folder every n encounters
         if config["backup_stats"] > 0 and \
@@ -402,11 +406,11 @@ def EncounterPokemon(starter: bool = False):
         if not starter and not legendary_hunt and config["catch_shinies"]:
             blocked = GetBlockList()
             opponent = GetOpponent()
-            if opponent["speciesName"] in blocked["block_list"]:
+            if opponent["name"] in blocked["block_list"]:
                 log.info("---- Pokemon is in list of non-catpures. Fleeing battle ----")
                 if config["discord"]["messages"]:
                     try:
-                        content = f"Encountered shiny {opponent['speciesName']}... but catching this species is disabled. Fleeing battle!"
+                        content = f"Encountered shiny {opponent['name']}... but catching this species is disabled. Fleeing battle!"
                         webhook = DiscordWebhook(url=config["discord"]["webhook_url"], content=content)
                         webhook.execute()
                     except Exception as e:
@@ -484,7 +488,7 @@ def EncounterPokemon(starter: bool = False):
 
                 lead = GetParty()[lead_idx]
                 if lead is not None:
-                    log.info(f"Replacing lead battler with {lead['speciesName']} (Party slot {lead_idx})")
+                    log.info(f"Replacing lead battler with {lead['name']} (Party slot {lead_idx})")
 
                 PressButton("A")
                 WaitFrames(60)

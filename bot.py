@@ -154,13 +154,11 @@ try:
 
     if config["discord"]["rich_presence"]:
         from modules.Discord import DiscordRichPresence
-        discord_rich_presence = Thread(target=DiscordRichPresence)
-        discord_rich_presence.start()
+        Thread(target=DiscordRichPresence).start()
 
     if config["server"]["enable"]:
         from modules.FlaskServer import httpServer
-        server = Thread(target=httpServer)
-        server.start()
+        Thread(target=httpServer).start()
 
     if config["ui"]["enable"]:
         import webview

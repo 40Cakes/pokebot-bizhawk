@@ -101,11 +101,11 @@ def PickupItems():
     for i, pokemon in enumerate(GetParty()):
         held_item = pokemon['heldItem']
 
-        if pokemon["speciesName"] in pickup_pokemon and held_item != 0:
+        if pokemon["name"] in pickup_pokemon and held_item != 0:
             item_count += 1
 
             pickup_mon_count += 1
-            log.info(f"Pokemon {i}: {pokemon['speciesName']} has item: {item_list[held_item]}")
+            log.info(f"Pokemon {i}: {pokemon['name']} has item: {item_list[held_item]}")
 
     if item_count < config["pickup_threshold"]:
         log.info(f"Party has {item_count} item(s), won't collect until at threshold {config['pickup_threshold']}")
@@ -116,7 +116,7 @@ def PickupItems():
     WaitFrames(65)
 
     for pokemon in GetParty():
-        if pokemon["speciesName"] in pickup_pokemon and pokemon["heldItem"] != 0:
+        if pokemon["name"] in pickup_pokemon and pokemon["heldItem"] != 0:
             # Take the item from the Pokémon
             ButtonCombo(["A", 15, "Up", 15, "Up", 15, "A", 15, "Down", 15, "A", 75, "B"])
             item_count -= 1
@@ -226,8 +226,8 @@ def CatchPokemon():
                 can_catch = False
 
                 # Check if current species has a preferred ball
-                if opponent["speciesName"] in config["pokeball_override"]:
-                    species_rule = config["pokeball_override"][opponent["speciesName"]]
+                if opponent["name"] in config["pokeball_override"]:
+                    species_rule = config["pokeball_override"][opponent["name"]]
 
                     for ball in species_rule:
                         if BagMenu(category="pokeballs", item=ball):
