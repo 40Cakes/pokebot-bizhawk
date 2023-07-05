@@ -158,6 +158,9 @@ def EnrichMonData(pokemon: dict):
                                         ^ trainer["tid"] ^ trainer["sid"])[2:], 2)
             pokemon["shiny"] = True if pokemon["shinyValue"] < 8 else False
 
+            #pokemon["shinyValue"] = 0  # Testing
+            #pokemon["shiny"] = True  # Testing
+
             # Copy move info out of an array (simplifies CSV logging)
             # TODO look at flattening the array instead of doing this
             pokemon["move_1"] = pokemon["moves"][0]
