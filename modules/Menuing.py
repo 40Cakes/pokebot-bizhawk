@@ -89,8 +89,8 @@ def BagMenu(category: str, item: str):
 
 def PickupItems():
     """
-    If using a team of Pokemon with the ability "pickup", this function will take the items from the pokemon in
-    your party if 3 or more Pokemon have an item
+    If using a team of Pokémon with the ability "pickup", this function will take the items from the pokemon in
+    your party if 3 or more Pokémon have an item
     """
     if GetTrainer()["state"] != GameState.OVERWORLD:
         return
@@ -101,23 +101,23 @@ def PickupItems():
     for i, pokemon in enumerate(GetParty()):
         held_item = pokemon['heldItem']
 
-        if pokemon["speciesName"] in pickup_pokemon and held_item != 0:
+        if pokemon["name"] in pickup_pokemon and held_item != 0:
             item_count += 1
 
             pickup_mon_count += 1
-            log.info(f"Pokemon {i}: {pokemon['speciesName']} has item: {item_list[held_item]}")
+            log.info(f"Pokemon {i}: {pokemon['name']} has item: {item_list[held_item]}")
 
     if item_count < config["pickup_threshold"]:
         log.info(f"Party has {item_count} item(s), won't collect until at threshold {config['pickup_threshold']}")
         return
 
     WaitFrames(60)  # Wait for animations
-    StartMenu("pokemon")  # Open Pokemon menu
+    StartMenu("pokemon")  # Open Pokémon menu
     WaitFrames(65)
 
     for pokemon in GetParty():
-        if pokemon["speciesName"] in pickup_pokemon and pokemon["heldItem"] != 0:
-            # Take the item from the pokemon
+        if pokemon["name"] in pickup_pokemon and pokemon["heldItem"] != 0:
+            # Take the item from the Pokémon
             ButtonCombo(["A", 15, "Up", 15, "Up", 15, "A", 15, "Down", 15, "A", 75, "B"])
             item_count -= 1
 
@@ -162,7 +162,7 @@ def ResetGame():
 def CatchPokemon():
     """
     Function to catch pokemon
-    :return: Boolean value of whether Pokemon was successfully captured
+    :return: Boolean value of whether Pokémon was successfully captured
     """
     opponent = GetOpponent()
     try:
@@ -170,10 +170,10 @@ def CatchPokemon():
             ReleaseAllInputs()
             ButtonCombo(["B", "Up", "Left"])  # Press B + up + left until FIGHT menu is visible
 
-        if config["manual_catch"]:
+        if not config["auto_catch"]:
             input(
-                "Pausing bot for manual catch (don't forget to pause pokebot.lua script so you can provide inputs). "
-                "Press Enter to continue...")
+                "Pausing bot for manual catch (pause pokebot.lua script so you can control your character). "
+                "Press Enter to continue once pokebot.lua is running again...")
             return True
         else:
             log.info("Attempting to catch Pokemon...")
@@ -226,8 +226,8 @@ def CatchPokemon():
                 can_catch = False
 
                 # Check if current species has a preferred ball
-                if opponent["speciesName"] in config["pokeball_override"]:
-                    species_rule = config["pokeball_override"][opponent["speciesName"]]
+                if opponent["name"] in config["pokeball_override"]:
+                    species_rule = config["pokeball_override"][opponent["name"]]
 
                     for ball in species_rule:
                         if BagMenu(category="pokeballs", item=ball):

@@ -1,14 +1,10 @@
-import logging
-
 import cv2
-from PIL import ImageFile
+import logging
 
 from modules.mmf.Emu import GetEmu
 from modules.mmf.Screenshot import GetScreenshot
 
 log = logging.getLogger(__name__)
-
-ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 
 def DetectTemplate(file: str):

@@ -1,6 +1,6 @@
-import logging
 import os
 import sys
+import logging
 from logging.handlers import RotatingFileHandler
 from threading import Thread
 
@@ -15,6 +15,7 @@ from modules.gen3.Legendaries import ModeGroudon, ModeKyogre, ModeRayquaza, Mode
 from modules.gen3.Starters import ModeStarters
 from modules.mmf.Emu import GetEmu
 from modules.mmf.Trainer import GetTrainer
+
 
 LogLevel = logging.INFO  # use logging.DEBUG while testing
 config = GetConfig()
@@ -151,21 +152,20 @@ try:
     main = Thread(target=MainLoop)
     main.start()
 
+    if config["discord"]["rich_presence"]:
+        from modules.Discord import DiscordRichPresence
+        Thread(target=DiscordRichPresence).start()
+
     if config["server"]["enable"]:
         from modules.FlaskServer import httpServer
-
-        server = Thread(target=httpServer)
-        server.start()
+        Thread(target=httpServer).start()
 
     if config["ui"]["enable"]:
         import webview
-
-
         def OnWindowClose():
             ReleaseAllInputs()
             log.info("Dashboard closed on user input...")
             os._exit(1)
-
 
         url = f"http://{config['server']['ip']}:{config['server']['port']}/dashboard"
         window = webview.create_window("PokeBot", url=url, width=config["ui"]["width"], height=config["ui"]["height"],

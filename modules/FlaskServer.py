@@ -1,7 +1,6 @@
 import cv2
 import json
 import logging
-from datetime import datetime
 
 import flask
 from flask import Flask, abort, jsonify, make_response, request
@@ -10,7 +9,7 @@ from flask_cors import CORS
 from modules.Config import GetConfig
 from modules.CatchBlockList import GetBlockList, BlockListManagement
 from modules.Files import ReadFile
-from modules.Stats import GetEncounterLog, GetShinyLog, GetStats
+from modules.Stats import GetEncounterLog, GetEncounterRate, GetShinyLog, GetStats
 from modules.mmf.Emu import GetEmu
 from modules.mmf.Pokemon import GetParty
 from modules.mmf.Screenshot import GetScreenshot
@@ -69,23 +68,14 @@ def httpServer():
                     except:
                         abort(503)
                 return jsonify(encounter)
-
             abort(503)
 
-        fmt = "%Y-%m-%d %H:%M:%S.%f"
         @server.route("/encounter_rate", methods=["GET"])
         def EncounterRate():
-            default = {"encounter_rate": "-"}
-            encounter_logs = GetEncounterLog()["encounter_log"]
-            if len(encounter_logs) > 10:
-                encounter_rate = int(
-                    (3600 /
-                    (datetime.strptime(encounter_logs[-1]["time_encountered"], fmt) -
-                    datetime.strptime(encounter_logs[-10]["time_encountered"], fmt)
-                    ).total_seconds()) * 10)
-                return jsonify({"encounter_rate": encounter_rate})
-            else:
-                return jsonify(default)
+            try:
+                return jsonify({"encounter_rate": GetEncounterRate()})
+            except:
+                return jsonify({"encounter_rate": "-"})
             abort(503)
 
         @server.route("/emu", methods=["GET"])
@@ -104,8 +94,9 @@ def httpServer():
 
         @server.route("/encounter_log", methods=["GET"])
         def EncounterLog():
-            encounter_log = GetEncounterLog()
-            if encounter_log:
+            recent_encounter_log = GetEncounterLog()["encounter_log"][-25:]
+            if recent_encounter_log:
+                encounter_log = {"encounter_log": recent_encounter_log}
                 return jsonify(encounter_log)
             abort(503)
 

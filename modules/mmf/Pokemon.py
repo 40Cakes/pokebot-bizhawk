@@ -123,14 +123,12 @@ HiddenPowers = [
 def EnrichMonData(pokemon: dict):
     """
     Function to add information to the pokemon data extracted from Bizhawk
-    :param pokemon: Pokemon data to enrich
-    :return: Enriched Pokemon data or None if failed
+    :param pokemon: Pokémon data to enrich
+    :return: Enriched Pokémon data or None if failed
     """
     try:
-        if pokemon["speciesName"].isalpha():
+        if pokemon["name"].isalpha():
             trainer = GetTrainer()
-            # Capitalise name
-            pokemon["name"] = pokemon["speciesName"].capitalize()
             # Human readable location name
             pokemon["metLocationName"] = location_list[pokemon["metLocation"]]
             # Human readable pokemon types
@@ -160,6 +158,9 @@ def EnrichMonData(pokemon: dict):
                                         ^ trainer["tid"] ^ trainer["sid"])[2:], 2)
             pokemon["shiny"] = True if pokemon["shinyValue"] < 8 else False
 
+            #pokemon["shinyValue"] = 0  # Testing
+            #pokemon["shiny"] = True  # Testing
+
             # Copy move info out of an array (simplifies CSV logging)
             # TODO look at flattening the array instead of doing this
             pokemon["move_1"] = pokemon["moves"][0]
@@ -175,7 +176,7 @@ def EnrichMonData(pokemon: dict):
             if len(pokemon["type"]) == 2:
                 pokemon["type_2"] = pokemon["type"][1]
 
-            # Add move data to Pokemon (includes move type, power, PP etc.)
+            # Add move data to Pokémon (includes move type, power, PP etc.)
             pokemon["enrichedMoves"] = []
             for move in pokemon["moves"]:
                 pokemon["enrichedMoves"].append(move_list[move])

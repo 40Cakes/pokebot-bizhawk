@@ -23,6 +23,7 @@ config_schema = {
         "johto_starter": {"type": "string"},
         "fossil": {"type": "string"},
         "deoxys_puzzle_solved": {"type": "boolean"},
+        "backup_stats": {"type": "number"},
         "ui": {"type": "object",
                "properties": {
                    "enable": {"type": "boolean"},
@@ -39,17 +40,42 @@ config_schema = {
                    },
         "discord": {"type": "object",
                     "properties": {
-                        "enable": {"type": "boolean"},
+                        "rich_presence": {"type": "boolean"},
+                        "messages": {"type": "boolean"},
                         "webhook_url": {"type": "string"},
-                        "iv_format": {"type": "string"}
-                    }
-                    },
-        "periodic_save": {"type": "boolean"},
-        "save_every_x_encounters": {"type": "number"},
-        "manual_catch": {"type": "boolean"},
+                        "iv_format": {"type": "string"},
+                        "shiny_pokemon_encounter": {"type": "object",
+                            "properties": {
+                                "enable": {"type": "boolean"},
+                                "interval": {"type": "number"}
+                            }},
+                        "pokemon_encounter_milestones": {"type": "object",
+                            "properties": {
+                                "enable": {"type": "boolean"},
+                                "interval": {"type": "number"}
+                            }},
+                        "shiny_pokemon_encounter_milestones": {"type": "object",
+                            "properties": {
+                                "enable": {"type": "boolean"},
+                                "interval": {"type": "number"}
+                            }},
+                        "total_encounter_milestones": {"type": "object",
+                            "properties": {
+                                "enable": {"type": "boolean"},
+                                "interval": {"type": "number"}
+                            }},
+                        "phase_summary": {"type": "object",
+                            "properties": {
+                                "enable": {"type": "boolean"},
+                                "first_interval": {"type": "number"},
+                                "consequent_interval": {"type": "number"}
+                            }}
+                    }},
+        "autosave_encounters": {"type": "number"},
+        "auto_catch": {"type": "boolean"},
         "use_spore": {"type": "boolean"},
         "catch_shinies": {"type": "boolean"},
-        "battle_others": {"type": "boolean"},
+        "battle": {"type": "boolean"},
         "pokeball_override": {"type": "object"},
         "cycle_lead_pokemon": {"type": "boolean"},
         "save_game_after_catch": {"type": "boolean"},
