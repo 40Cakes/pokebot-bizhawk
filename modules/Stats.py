@@ -302,7 +302,8 @@ def LogEncounter(pokemon: dict):
             stats["totals"].get("shiny_encounters", 0),
             stats["totals"].get("shiny_average", 0)))
 
-        time.sleep(config["misc"].get("shiny_delay", 0))
+        if pokemon["shiny"]:
+            time.sleep(config["misc"].get("shiny_delay", 0))
         if config["misc"]["obs"].get("enable_screenshot", None) and \
         pokemon["shiny"]:
             for key in config["misc"]["obs"]["hotkey_screenshot"]:
