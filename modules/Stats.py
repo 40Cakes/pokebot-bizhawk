@@ -236,26 +236,7 @@ def LogEncounter(pokemon: dict):
             header = False if os.path.exists(f"{csvpath}{csvfile}") else True
             pokemondata.to_csv(f"{csvpath}{csvfile}", mode="a", encoding="utf-8", index=False, header=header)
 
-        # Log encounter to encounter_log
-        log_obj = {
-            "time_encountered": str(datetime.now()),
-            "pokemon_obj": pokemon,
-            "snapshot_stats": {
-                "phase_encounters": stats["totals"]["phase_encounters"],
-                "species_encounters": stats["pokemon"][pokemon["name"]]["encounters"],
-                "species_shiny_encounters": stats["pokemon"][pokemon["name"]].get("shiny_encounters", 0),
-                "total_encounters": stats["totals"]["encounters"],
-                "total_shiny_encounters": stats["totals"].get("shiny_encounters", 0),
-            }
-        }
         encounter_log = GetEncounterLog()
-        encounter_log["encounter_log"].append(log_obj)
-        encounter_log["encounter_log"] = encounter_log["encounter_log"][-250:]
-        WriteFile(files["encounter_log"], json.dumps(encounter_log, indent=4, sort_keys=True))
-        if pokemon["shiny"]:
-            shiny_log = GetShinyLog()
-            shiny_log["shiny_log"].append(log_obj)
-            WriteFile(files["shiny_log"], json.dumps(shiny_log, indent=4, sort_keys=True))
 
         # Same Pokémon encounter streak records
         if len(encounter_log["encounter_log"]) > 1 and encounter_log["encounter_log"][-2]["pokemon_obj"]["name"] == pokemon["name"]:
@@ -280,32 +261,71 @@ def LogEncounter(pokemon: dict):
             avg = int(math.floor(stats["totals"]["encounters"] / stats["totals"]["shiny_encounters"]))
             stats["totals"]["shiny_average"] = f"1/{avg:,}"
 
+        # Log encounter to encounter_log
+        log_obj = {
+            "time_encountered": str(datetime.now()),
+            "pokemon_obj": pokemon,
+            "snapshot_stats": {
+                "phase_encounters": stats["totals"]["phase_encounters"],
+                "species_encounters": stats["pokemon"][pokemon["name"]]["encounters"],
+                "species_shiny_encounters": stats["pokemon"][pokemon["name"]].get("shiny_encounters", 0),
+                "total_encounters": stats["totals"]["encounters"],
+                "total_shiny_encounters": stats["totals"].get("shiny_encounters", 0),
+            }
+        }
+        encounter_log["encounter_log"].append(log_obj)
+        encounter_log["encounter_log"] = encounter_log["encounter_log"][-250:]
+        WriteFile(files["encounter_log"], json.dumps(encounter_log, indent=4, sort_keys=True))
+        if pokemon["shiny"]:
+            shiny_log = GetShinyLog()
+            shiny_log["shiny_log"].append(log_obj)
+            WriteFile(files["shiny_log"], json.dumps(shiny_log, indent=4, sort_keys=True))
+
+        log.info(f"------------------ {pokemon['name']} ------------------")
+        article = "an" if pokemon["name"].lower()[0] in {"a", "e", "i", "o", "u"} else "a"
+        log.info("Encountered {} {} at {}".format(
+            article,
+            pokemon['name'],
+            pokemon['metLocationName']))
+        log.info("HP: {} | ATK: {} | DEF: {} | SPATK: {} | SPDEF: {} | SPE: {}".format(
+            pokemon['hpIV'],
+            pokemon['attackIV'],
+            pokemon['defenseIV'],
+            pokemon['spAttackIV'],
+            pokemon['spDefenseIV'],
+            pokemon['speedIV']))
+        log.info("Shiny Value (SV): {:,} (is {:,} < 8 = {})".format(
+            pokemon['shinyValue'],
+            pokemon['shinyValue'],
+            pokemon['shiny']))
         log.info("Phase encounters: {} | {} Phase Encounters: {}".format(
             stats["totals"]["phase_encounters"],
             pokemon["name"],
             stats["pokemon"][pokemon["name"]]["phase_encounters"]))
-
         log.info("{} Encounters: {:,} | Lowest {} SV seen this phase: {}".format(
             pokemon["name"],
             stats["pokemon"][pokemon["name"]]["encounters"],
             pokemon["name"],
             stats["pokemon"][pokemon["name"]]["phase_lowest_sv"]))
-
         log.info("Shiny {} Encounters: {:,} | {} Shiny Average: {}".format(
             pokemon["name"],
             stats["pokemon"][pokemon["name"]].get("shiny_encounters", 0),
             pokemon["name"],
             stats["pokemon"][pokemon["name"]].get("shiny_average", 0)))
-
         log.info("Total Encounters: {:,} | Total Shiny Encounters: {:,} | Total Shiny Average: {}".format(
             stats["totals"]["encounters"],
             stats["totals"].get("shiny_encounters", 0),
             stats["totals"].get("shiny_average", 0)))
+        log.info(f"--------------------------------------------------")
 
         if pokemon["shiny"]:
             time.sleep(config["misc"].get("shiny_delay", 0))
         if config["misc"]["obs"].get("enable_screenshot", None) and \
         pokemon["shiny"]:
+            # Throw out Pokemon for screenshot
+            while GetTrainer()["state"] != GameState.BATTLE:
+                PressButton("B")
+            WaitFrames(180)
             for key in config["misc"]["obs"]["hotkey_screenshot"]:
                 pydirectinput.keyDown(key)
             for key in reversed(config["misc"]["obs"]["hotkey_screenshot"]):
@@ -378,28 +398,15 @@ def EncounterPokemon(starter: bool = False):
 
     if starter:
         WaitFrames(30)
-    else:
-        for _ in range(250):
-            if GetTrainer()["state"] in [3, 255]:
-                break
 
     if GetTrainer()["state"] == GameState.OVERWORLD:
         return False
 
     pokemon = GetParty()[0] if starter else GetOpponent()
-
-    # Use the correct article when describing the Pokémon
-    # e.g. "A Poochyena", "An Anorith"
-    article = "an" if pokemon["name"].lower()[0] in {"a", "e", "i", "o", "u"} else "a"
-
-    log.info(f"------------------ {pokemon['name']} ------------------")
-    log.debug(pokemon)
-    log.info(f"Encountered {article} {pokemon['name']} at {pokemon['metLocationName']}")
-    log.info(f"HP: {pokemon['hpIV']} | ATK: {pokemon['attackIV']} | DEF: {pokemon['defenseIV']} | " 
-             f"SPATK: {pokemon['spAttackIV']} | SPDEF: {pokemon['spDefenseIV']} | SPE: {pokemon['speedIV']}")
-    log.info(f"Shiny Value (SV): {pokemon['shinyValue']:,} (is {pokemon['shinyValue']:,} < 8 = {pokemon['shiny']})")
     LogEncounter(pokemon)
-    log.info(f"----------------------------------------")
+
+    while GetTrainer()["state"] != GameState.BATTLE:
+        PressButton("B")
 
     replace_battler = False
 

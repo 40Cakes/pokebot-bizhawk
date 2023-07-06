@@ -13,6 +13,8 @@ function header_stats() {
             stats["totals"]["phase_encounters"].toLocaleString()
         );
         $("#nav_stat_total").text(stats["totals"]["encounters"].toLocaleString());
+
+        stats["totals"]["shiny_encounters"] = (stats["totals"]["shiny_encounters"] === undefined) ? 0 : stats["totals"]["shiny_encounters"];
         $("#nav_stat_shiny").text(
             stats["totals"]["shiny_encounters"].toLocaleString()
         );

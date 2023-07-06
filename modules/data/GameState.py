@@ -6,6 +6,6 @@ class GameState(IntEnum):
     MISC_MENU = 255
     BAG_MENU = 0
     # Needs further investigation; these values have multiple meanings
-    # BATTLE = 3
+    BATTLE = 3
     # BATTLE_2 = 2
     # FOE_DEFEATED = 5

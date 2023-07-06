@@ -139,31 +139,33 @@ function encounter() {
                 get_type_image(encounter["type"][o]) +
                 String(encounter["type"][o] != 0 && arrayLength != 1 ? "" : " ");
         }
+
         $("#opponent_type").html(types);
 
-        if (encounter["stats"]) {
-            $("#opponent_phase_encounters").text(
-                encounter["stats"]["phase_encounters"].toLocaleString()
-            );
-            $("#opponent_encounters").text(
-                encounter["stats"]["encounters"].toLocaleString()
-            );
-            $("#opponent_shiny_encounters").text(
-                encounter["stats"]["shiny_encounters"].toLocaleString()
-            );
-            $("#opponent_shiny_average").text(
-                encounter["stats"]["shiny_average"]
-            );
-            $("#opponent_phase_lowest_sv").text(
-                encounter["stats"]["phase_lowest_sv"].toLocaleString()
-            );
-        } else {
-            $("#opponent_encounters").text("-");
-            $("#opponent_phase_encounters").text("-");
-            $("#opponent_shiny_encounters").text("-");
-            $("#opponent_shiny_average").text("-");
-            $("#opponent_phase_lowest_sv").text("-");
-        }
+        encounter["stats"]["phase_encounters"] = (encounter["stats"]["phase_encounters"] === undefined) ? 0 : encounter["stats"]["phase_encounters"];
+        $("#opponent_phase_encounters").text(
+            encounter["stats"]["phase_encounters"].toLocaleString()
+        );
+
+        encounter["stats"]["encounters"] = (encounter["stats"]["encounters"] === undefined) ? 0 : encounter["stats"]["encounters"];
+        $("#opponent_encounters").text(
+            encounter["stats"]["encounters"].toLocaleString()
+        );
+
+        encounter["stats"]["shiny_encounters"] = (encounter["stats"]["shiny_encounters"] === undefined) ? 0 : encounter["stats"]["shiny_encounters"];
+        $("#opponent_shiny_encounters").text(
+            encounter["stats"]["shiny_encounters"].toLocaleString()
+        );
+
+        encounter["stats"]["shiny_average"] = (encounter["stats"]["shiny_average"] === undefined) ? "-" : encounter["stats"]["shiny_average"];
+        $("#opponent_shiny_average").text(
+            encounter["stats"]["shiny_average"]
+        );
+
+        encounter["stats"]["phase_lowest_sv"] = (encounter["stats"]["phase_lowest_sv"] === undefined) ? 65535 : encounter["stats"]["phase_lowest_sv"];
+        $("#opponent_phase_lowest_sv").text(
+            encounter["stats"]["phase_lowest_sv"].toLocaleString()
+        );
 
         if (encounter["stats"]["phase_lowest_sv"] < 8) {
             $("#opponent_phase_lowest_sv").css("color", "green");
@@ -302,19 +304,32 @@ function stats() {
         format: "json",
         timeout: 2500,
     }).done(function(stats) {
+        stats["totals"]["phase_encounters"] = (stats["totals"]["phase_encounters"] === undefined) ? 0 : stats["totals"]["phase_encounters"];
         $("#stats_phase_encounters").text(
             stats["totals"]["phase_encounters"].toLocaleString()
         );
+
+        stats["totals"]["shiny_encounters"] = (stats["totals"]["shiny_encounters"] === undefined) ? 0 : stats["totals"]["shiny_encounters"];
         $("#stats_shiny_encounters").text(
             stats["totals"]["shiny_encounters"].toLocaleString()
         );
+
+        stats["totals"]["shiny_encounters"] = (stats["totals"]["shiny_encounters"] === undefined) ? 0 : stats["totals"]["shiny_encounters"];
         $("#stats_total_encounters").text(
             stats["totals"]["encounters"].toLocaleString()
         );
-        $("#stats_shiny_average").text(stats["totals"]["shiny_average"]);
+
+        stats["totals"]["shiny_average"] = (stats["totals"]["shiny_average"] === undefined) ? "-" : stats["totals"]["shiny_average"];
+        $("#stats_shiny_average").text(
+            stats["totals"]["shiny_average"]
+        );
+
+        stats["totals"]["shortest_phase_encounters"] = (stats["totals"]["shortest_phase_encounters"] === undefined) ? 0 : stats["totals"]["shortest_phase_encounters"];
         $("#stats_shortest_phase").text(
             stats["totals"]["shortest_phase_encounters"].toLocaleString()
         );
+
+        stats["totals"]["longest_phase_encounters"] = (stats["totals"]["longest_phase_encounters"] === undefined) ? 0 : stats["totals"]["longest_phase_encounters"];
         $("#stats_longest_phase").text(
             stats["totals"]["longest_phase_encounters"].toLocaleString()
         );
