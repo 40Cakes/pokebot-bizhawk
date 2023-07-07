@@ -89,6 +89,7 @@ def ModeRayquaza():
 
         # Wait until battle is over
         while GetTrainer()["state"] != GameState.OVERWORLD:
+            WaitFrames(1)
             continue
 
         # Exit and re-enter
@@ -191,6 +192,7 @@ def ModeSouthernIsland():
 
         # Wait until battle is over
         while GetTrainer()["state"] != GameState.OVERWORLD:
+            WaitFrames(1)
             continue
 
         # Exit and re-enter
@@ -327,3 +329,63 @@ def ModeDeoxysResets():
                 EncounterPokemon()
             break
         continue
+
+
+def ModeHoOh():
+    if not PlayerOnMap(MapDataEnum.NAVEL_ROCK_I.value) and GetTrainer()["posX"] == 12:
+        log.info("Please place the player on the steps in front of Ho-oh at Navel Rock and restart the script.")
+        os._exit(1)
+
+    while True:
+        while not OpponentChanged():
+            if GetTrainer()["posY"] == 9:
+                break
+            ButtonCombo(["Up"])
+        else:
+            EncounterPokemon()
+
+        # Wait until battle is over
+        while GetTrainer()["state"] != GameState.OVERWORLD:
+            WaitFrames(1)
+            continue
+
+        # Exit and re-enter
+        PressButton("B")
+        FollowPath([
+            (12, 20),
+            (99, 20, MapDataEnum.NAVEL_ROCK_H.value),
+            (4, 5),
+            (99, 5, MapDataEnum.NAVEL_ROCK_I.value),
+            (12, 20),
+            (12, 10)
+        ])
+
+def ModeLugia():
+    trainer = GetTrainer()
+    if not PlayerOnMap(MapDataEnum.NAVEL_ROCK_U.value) and trainer["posX"] == 11:
+        log.info("Please place the player on the steps in front of Lugia at Navel Rock and restart the script.")
+        os._exit(1)
+
+    while True:
+        while not OpponentChanged():
+            if GetTrainer()["posY"] < 14:
+                break
+            ButtonCombo(["A", "Up"])
+        else:
+            EncounterPokemon()
+
+        # Wait until battle is over
+        while GetTrainer()["state"] != GameState.OVERWORLD:
+            WaitFrames(1)
+            continue
+
+        # Exit and re-enter
+        PressButton("B")
+        FollowPath([
+            (11, 19),
+            (99, 19, MapDataEnum.NAVEL_ROCK_T.value),
+            (4, 5),
+            (99, 5, MapDataEnum.NAVEL_ROCK_U.value),
+            (11, 19),
+            (11, 14)
+        ])

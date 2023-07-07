@@ -1,3 +1,4 @@
+import re
 import json
 import numpy
 import logging
@@ -127,7 +128,7 @@ def EnrichMonData(pokemon: dict):
     :return: Enriched Pokémon data or None if failed
     """
     try:
-        if pokemon["name"].isalpha():
+        if re.match("^[A-Za-z0-9-]*$", pokemon["name"]):
             trainer = GetTrainer()
             # Human readable location name
             pokemon["metLocationName"] = location_list[pokemon["metLocation"]]

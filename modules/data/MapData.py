@@ -511,20 +511,22 @@ class mapRSE(Enum):
     NAVEL_ROCK_E = (26, 71)
     NAVEL_ROCK_F = (26, 72)
     NAVEL_ROCK_G = (26, 73)
-    NAVEL_ROCK_H = (26, 75)
-    NAVEL_ROCK_I = (26, 76)
-    NAVEL_ROCK_J = (26, 77)
-    NAVEL_ROCK_K = (26, 78)
-    NAVEL_ROCK_L = (26, 79)
-    NAVEL_ROCK_M = (26, 80)
-    NAVEL_ROCK_N = (26, 81)
-    NAVEL_ROCK_O = (26, 82)
-    NAVEL_ROCK_P = (26, 83)
-    NAVEL_ROCK_Q = (26, 84)
-    NAVEL_ROCK_R = (26, 85)
-    NAVEL_ROCK_S = (26, 86)
-    NAVEL_ROCK_T = (26, 87)
+    NAVEL_ROCK_H = (26, 74) #Ho-Oh
+    NAVEL_ROCK_I = (26, 75) #Ho-Oh
+    NAVEL_ROCK_J = (26, 76)
+    NAVEL_ROCK_K = (26, 77)
+    NAVEL_ROCK_L = (26, 78)
+    NAVEL_ROCK_M = (26, 79)
+    NAVEL_ROCK_N = (26, 80)
+    NAVEL_ROCK_O = (26, 81)
+    NAVEL_ROCK_P = (26, 82)
+    NAVEL_ROCK_Q = (26, 83)
+    NAVEL_ROCK_R = (26, 84)
+    NAVEL_ROCK_S = (26, 85)
+    NAVEL_ROCK_T = (26, 86) #Lugia
+    NAVEL_ROCK_U = (26, 87) #Lugia
     TRAINER_HILL_F = (26, 88)
+
 
     ROUTE_104_C = (27, 0)
     ROUTE_104_D = (27, 1)
