@@ -1,7 +1,7 @@
 # Bot config
 
 # Bot mode
-# spin, sweet scent, bunny hop, coords, bonk, fishing, starters
+# spin, sweet scent, bunny hop, coords, bonk, fishing, starters, lugia, ho-oh
 # rayquaza, groudon, kyogre, southern island, mew, regis, deoxys runaways
 # deoxys reset, fossil, castform, beldum, johto starters, buy premier balls
 bot_mode: spin

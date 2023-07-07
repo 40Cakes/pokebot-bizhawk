@@ -11,7 +11,7 @@ from modules.gen3.General import ModeBonk, ModeBunnyHop, ModeFishing, ModeCoords
     ModePremierBalls
 from modules.gen3.GiftPokemon import ModeCastform, ModeBeldum, ModeFossil, ModeJohtoStarters
 from modules.gen3.Legendaries import ModeGroudon, ModeKyogre, ModeRayquaza, ModeMew, ModeRegis, ModeSouthernIsland, \
-    ModeDeoxysPuzzle, ModeDeoxysResets
+    ModeDeoxysPuzzle, ModeDeoxysResets, ModeHoOh, ModeLugia
 from modules.gen3.Starters import ModeStarters
 from modules.mmf.Emu import GetEmu
 from modules.mmf.Trainer import GetTrainer
@@ -70,6 +70,10 @@ def MainLoop():
                             ModeDeoxysResets()
                         else:
                             ModeDeoxysPuzzle(False)
+                    case "lugia":
+                        ModeLugia()
+                    case "ho-oh":
+                        ModeHoOh()
                     case "fossil":
                         ModeFossil()
                     case "castform":
