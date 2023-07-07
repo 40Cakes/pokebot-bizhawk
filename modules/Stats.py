@@ -405,9 +405,6 @@ def EncounterPokemon(starter: bool = False):
     pokemon = GetParty()[0] if starter else GetOpponent()
     LogEncounter(pokemon)
 
-    while GetTrainer()["state"] != GameState.BATTLE:
-        PressButton("B")
-
     replace_battler = False
 
     if pokemon["shiny"]:
