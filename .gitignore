@@ -10,4 +10,5 @@ reports/
 roms/
 .venv
 .idea
+.vs
 bot.spec
