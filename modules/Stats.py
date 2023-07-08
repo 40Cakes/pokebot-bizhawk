@@ -238,19 +238,6 @@ def LogEncounter(pokemon: dict):
 
         encounter_log = GetEncounterLog()
 
-        # Same Pokémon encounter streak records
-        if len(encounter_log["encounter_log"]) > 1 and encounter_log["encounter_log"][-2]["pokemon_obj"]["name"] == pokemon["name"]:
-            stats["totals"]["current_streak"] = stats["totals"].get("current_streak", 0) + 1
-        else:
-            stats["totals"]["current_streak"] = 1
-        if stats["totals"].get("current_streak", 0) >= stats["totals"].get("phase_streak", 0):
-            stats["totals"]["phase_streak"] = stats["totals"].get("current_streak", 0)
-            stats["totals"]["phase_streak_pokemon"] = pokemon["name"]
-
-        if pokemon["shiny"]:
-            stats["pokemon"][pokemon["name"]]["shiny_encounters"] = stats["pokemon"][pokemon["name"]].get("shiny_encounters", 0) + 1
-            stats["totals"]["shiny_encounters"] = stats["totals"].get("shiny_encounters", 0) + 1
-
         # Pokémon shiny average
         if stats["pokemon"][pokemon["name"]].get("shiny_encounters"):
             avg = int(math.floor(stats["pokemon"][pokemon["name"]]["encounters"] / stats["pokemon"][pokemon["name"]]["shiny_encounters"]))
@@ -280,6 +267,19 @@ def LogEncounter(pokemon: dict):
             shiny_log = GetShinyLog()
             shiny_log["shiny_log"].append(log_obj)
             WriteFile(files["shiny_log"], json.dumps(shiny_log, indent=4, sort_keys=True))
+
+        # Same Pokémon encounter streak records
+        if len(encounter_log["encounter_log"]) > 1 and encounter_log["encounter_log"][-2]["pokemon_obj"]["name"] == pokemon["name"]:
+            stats["totals"]["current_streak"] = stats["totals"].get("current_streak", 0) + 1
+        else:
+            stats["totals"]["current_streak"] = 1
+        if stats["totals"].get("current_streak", 0) >= stats["totals"].get("phase_streak", 0):
+            stats["totals"]["phase_streak"] = stats["totals"].get("current_streak", 0)
+            stats["totals"]["phase_streak_pokemon"] = pokemon["name"]
+
+        if pokemon["shiny"]:
+            stats["pokemon"][pokemon["name"]]["shiny_encounters"] = stats["pokemon"][pokemon["name"]].get("shiny_encounters", 0) + 1
+            stats["totals"]["shiny_encounters"] = stats["totals"].get("shiny_encounters", 0) + 1
 
         log.info(f"------------------ {pokemon['name']} ------------------")
         article = "an" if pokemon["name"].lower()[0] in {"a", "e", "i", "o", "u"} else "a"
