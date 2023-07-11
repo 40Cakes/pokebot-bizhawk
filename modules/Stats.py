@@ -113,6 +113,11 @@ def OpponentChanged():
         # Fixes a bug where the bot checks the opponent for up to 20 seconds if it was last closed in a battle
         if GetTrainer()["state"] == GameState.OVERWORLD:
             return False
+        
+        #recheck again after 5 frames to avoid infinite loop in GetOpponent
+        WaitFrames(5)
+        if GetTrainer()["state"] == GameState.OVERWORLD:
+            return False
 
         opponent = GetOpponent()
         if opponent:

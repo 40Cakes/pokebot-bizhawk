@@ -8,7 +8,7 @@ from modules.Config import GetConfig
 from modules.Inputs import ReleaseAllInputs, PressButton, WaitFrames
 from modules.Stats import EncounterPokemon, OpponentChanged
 from modules.gen3.General import ModeBonk, ModeBunnyHop, ModeFishing, ModeCoords, ModeSpin, ModeSweetScent, \
-    ModePremierBalls
+    ModePremierBalls, ModePetalburgLoop
 from modules.gen3.GiftPokemon import ModeCastform, ModeBeldum, ModeFossil, ModeJohtoStarters
 from modules.gen3.Legendaries import ModeGroudon, ModeKyogre, ModeRayquaza, ModeMew, ModeRegis, ModeSouthernIsland, \
     ModeDeoxysPuzzle, ModeDeoxysResets, ModeHoOh, ModeLugia
@@ -39,6 +39,8 @@ def MainLoop():
                         EncounterPokemon()
                     case "spin":
                         ModeSpin()
+                    case "petalburg loop":
+                        ModePetalburgLoop()
                     case "sweet scent":
                         ModeSweetScent()
                     case "bunny hop":

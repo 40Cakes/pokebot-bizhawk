@@ -4,10 +4,11 @@ import logging
 from modules.data.GameState import GameState
 from modules.Config import GetConfig
 from modules.Image import DetectTemplate
-from modules.Inputs import ButtonCombo, HoldButton, PressButton, ReleaseAllInputs, WaitFrames
-from modules.Menuing import StartMenu
+from modules.Inputs import ButtonCombo, HoldButton, ReleaseButton, PressButton, ReleaseAllInputs, WaitFrames
+from modules.Menuing import StartMenu, IsValidMove
 from modules.Navigation import Bonk, FollowPath
 from modules.Stats import EncounterPokemon, OpponentChanged
+from modules.mmf.Pokemon import GetParty
 from modules.mmf.Trainer import GetTrainer
 
 log = logging.getLogger(__name__)
@@ -107,6 +108,77 @@ def ModeSpin():  # TODO check if players direction changes, if not spam B (Poken
                 PressButton("B")
     except Exception as e:
         log.exception(str(e))
+
+def ModePetalburgLoop():
+    try:
+        trainer = GetTrainer()
+        party = GetParty()
+        log.info(f"Entering Petalburg fight/heal loop")
+        talkCycle = 0
+        while True:
+            trainer = GetTrainer()
+            posX = trainer["posX"]
+
+            if OpponentChanged(): EncounterPokemon()
+
+            party = GetParty()
+            tapB = False # For getting out of PokeNav and/or pickup imperfections
+            if party:
+                isHighHealth = party[0]["hp"] > party[0]["maxHP"] * 0.5
+                
+                hasViableMoves = False
+                for i, move in enumerate(party[0]["enrichedMoves"]):
+                    # Ignore banned moves and those with 0 PP
+                    if IsValidMove(move) and party[0]["pp"][i] > 0:
+                        hasViableMoves = True
+                if not (isHighHealth and hasViableMoves):
+                    # Not in a state to battle, gotta go back to heal
+                    if posX < 7 or posX > 20:
+                        # Outside and to the right of the Pokemon Center
+                        HoldButton("B")
+                        PressButton("Left")
+                    elif posX > 7 and posX < 20:
+                        # Somehow overshot Pokemon Center, gotta walk back right a bit
+                        PressButton("Right")
+                        tapB = True
+                    else:
+                        # Right in front of or inside Pokemon Center. Enter building, walk up to Nurse Joy and mash A through her dialogue to heal
+                        PressButton("Up")
+                        if talkCycle > 2:
+                            HoldButton("A")
+                else:
+                    # First pokemon in party (probably) has enough HP and PP to actually battle
+                    if posX == 7:
+                        # Inside Pokemon Center, try to walk down and mash B through Nurse Joy dialogue if it's open
+                        PressButton("Down")
+                        if talkCycle > 2:
+                            HoldButton("B")
+                    elif posX > 7:
+                        # Outside and still in the Rustboro tile, run right
+                        PressButton("Right")
+                        HoldButton("B")
+                    elif posX < 4 or trainer["facing"] == "Left":
+                        # In the same tile as the grass, but not in the grass yet. Or in the grass and facing left, so we want to turn right as simpler a alternative to spinning
+                        PressButton("Right")
+                        tapB = True
+                    else:
+                        # Must be in the grass and not facing left, so turn left as a simpler alternative to spinning
+                        PressButton("Left")
+                        tapB = True
+
+            WaitFrames(2)
+            talkCycle = (talkCycle + 1) % 4 # to pace button mashing of text boxes and force A/B button holding to reset
+            if talkCycle == 0:
+                ReleaseAllInputs()
+
+            if tapB:
+                WaitFrames(1)
+                if GetTrainer()["facing"] == trainer["facing"]:
+                    # Check if the trainer's facing direction actually changed, press B to cancel PokeNav as it prevents
+                    # all movement
+                    PressButton("B")
+    except Exception as e:
+        log.exception(str(e))#
 
 
 def ModeSweetScent():
