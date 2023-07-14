@@ -33,12 +33,13 @@ function bag() {
         let tr = ""
 
         let wrapper = document.getElementById("bag_log")
-
+        
+        console.log(bag)
         Object.entries(bag).forEach(([key, value]) => {
             for (let j = 0; j < value.length; j++) {
                 if (value[j]["name"] != "None" && value[j]["name"] != "unknown") {
                     tr +=
-                        '<tr><td><img class="sprite32" src="/interface/sprites/items/' +
+                        '<tr><td class="text-center"><img class="sprite32" src="/interface/sprites/items/' +
                         value[j]["name"] +
                         '.png"></td><td class="text-center">' +
                         value[j]["name"] +
@@ -390,7 +391,12 @@ window.setInterval(function() {
     stats();
 }, 1000);
 
+window.setInterval(function() {
+    bag();
+}, 2500);
+
 shiny_log();
 encounter_log();
 trainer();
 encounter();
+bag();
