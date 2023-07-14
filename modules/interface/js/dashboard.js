@@ -21,6 +21,40 @@ function trainer() {
     });
 }
 
+function bag() {
+    $.ajax({
+        method: "GET",
+        url: host + "/bag",
+        crossDomain: true,
+        dataType: "json",
+        format: "json",
+        timeout: 500,
+    }).done(function(bag) {
+        let tr = ""
+
+        let wrapper = document.getElementById("bag_log")
+
+        Object.entries(bag).forEach(([key, value]) => {
+            for (let j = 0; j < value.length; j++) {
+                if (value[j]["name"] != "None" && value[j]["name"] != "unknown") {
+                    tr +=
+                        '<tr><td><img class="sprite32" src="/interface/sprites/items/' +
+                        value[j]["name"] +
+                        '.png"></td><td class="text-center">' +
+                        value[j]["name"] +
+                        '</td></td><td class="text-center">' +
+                        key +
+                        '</td><td class="text-center">' +
+                        value[j]["quantity"] +
+                        "</td></tr>"
+                }              
+            }
+        })
+
+        wrapper.innerHTML = tr
+    })
+}
+
 function get_type_image(type_str) {
     return `<img src=\"/interface/sprites/types/${type_str}.png\">`;
 }

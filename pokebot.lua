@@ -30,6 +30,8 @@ package.path = utils.translatePath(";.\\lua\\?.lua;")
 
 json = require "json"
 PokemonNames = require "PokemonNames"
+ItemNames = require "ItemNames"
+
 -- Release all keys after starting script
 if enable_input then
 	input = joypad.get()
@@ -46,6 +48,7 @@ comm.mmfScreenshot()
 comm.mmfWrite("bizhawk_press_input-" .. bot_instance_id, string.rep("\x00", 4096))
 comm.mmfWrite("bizhawk_hold_input-" .. bot_instance_id, string.rep("\x00", 4096))
 comm.mmfWrite("bizhawk_trainer_data-" .. bot_instance_id, string.rep("\x00", 4096))
+comm.mmfWrite("bizhawk_bag_data-" .. bot_instance_id, string.rep("\x00", 8192))
 comm.mmfWrite("bizhawk_party_data-" .. bot_instance_id, string.rep("\x00", 8192))
 comm.mmfWrite("bizhawk_opponent_data-" .. bot_instance_id, string.rep("\x00", 4096))
 comm.mmfWrite("bizhawk_emu_data-" .. bot_instance_id, string.rep("\x00", 4096))
@@ -239,6 +242,36 @@ function getTrainer()
 	return trainer
 end
 
+function readItemData(addr, securityKey)
+	local item = {}
+
+	item.type = Memory.readword(addr + 0)
+	item.name = ItemNames[item.type + 1]
+	item.quantity = Memory.readword(addr + 2) ~ securityKey
+
+	return item
+end
+
+function getBag()
+	local trainer = Memory.readdword(GameSettings.trainerpointer)
+	local securityKey = Memory.readword(trainer + 172)
+
+	local bag = {}
+	local bagType = {"Items", "Poké Balls", "TMs & HMs", "Berries", "Key Items"}
+
+	for i=0, 4 do
+		local startBag = Memory.readdword(0x2039DD8 + i * 8)
+		local numberOfBytes = Memory.readbyte(0x2039DD8 + i * 8 + 4)
+		bag[bagType[i + 1]] = {}
+		for j = 1, numberOfBytes do
+			bag[bagType[i + 1]][j] = readItemData(startBag, securityKey)
+			startBag = startBag + 4
+		end
+	end
+
+	return bag
+end
+
 -- Function to get data of all Pokemon in the player's party
 function getParty()
 	local party = {}
@@ -271,10 +304,12 @@ function mainLoop()
 	trainer = getTrainer()
 	party = getParty()
 	opponent = readMonData(GameSettings.estats)
+	bag = getBag()
 
 	comm.mmfWrite("bizhawk_trainer_data-" .. bot_instance_id, json.encode({["trainer"] = trainer}) .. "\x00")
 	comm.mmfWrite("bizhawk_party_data-" .. bot_instance_id, json.encode({["party"] = party}) .. "\x00")
 	comm.mmfWrite("bizhawk_opponent_data-" .. bot_instance_id, json.encode({["opponent"] = opponent}) .. "\x00")
+	comm.mmfWrite("bizhawk_bag_data-" .. bot_instance_id, json.encode({["bag"] = bag}) .. "\x00")
 
 	if write_files then
 		check_input = joypad.get()
@@ -296,6 +331,13 @@ function mainLoop()
 			)
 			opponent_data_file:write(json.encode({["opponent"] = opponent}))
 			opponent_data_file:close()
+
+			bag_data_file = io.open(
+				utils.translatePath("testing\\bag_data.json"), "w"
+			)
+			bag_data_file:write(json.encode({["bag"] = bag}))
+			bag_data_file:close()
+
 		end
 	end
 	
