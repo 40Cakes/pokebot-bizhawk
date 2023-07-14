@@ -260,8 +260,8 @@ function getBag()
 	local bagType = {"Items", "Poké Balls", "TMs & HMs", "Berries", "Key Items"}
 
 	for i=0, 4 do
-		local startBag = Memory.readdword(0x2039DD8 + i * 8)
-		local numberOfBytes = Memory.readbyte(0x2039DD8 + i * 8 + 4)
+		local startBag = Memory.readdword(GameSettings.bag + i * 8)
+		local numberOfBytes = Memory.readbyte(GameSettings.bag + i * 8 + 4)
 		bag[bagType[i + 1]] = {}
 		for j = 1, numberOfBytes do
 			bag[bagType[i + 1]][j] = readItemData(startBag, securityKey)
