@@ -10,6 +10,7 @@ from modules.Navigation import Bonk, FollowPath
 from modules.Stats import EncounterPokemon, OpponentChanged
 from modules.mmf.Pokemon import GetParty
 from modules.mmf.Trainer import GetTrainer
+from modules.mmf.Bag import GetBag
 
 log = logging.getLogger(__name__)
 config = GetConfig()
@@ -21,6 +22,7 @@ def ModeBonk():
     while True:
         log.info(f"Pathing {direction} until bonk...")
 
+        AutoStop()
         while not OpponentChanged():
             if direction == "horizontal":
                 pos1 = Bonk("Left")
@@ -42,6 +44,8 @@ def ModeBonk():
 def ModeBunnyHop():
     log.info("Bunny hopping...")
     i = 0
+    
+    AutoStop()
     while not OpponentChanged():
         if i < 250:
             HoldButton("B")
@@ -59,6 +63,8 @@ def ModeFishing():
     log.info(f"Fishing...")
     ButtonCombo(["Select", 50])  # Cast rod and wait for fishing animation
     # started_fishing = time.time()
+    
+    AutoStop()
     while not OpponentChanged():
         if DetectTemplate("oh_a_bite.png") or DetectTemplate("on_the_hook.png"):
             PressButton("A")
@@ -76,6 +82,7 @@ def ModeCoords():
     coords = config["coords"]
     pos1, pos2 = coords["pos1"], coords["pos2"]
     while True:
+        AutoStop()
         while not OpponentChanged():
             FollowPath([(pos1[0], pos1[1]), (pos2[0], pos2[1])], exit_when_stuck=True)
         EncounterPokemon()
@@ -89,6 +96,7 @@ def ModeSpin():  # TODO check if players direction changes, if not spam B (Poken
         home_coords = (trainer["posX"], trainer["posY"])
         log.info(f"Spinning on the spot, home position is {home_coords}")
         while True:
+            AutoStop()
             trainer = GetTrainer()
             if OpponentChanged(): EncounterPokemon()
             if home_coords != (trainer["posX"], trainer[
@@ -119,6 +127,7 @@ def ModePetalburgLoop():
             trainer = GetTrainer()
             posX = trainer["posX"]
 
+            AutoStop()
             if OpponentChanged(): EncounterPokemon()
 
             party = GetParty()
@@ -183,6 +192,7 @@ def ModePetalburgLoop():
 
 def ModeSweetScent():
     log.info(f"Using Sweet Scent...")
+    AutoStop()
     StartMenu("pokemon")
     PressButton("A")  # Select first pokemon in party
     # Search for sweet scent in menu
@@ -205,3 +215,15 @@ def ModePremierBalls():
     if DetectTemplate("mart/times_11.png"):
         PressButton("Down")
     return True
+
+def AutoStop():
+    if config["auto_stop"]: 
+        bag = GetBag()
+        for item in bag["Poké Balls"]:
+            if item["quantity"] > 0:
+                return
+    else:
+        return
+
+    log.info(f"Ran out of Balls, pausing the bot...")
+    input("Press Enter to continue...")
