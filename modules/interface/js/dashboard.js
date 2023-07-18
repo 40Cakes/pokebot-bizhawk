@@ -33,22 +33,38 @@ function bag() {
         let tr = ""
 
         let wrapper = document.getElementById("bag_log")
-        
-        console.log(bag)
+
+        let condensedBag = []
         Object.entries(bag).forEach(([key, value]) => {
             for (let j = 0; j < value.length; j++) {
-                if (value[j]["name"] != "None" && value[j]["name"] != "unknown") {
+                if (value[j]["name"] == "None" || value[j]["name"] == "unknown") continue
+
+                if (!condensedBag[key]) {
+                        condensedBag[key] = []
+                }
+                
+                if (condensedBag[key][value[j]["name"]]) {
+                    condensedBag[key][value[j]["name"]] += value[j]["quantity"]
+                }
+                else {
+                    condensedBag[key][value[j]["name"]] = value[j]["quantity"]
+                }
+            }
+
+        })
+        
+        Object.entries(condensedBag).forEach(([key, value]) => {
+            for (keyItem in value) {
                     tr +=
                         '<tr><td class="text-center"><img class="sprite32" src="/interface/sprites/items/' +
-                        value[j]["name"] +
+                        keyItem +
                         '.png"></td><td class="text-center">' +
-                        value[j]["name"] +
+                        keyItem +
                         '</td></td><td class="text-center">' +
                         key +
                         '</td><td class="text-center">' +
-                        value[j]["quantity"] +
-                        "</td></tr>"
-                }              
+                        value[keyItem]   +
+                        "</td></tr>"           
             }
         })
 
