@@ -104,7 +104,7 @@
         "pokedex_id": 183,
         "name": "Marill",
         "levels": "5-35",
-        "rate": "1%",
+        "rate": "99%",
         "encounter_type": "surfing"
       },
       {
@@ -1381,7 +1381,7 @@
         "pokedex_id": 322,
         "name": "Numel",
         "levels": "14-16",
-        "rate": "75",
+        "rate": "75%",
         "encounter_type": "grass"
       }
     ]
@@ -3128,7 +3128,7 @@
       },
       {
         "pokedex_id": 0,
-        "name": "Shuppett",
+        "name": "Shuppet",
         "levels": "27-29",
         "rate": "60%",
         "encounter_type": "grass"
@@ -3198,7 +3198,7 @@
         "pokedex_id": 129,
         "name": "Magikarp",
         "levels": "5-10",
-        "rate": "%",
+        "rate": "70%",
         "encounter_type": "fishing_old"
       },
       {
@@ -3959,7 +3959,7 @@
         "pokedex_id": 129,
         "name": "Magikarp",
         "levels": "5-10",
-        "rate": "%",
+        "rate": "70%",
         "encounter_type": "fishing_old"
       },
       {
@@ -4035,7 +4035,7 @@
         "pokedex_id": 129,
         "name": "Magikarp",
         "levels": "5-10",
-        "rate": "%",
+        "rate": "70%",
         "encounter_type": "fishing_old"
       },
       {
@@ -4132,7 +4132,7 @@
         "pokedex_id": 129,
         "name": "Magikarp",
         "levels": "5-10",
-        "rate": "%",
+        "rate": "70%",
         "encounter_type": "fishing_old"
       },
       {
@@ -4208,7 +4208,7 @@
         "pokedex_id": 129,
         "name": "Magikarp",
         "levels": "5-10",
-        "rate": "%",
+        "rate": "70%",
         "encounter_type": "fishing_old"
       },
       {
@@ -5275,7 +5275,7 @@
         "pokedex_id": 202,
         "name": "Wobbuffet",
         "levels": "27-29",
-        "rate": "%",
+        "rate": "10%",
         "encounter_type": "walking"
       },
       {
