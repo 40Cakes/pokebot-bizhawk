@@ -91,6 +91,19 @@ function party() {
     });
 }
 
+function bag_log() {
+    $.ajax({
+        method: "GET",
+        url: host + "/bag",
+        crossDomain: true,
+        dataType: "json",
+        format: "json",
+        timeout: 1000,
+    }).done(function(party) {
+        document.getElementById("bag_log").innerHTML = JSONTree.create(party)
+    });
+}
+
 trainer();
 encounter();
 encounter_log();
@@ -98,3 +111,4 @@ shiny_log();
 stats();
 emulator();
 party();
+bag_log();

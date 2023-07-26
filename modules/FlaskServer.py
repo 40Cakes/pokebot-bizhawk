@@ -14,6 +14,7 @@ from modules.mmf.Emu import GetEmu
 from modules.mmf.Pokemon import GetParty
 from modules.mmf.Screenshot import GetScreenshot
 from modules.mmf.Trainer import GetTrainer
+from modules.mmf.Bag import GetBag
 
 config = GetConfig()
 
@@ -46,6 +47,13 @@ def httpServer():
             trainer = GetTrainer()
             if trainer:
                 return jsonify(trainer)
+            abort(503)
+
+        @server.route("/bag", methods=["GET"])
+        def Bag():
+            bag = GetBag()
+            if bag:
+                return jsonify(bag)
             abort(503)
 
         @server.route("/party", methods=["GET"])

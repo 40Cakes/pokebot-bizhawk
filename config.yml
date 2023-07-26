@@ -101,6 +101,10 @@ pokeball_override:
   - ultra_ball
   - great_ball
 
+# Toggle auto stop when you are run out of balls
+# Otherwise, if you want to continue without have balls, this option needs to be false
+auto_stop: true
+
 # Cycle to next Pokémon if the lead Pokémon faints
 cycle_lead_pokemon: true
 

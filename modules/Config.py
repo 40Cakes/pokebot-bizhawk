@@ -84,7 +84,8 @@ config_schema = {
         "log": {"type": "boolean"},
         "bot_instance_id": {"type": "string"},
         "banned_moves": {"type": "array"},
-        "mem_hacks": {"type": "boolean"}
+        "mem_hacks": {"type": "boolean"},
+        "auto_stop": {"type": "boolean"}
     }
 }
 
