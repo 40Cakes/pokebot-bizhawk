@@ -22,15 +22,20 @@ def CustomCatchConfig(pokemon: object):
         if pokemon["IVSum"] == 0:
             return True
 
-        # Catch Pokémon with 6 identical IVs of any value
         ivs = [pokemon["hpIV"],
                pokemon["attackIV"],
                pokemon["defenseIV"],
                pokemon["speedIV"],
                pokemon["spAttackIV"],
                pokemon["spDefenseIV"]]
+        # Catch Pokémon with 6 identical IVs of any value
         if all(v == ivs[0] for v in ivs):
             return True
+
+        # Catch Pokémon with 4 or more max IVs in any stat
+        #max_ivs = sum(1 for v in ivs if v == 31)
+        #if max_ivs > 4:
+        #    return True
 
         # Catch Pokémon with a good IV sum of greater than or equal to 170
         #if pokemon["IVSum"] >= 170:
