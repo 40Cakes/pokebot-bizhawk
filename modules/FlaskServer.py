@@ -3,7 +3,7 @@ import json
 import logging
 
 import flask
-from flask import Flask, abort, jsonify, make_response, request
+from flask import Flask, abort, jsonify, make_response, url_for, redirect, request
 from flask_cors import CORS
 
 from modules.Config import GetConfig
@@ -29,6 +29,10 @@ def httpServer():
 
         server = Flask(__name__, static_folder="./interface")
         CORS(server)
+
+        @server.route("/")
+        def Root():
+            return redirect(url_for('Dashboard'))
 
         @server.route("/dashboard", methods=["GET"])
         def Dashboard():
