@@ -148,6 +148,12 @@ function GameSettings.initialize()
 		GameSettings.encountertable = 0x0
 		GameSettings.version = GameSettings.VERSIONS.FRLG
 		GameSettings.language = GameSettings.LANGUAGES.S
+	elseif gamecode == 0x42504544 then
+		GameSettings.game = 2
+		GameSettings.gamename = "Pokemon Emerald (G)"
+		GameSettings.encountertable = 0x0
+		GameSettings.version = GameSettings.VERSIONS.E
+		GameSettings.language = GameSettings.LANGUAGES.G
 	else
 		GameSettings.game = 0
 		GameSettings.gamename = "Unsupported game"
