@@ -4,7 +4,7 @@
 ### An automated shiny hunting bot for Pokémon Emerald
 These scripts are currently being used to complete and stream a Prof. Oak living ✨shiny✨ dex challenge in Pokémon emerald on [YouTube](https://www.youtube.com/watch?v=nVEONn19lZY) and [Twitch](https://www.twitch.tv/fortycakes). Feel free to join the [Discord](https://discord.gg/CXQDjGSeyV) to discuss the stream and get support for this bot.
 
-[![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/BgcFIMAqAac/0.jpg)](https://www.youtube.com/watch?v=BgcFIMAqAac)
+[![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/W6OOnrx8g58/0.jpg)](https://www.youtube.com/watch?v=W6OOnrx8g58)
 
 ## Supported games
 |  | Ruby | Sapphire | Emerald | FireRed | LeafGreen | 
