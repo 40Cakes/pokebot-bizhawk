@@ -10,3 +10,4 @@ pywebview==4.0.2
 fastjsonschema==2.16.3
 pandas==2.0.2
 discord-webhook==1.1.0
+Werkzeug==2.2.2
